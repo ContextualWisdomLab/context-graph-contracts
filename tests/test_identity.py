@@ -63,6 +63,24 @@ def test_authority_parse_rejects_asset_uri() -> None:
         )
 
 
+@pytest.mark.parametrize("field_name", ["tenant_id", "authority"])
+def test_authority_build_rejects_non_string_segments(field_name: str) -> None:
+    """Authority construction rejects non-string components deliberately."""
+    kwargs: dict[str, object] = {
+        "tenant_id": "tenant_001",
+        "authority": "ea_core",
+    }
+    kwargs[field_name] = 1
+    with pytest.raises(TypeError, match=field_name):
+        CanonicalAuthorityUri.build(**kwargs)  # type: ignore[arg-type]
+
+
+def test_authority_parse_rejects_non_string_input() -> None:
+    """Authority parsing rejects non-string input at the public boundary."""
+    with pytest.raises(TypeError, match="value"):
+        CanonicalAuthorityUri.parse(1)  # type: ignore[arg-type]
+
+
 @pytest.mark.parametrize("field", INVALID_SEGMENTS)
 def test_asset_build_rejects_invalid_segments(field: str) -> None:
     """Asset URI segments must use bounded canonical lower-snake words."""
@@ -82,6 +100,26 @@ def test_asset_parse_rejects_invalid_segments(field: str) -> None:
         CanonicalAssetUri.parse(
             f"urn:cwl:{field}:ea_core:application_record:{UUID7_TEXT}"
         )
+
+
+@pytest.mark.parametrize("field_name", ["tenant_id", "authority", "object_type"])
+def test_asset_build_rejects_non_string_segments(field_name: str) -> None:
+    """Asset construction rejects non-string components deliberately."""
+    kwargs: dict[str, object] = {
+        "tenant_id": "tenant_001",
+        "authority": "ea_core",
+        "object_type": "application_record",
+        "object_id": UUID7_TEXT,
+    }
+    kwargs[field_name] = 1
+    with pytest.raises(TypeError, match=field_name):
+        CanonicalAssetUri.build(**kwargs)  # type: ignore[arg-type]
+
+
+def test_asset_parse_rejects_non_string_input() -> None:
+    """Asset parsing rejects non-string input at the public boundary."""
+    with pytest.raises(TypeError, match="value"):
+        CanonicalAssetUri.parse(1)  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
