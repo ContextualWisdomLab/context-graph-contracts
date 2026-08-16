@@ -37,7 +37,9 @@ def test_default_draft_202012_format_annotation_is_not_semantic_validation() -> 
         "recorded_at": "2026-08-16T12:00:00Z",
     }
 
-    assert list(validator.iter_errors(structurally_valid_but_semantically_invalid)) == []
+    assert (
+        list(validator.iter_errors(structurally_valid_but_semantically_invalid)) == []
+    )
 
 
 def test_packaged_timestamp_profile_is_executable() -> None:
@@ -52,6 +54,12 @@ def test_packaged_timestamp_profile_is_executable() -> None:
     for value in profile["invalid_values"]:
         with pytest.raises(ValueError, match="CWL timestamp profile"):
             parse_cwl_timestamp(value)
+
+
+def test_parser_rejects_24_hour_midnight_alias() -> None:
+    """Reject ISO 8601's 24:00 alias because CWL permits only hours 00 through 23."""
+    with pytest.raises(ValueError, match="CWL timestamp profile"):
+        parse_cwl_timestamp("2026-01-01T24:00:00Z")
 
 
 @pytest.mark.parametrize("offset_seconds", [30, -30])
