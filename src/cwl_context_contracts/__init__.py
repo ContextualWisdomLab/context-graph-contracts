@@ -1,6 +1,7 @@
 """Public contracts for the ContextualWisdomLab Context Fabric."""
 
 from .events import CloudEventEnvelope
+from .fixtures import available_fixture_names, load_fixture
 from .identity import CanonicalAssetUri, CanonicalAuthorityUri
 from .provenance import ProvenanceReference
 from .schemas import available_schema_names, load_schema
@@ -14,7 +15,9 @@ __all__ = [
     "CloudEventEnvelope",
     "ProvenanceReference",
     "TruthStatus",
+    "available_fixture_names",
     "available_schema_names",
+    "load_fixture",
     "load_schema",
 ]
 
