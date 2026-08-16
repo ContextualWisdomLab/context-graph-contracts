@@ -29,13 +29,22 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
-          version: "0.11.29"
+          version: "0.11.32"
           enable-cache: false
-      - run: uv sync --extra dev --python "${{ matrix.python-version }}"
-      - run: uv run --extra dev --python "${{ matrix.python-version }}" python -m compileall -q src
-      - run: uv run --extra dev --python "${{ matrix.python-version }}" python -m ruff check . --output-format=github
-      - run: uv run --extra dev --python "${{ matrix.python-version }}" python -m coverage run -m pytest -q
-      - run: uv run --extra dev --python "${{ matrix.python-version }}" python -m coverage report
+      - run: uv lock
+      - run: uv sync --frozen --extra dev --python "${{ matrix.python-version }}"
+      - run: >-
+          uv run --frozen --extra dev --python "${{ matrix.python-version }}"
+          python -m compileall -q src
+      - run: >-
+          uv run --frozen --extra dev --python "${{ matrix.python-version }}"
+          python -m ruff check . --output-format=github
+      - run: >-
+          uv run --frozen --extra dev --python "${{ matrix.python-version }}"
+          python -m coverage run -m pytest -q
+      - run: >-
+          uv run --frozen --extra dev --python "${{ matrix.python-version }}"
+          python -m coverage report
 
   package:
     runs-on: ubuntu-latest
@@ -49,9 +58,10 @@ jobs:
           python-version: "3.14"
       - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
         with:
-          version: "0.11.29"
+          version: "0.11.32"
           enable-cache: false
-      - run: uv sync --extra dev --python 3.14
+      - run: uv lock
+      - run: uv sync --frozen --extra dev --python 3.14
       - run: uv build --wheel --sdist --out-dir dist
       - name: Inspect wheel and source distribution contract resources
         run: |
@@ -87,7 +97,9 @@ jobs:
           assert any(name.endswith("/LICENSE") for name in sdist_names)
           PY
       - run: uv venv .package-smoke --python 3.14
-      - run: uv pip install --python .package-smoke/bin/python --no-index --find-links dist cwl-context-contracts
+      - run: >-
+          uv pip install --python .package-smoke/bin/python
+          --no-index --find-links dist cwl-context-contracts
       - name: Smoke-test installed schemas and conformance fixtures
         run: |
           .package-smoke/bin/python - <<'PY'
