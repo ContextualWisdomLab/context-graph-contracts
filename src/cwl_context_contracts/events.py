@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from types import MappingProxyType
 from typing import Any
+from urllib.parse import urlsplit
 from uuid import UUID
 
 from .identity import CanonicalAssetUri, CanonicalAuthorityUri, _validate_uuid7
@@ -21,7 +22,10 @@ from .temporal import (
 _EVENT_TYPE_PATTERN = re.compile(
     r"^org\.contextualwisdomlab\.[a-z0-9_]+(?:\.[a-z0-9_]+)*\.v[1-9][0-9]*$"
 )
-_ABSOLUTE_URI_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:[^\s]+$")
+_URI_CHARACTER_PATTERN = re.compile(
+    r"^[A-Za-z][A-Za-z0-9+.-]*:[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]*$"
+)
+_MALFORMED_PERCENT_ESCAPE_PATTERN = re.compile(r"%(?![0-9A-Fa-f]{2})")
 _EXTENSION_PATTERN = re.compile(r"^[a-z][a-z0-9]{0,19}$")
 _MAX_JSON_DEPTH = 64
 _MAX_EXACT_JSON_INTEGER = (2**53) - 1
@@ -43,6 +47,33 @@ def _require_string(value: Any, field_name: str) -> str:
     if not isinstance(value, str):
         raise TypeError(f"{field_name} must be a string")
     return value
+
+
+def _is_rfc3986_uri_with_scheme(value: str) -> bool:
+    """Return whether ``value`` satisfies portable RFC 3986 URI syntax."""
+    if not _URI_CHARACTER_PATTERN.fullmatch(value):
+        return False
+    if _MALFORMED_PERCENT_ESCAPE_PATTERN.search(value):
+        return False
+    if value.count("#") > 1:
+        return False
+    try:
+        parsed = urlsplit(value)
+        if any(
+            bracket in component
+            for component in (parsed.path, parsed.query, parsed.fragment)
+            for bracket in "[]"
+        ):
+            return False
+        if parsed.netloc:
+            # Accessing these properties makes ``urllib`` reject malformed
+            # bracketed hosts and non-numeric/out-of-range ports. Scheme-level
+            # host semantics remain the responsibility of the URI scheme.
+            parsed.hostname
+            parsed.port
+    except ValueError:
+        return False
+    return True
 
 
 def _validate_and_freeze_json_value(
@@ -195,8 +226,8 @@ class CloudEventEnvelope:
         if self.data_schema is not None:
             if not isinstance(self.data_schema, str):
                 raise TypeError("data_schema must be a string when present")
-            if not _ABSOLUTE_URI_PATTERN.fullmatch(self.data_schema):
-                raise ValueError("dataschema must be an absolute URI")
+            if not _is_rfc3986_uri_with_scheme(self.data_schema):
+                raise ValueError("dataschema must be an RFC 3986 URI with a scheme")
         if self.source.tenant_id != self.subject.tenant_id:
             raise ValueError("source and subject must belong to the same tenant")
         if not isinstance(self.extensions, Mapping):
