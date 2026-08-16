@@ -34,5 +34,8 @@ All notable changes to this project are documented in this file.
   aliases retained for compatibility; serialization rejects timezone offsets
   that cannot be represented by the profile.
 - Committed `uv.lock` and lock-checked CI so consumer installs are reproducible.
+- Exact-head SPDX JSON SBOM and SHA-256 package evidence on pull requests and
+  protected-main builds, plus protected-main SLSA build-provenance and SBOM
+  attestations using immutably pinned GitHub/Anchore actions.
 - APA 7th doctoring for RFC 3339, RFC 8259, TSQL2/bitemporal semantics, PROV-DM,
   RDF 1.1, and multilevel-membership research.
