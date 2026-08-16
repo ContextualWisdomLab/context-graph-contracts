@@ -60,8 +60,6 @@ def format_cwl_timestamp(
         raise ValueError(f"{field_name} must use a whole-minute UTC offset")
     serialized = aware_value.isoformat()
     if offset == timedelta(0):
-        if not serialized.endswith("+00:00"):
-            raise ValueError(f"{field_name} could not be serialized canonically")
         return f"{serialized[:-6]}Z"
     return serialized
 
