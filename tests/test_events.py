@@ -77,7 +77,7 @@ def test_event_omits_absent_dataschema(authority_uri, asset_uri) -> None:
             "authority",
         ),
         ({"type": "bad"}, "event_type"),
-        ({"time": "not-time"}, "parseable"),
+        ({"time": "not-time"}, "RFC 3339"),
         ({"dataschema": "relative/schema.json"}, "dataschema"),
     ],
 )
@@ -163,6 +163,23 @@ def test_event_rejects_invalid_extensions(
             event_time=datetime(2026, 8, 16, tzinfo=UTC),
             data={},
             extensions=extensions,
+        )
+
+
+def test_event_rejects_non_string_extension_names(
+    authority_uri,
+    asset_uri,
+) -> None:
+    """Extension attribute names are strings before grammar checks."""
+    with pytest.raises(TypeError, match="extension names"):
+        CloudEventEnvelope(
+            event_id=EVENT_ID,
+            source=authority_uri,
+            event_type="org.contextualwisdomlab.ea.lifecycle.changed.v1",
+            subject=asset_uri,
+            event_time=datetime(2026, 8, 16, tzinfo=UTC),
+            data={},
+            extensions={1: "value"},  # type: ignore[dict-item]
         )
 
 

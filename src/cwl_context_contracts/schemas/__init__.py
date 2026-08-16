@@ -13,6 +13,8 @@ _SCHEMA_NAMES = (
     "bitemporal-interval.schema.json",
     "provenance-reference.schema.json",
     "cloudevent-envelope.schema.json",
+    "context-membership.schema.json",
+    "context-assertion.schema.json",
 )
 
 

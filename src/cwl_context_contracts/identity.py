@@ -7,15 +7,16 @@ from dataclasses import dataclass
 from uuid import RFC_4122, UUID
 
 _SEGMENT_GRAMMAR = r"[a-z][a-z0-9]+(?:_[a-z0-9]+)*"
+_BOUNDED_SEGMENT = rf"(?=[^:]{{2,63}}(?:$|:)){_SEGMENT_GRAMMAR}"
 _SEGMENT_PATTERN = re.compile(rf"^{_SEGMENT_GRAMMAR}$")
 _AUTHORITY_URI_PATTERN = re.compile(
-    rf"^urn:cwl:(?P<tenant>{_SEGMENT_GRAMMAR}):"
-    rf"(?P<authority>{_SEGMENT_GRAMMAR})$"
+    rf"^urn:cwl:(?P<tenant>{_BOUNDED_SEGMENT}):"
+    rf"(?P<authority>{_BOUNDED_SEGMENT})$"
 )
 _ASSET_URI_PATTERN = re.compile(
-    rf"^urn:cwl:(?P<tenant>{_SEGMENT_GRAMMAR}):"
-    rf"(?P<authority>{_SEGMENT_GRAMMAR}):"
-    rf"(?P<object_type>{_SEGMENT_GRAMMAR}):"
+    rf"^urn:cwl:(?P<tenant>{_BOUNDED_SEGMENT}):"
+    rf"(?P<authority>{_BOUNDED_SEGMENT}):"
+    rf"(?P<object_type>{_BOUNDED_SEGMENT}):"
     r"(?P<object_id>[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-"
     r"[89ab][0-9a-f]{3}-[0-9a-f]{12})$"
 )

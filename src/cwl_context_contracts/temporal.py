@@ -2,8 +2,20 @@
 
 from __future__ import annotations
 
+import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
+
+_RFC3339_TIMESTAMP_PATTERN = re.compile(
+    r"^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt]"
+    r"[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?"
+    r"(?:[Zz]|[+-][0-9]{2}:[0-9]{2})$"
+)
+_INTERVAL_FIELDS = frozenset(
+    {"valid_from", "recorded_at", "valid_to", "superseded_at"}
+)
 
 
 def _require_aware(value: datetime, field_name: str) -> datetime:
@@ -14,6 +26,31 @@ def _require_aware(value: datetime, field_name: str) -> datetime:
     if value.tzinfo is None or value.utcoffset() is None:
         raise ValueError(f"{field_name} must be timezone-aware")
     return value
+
+
+def parse_rfc3339_timestamp(value: str, field_name: str = "timestamp") -> datetime:
+    """Parse the RFC 3339 profile used by CloudEvents timestamps."""
+    if not isinstance(value, str):
+        raise TypeError(f"{field_name} must be a string")
+    if _RFC3339_TIMESTAMP_PATTERN.fullmatch(value) is None:
+        raise ValueError(f"{field_name} must be an RFC 3339 timestamp")
+    normalized = f"{value[:10]}T{value[11:]}"
+    if normalized[-1] in {"Z", "z"}:
+        normalized = f"{normalized[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise ValueError(f"{field_name} must be an RFC 3339 timestamp") from exc
+    return _require_aware(parsed, field_name)
+
+
+def format_rfc3339_timestamp(
+    value: datetime,
+    field_name: str = "timestamp",
+) -> str:
+    """Serialize a timezone-aware instant to a canonical RFC 3339 string."""
+    _require_aware(value, field_name)
+    return value.isoformat().replace("+00:00", "Z")
 
 
 @dataclass(frozen=True, slots=True)
@@ -53,4 +90,52 @@ class BitemporalInterval:
         _require_aware(instant, "instant")
         return self.recorded_at <= instant and (
             self.superseded_at is None or instant < self.superseded_at
+        )
+
+    def to_mapping(self) -> dict[str, str | None]:
+        """Serialize both time dimensions to RFC 3339 wire fields."""
+        return {
+            "valid_from": format_rfc3339_timestamp(self.valid_from, "valid_from"),
+            "recorded_at": format_rfc3339_timestamp(self.recorded_at, "recorded_at"),
+            "valid_to": (
+                None
+                if self.valid_to is None
+                else format_rfc3339_timestamp(self.valid_to, "valid_to")
+            ),
+            "superseded_at": (
+                None
+                if self.superseded_at is None
+                else format_rfc3339_timestamp(self.superseded_at, "superseded_at")
+            ),
+        }
+
+    @classmethod
+    def from_mapping(cls, value: Mapping[str, Any]) -> BitemporalInterval:
+        """Parse one coherent snapshot of a bitemporal interval mapping."""
+        if not isinstance(value, Mapping):
+            raise TypeError("value must be a mapping")
+        snapshot = dict(value.items())
+        unknown = snapshot.keys() - _INTERVAL_FIELDS
+        if unknown:
+            raise ValueError(f"unknown interval fields: {sorted(unknown)!r}")
+        if "valid_from" not in snapshot or "recorded_at" not in snapshot:
+            raise ValueError("interval requires valid_from and recorded_at")
+        raw_valid_to = snapshot.get("valid_to")
+        raw_superseded_at = snapshot.get("superseded_at")
+        return cls(
+            valid_from=parse_rfc3339_timestamp(snapshot["valid_from"], "valid_from"),
+            recorded_at=parse_rfc3339_timestamp(
+                snapshot["recorded_at"],
+                "recorded_at",
+            ),
+            valid_to=(
+                None
+                if raw_valid_to is None
+                else parse_rfc3339_timestamp(raw_valid_to, "valid_to")
+            ),
+            superseded_at=(
+                None
+                if raw_superseded_at is None
+                else parse_rfc3339_timestamp(raw_superseded_at, "superseded_at")
+            ),
         )

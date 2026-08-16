@@ -4,11 +4,11 @@ import json
 from importlib.resources import files
 
 import pytest
-from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
 from cwl_context_contracts import available_schema_names, load_schema
-from tests.conftest import UUID7_TEXT
+from tests.conftest import RFC3339_FORMAT_CHECKER, UUID7_TEXT
 
 
 def test_all_packaged_schemas_are_valid_draft_2020_12() -> None:
@@ -29,13 +29,27 @@ def test_positive_and_negative_fixtures() -> None:
     validator = Draft202012Validator(
         event_schema,
         registry=registry,
-        format_checker=FormatChecker(),
+        format_checker=RFC3339_FORMAT_CHECKER,
     )
     fixture_root = files("tests.fixtures")
     valid = json.loads(fixture_root.joinpath("valid-event.json").read_text())
     invalid = json.loads(fixture_root.joinpath("invalid-event.json").read_text())
     assert list(validator.iter_errors(valid)) == []
     assert list(validator.iter_errors(invalid))
+
+    assertion_validator = Draft202012Validator(
+        load_schema("context-assertion.schema.json"),
+        registry=registry,
+        format_checker=RFC3339_FORMAT_CHECKER,
+    )
+    valid_assertion = json.loads(
+        fixture_root.joinpath("valid-assertion.json").read_text()
+    )
+    invalid_assertion = json.loads(
+        fixture_root.joinpath("invalid-assertion.json").read_text()
+    )
+    assert list(assertion_validator.iter_errors(valid_assertion)) == []
+    assert list(assertion_validator.iter_errors(invalid_assertion))
 
 
 @pytest.mark.parametrize(

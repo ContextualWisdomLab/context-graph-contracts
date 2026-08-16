@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
-from jsonschema import Draft202012Validator, FormatChecker
+from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
 from cwl_context_contracts import (
@@ -12,6 +12,7 @@ from cwl_context_contracts import (
     available_schema_names,
     load_schema,
 )
+from tests.conftest import RFC3339_FORMAT_CHECKER
 
 _INVALID_RFC3339_TIMES = (
     "2026-08-16 12:00:00+00:00",
@@ -85,7 +86,7 @@ def test_packaged_event_schema_rejects_non_rfc3339_time(timestamp: str) -> None:
     validator = Draft202012Validator(
         load_schema("cloudevent-envelope.schema.json"),
         registry=registry,
-        format_checker=FormatChecker(),
+        format_checker=RFC3339_FORMAT_CHECKER,
     )
     mapping = {
         "specversion": "1.0",

@@ -4,7 +4,11 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from cwl_context_contracts import BitemporalInterval
+from cwl_context_contracts import (
+    BitemporalInterval,
+    format_rfc3339_timestamp,
+    parse_rfc3339_timestamp,
+)
 
 
 def test_open_interval_queries_real_and_system_time() -> None:
@@ -113,3 +117,59 @@ def test_query_rejects_non_datetime_instant(query_name: str) -> None:
     query = getattr(interval, query_name)
     with pytest.raises(TypeError, match="instant"):
         query("2026-01-01T00:00:00Z")
+
+
+def test_interval_mapping_round_trips_open_and_closed_forms() -> None:
+    """Wire mappings keep omitted ends as null and closed ends as RFC 3339."""
+    open_interval = BitemporalInterval(
+        datetime(2026, 1, 1, tzinfo=UTC),
+        datetime(2026, 1, 2, tzinfo=UTC),
+    )
+    closed_interval = BitemporalInterval(
+        datetime(2026, 1, 1, tzinfo=UTC),
+        datetime(2026, 1, 2, tzinfo=UTC),
+        datetime(2026, 2, 1, tzinfo=UTC),
+        datetime(2026, 2, 2, tzinfo=UTC),
+    )
+    assert BitemporalInterval.from_mapping(open_interval.to_mapping()) == open_interval
+    assert BitemporalInterval.from_mapping(closed_interval.to_mapping()) == (
+        closed_interval
+    )
+
+
+def test_interval_mapping_rejects_hostile_or_incomplete_input() -> None:
+    """Interval parsers snapshot once and fail closed."""
+    with pytest.raises(TypeError, match="mapping"):
+        BitemporalInterval.from_mapping([])  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="unknown interval fields"):
+        BitemporalInterval.from_mapping(
+            {
+                "valid_from": "2026-01-01T00:00:00Z",
+                "recorded_at": "2026-01-02T00:00:00Z",
+                "extra": "no",
+            }
+        )
+    with pytest.raises(ValueError, match="requires valid_from"):
+        BitemporalInterval.from_mapping({"valid_from": "2026-01-01T00:00:00Z"})
+    with pytest.raises(ValueError, match="RFC 3339"):
+        BitemporalInterval.from_mapping(
+            {
+                "valid_from": "2026-01-01 00:00:00+00:00",
+                "recorded_at": "2026-01-02T00:00:00Z",
+            }
+        )
+    with pytest.raises(TypeError, match="valid_from"):
+        BitemporalInterval.from_mapping(
+            {
+                "valid_from": datetime(2026, 1, 1, tzinfo=UTC),
+                "recorded_at": "2026-01-02T00:00:00Z",
+            }
+        )
+
+
+def test_rfc3339_helpers_reject_non_string_and_naive_values() -> None:
+    """Public timestamp helpers keep the same fail-closed boundary."""
+    with pytest.raises(TypeError, match="timestamp"):
+        parse_rfc3339_timestamp(1)  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="timezone-aware"):
+        format_rfc3339_timestamp(datetime(2026, 1, 1))
