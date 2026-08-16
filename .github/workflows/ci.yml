@@ -53,6 +53,67 @@ jobs:
           enable-cache: false
       - run: uv sync --extra dev --python 3.14
       - run: uv build --wheel --sdist --out-dir dist
+      - name: Inspect wheel and source distribution contract resources
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import tarfile
+          import zipfile
+
+          wheel_path = next(Path("dist").glob("*.whl"))
+          sdist_path = next(Path("dist").glob("*.tar.gz"))
+          required_suffixes = {
+              "cwl_context_contracts/py.typed",
+              "cwl_context_contracts/schemas/canonical-authority-uri.schema.json",
+              "cwl_context_contracts/schemas/canonical-asset-uri.schema.json",
+              "cwl_context_contracts/schemas/truth-status.schema.json",
+              "cwl_context_contracts/schemas/bitemporal-interval.schema.json",
+              "cwl_context_contracts/schemas/provenance-reference.schema.json",
+              "cwl_context_contracts/schemas/cloudevent-envelope.schema.json",
+              "cwl_context_contracts/fixtures/valid-event.json",
+              "cwl_context_contracts/fixtures/invalid-event.json",
+          }
+
+          with zipfile.ZipFile(wheel_path) as wheel_file:
+              wheel_names = set(wheel_file.namelist())
+          for suffix in required_suffixes:
+              assert any(name.endswith(suffix) for name in wheel_names), suffix
+          assert any(name.endswith("/licenses/LICENSE") for name in wheel_names)
+
+          with tarfile.open(sdist_path, "r:gz") as sdist_file:
+              sdist_names = set(sdist_file.getnames())
+          for suffix in required_suffixes:
+              assert any(name.endswith(suffix) for name in sdist_names), suffix
+          assert any(name.endswith("/LICENSE") for name in sdist_names)
+          PY
       - run: uv venv .package-smoke --python 3.14
       - run: uv pip install --python .package-smoke/bin/python --no-index --find-links dist cwl-context-contracts
-      - run: .package-smoke/bin/python -c "from cwl_context_contracts import TruthStatus; assert TruthStatus.OBSERVED.value == 'observed'"
+      - name: Smoke-test installed schemas and conformance fixtures
+        run: |
+          .package-smoke/bin/python - <<'PY'
+          from cwl_context_contracts import (
+              CloudEventEnvelope,
+              TruthStatus,
+              available_fixture_names,
+              available_schema_names,
+              load_fixture,
+              load_schema,
+          )
+
+          assert TruthStatus.OBSERVED.value == "observed"
+          for schema_name in available_schema_names():
+              schema = load_schema(schema_name)
+              assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+              assert schema["$id"].startswith("https://schemas.contextualwisdomlab.org/")
+
+          assert available_fixture_names() == ("valid-event.json", "invalid-event.json")
+          valid_event = load_fixture("valid-event.json")
+          invalid_event = load_fixture("invalid-event.json")
+          assert CloudEventEnvelope.from_mapping(valid_event).to_mapping() == valid_event
+          try:
+              CloudEventEnvelope.from_mapping(invalid_event)
+          except ValueError as exc:
+              assert "UUIDv7" in str(exc) or "RFC 9562" in str(exc)
+          else:
+              raise AssertionError("negative conformance fixture unexpectedly parsed")
+          PY
