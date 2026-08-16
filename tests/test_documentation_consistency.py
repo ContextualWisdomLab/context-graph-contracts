@@ -29,3 +29,14 @@ def test_customer_readme_names_current_semantic_conformance_profiles() -> None:
     assert "CWL Timestamp Profile v1" in readme
     assert "Context assertion" in readme
     assert "CWL JSON interoperability profile" in readme
+
+
+def test_threat_model_preserves_contract_only_security_boundary() -> None:
+    """Keep security threats explicit without inventing runtime authority."""
+    threat_model = Path("docs/THREAT_MODEL.md").read_text(encoding="utf-8")
+
+    assert "contract-only" in threat_model
+    assert "does not authorize" in threat_model
+    assert "same-tenant" in threat_model
+    assert "replay" in threat_model
+    assert "credentials" in threat_model
