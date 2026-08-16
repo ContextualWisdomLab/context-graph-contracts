@@ -24,6 +24,7 @@ _EVENT_TYPE_PATTERN = re.compile(
 _ABSOLUTE_URI_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:[^\s]+$")
 _EXTENSION_PATTERN = re.compile(r"^[a-z][a-z0-9]{0,19}$")
 _MAX_JSON_DEPTH = 64
+_MAX_EXACT_JSON_INTEGER = (2**53) - 1
 _RESERVED_NAMES = {
     "specversion",
     "id",
@@ -54,7 +55,14 @@ def _validate_and_freeze_json_value(
     """Validate one JSON traversal and return a detached immutable snapshot."""
     if depth > _MAX_JSON_DEPTH:
         raise ValueError(f"JSON nesting depth exceeds {_MAX_JSON_DEPTH} at {path}")
-    if value is None or isinstance(value, (str, bool, int)):
+    if value is None or isinstance(value, (str, bool)):
+        return value
+    if isinstance(value, int):
+        if abs(value) > _MAX_EXACT_JSON_INTEGER:
+            raise ValueError(
+                f"JSON integer at {path} exceeds the exact interoperable range "
+                f"[-{_MAX_EXACT_JSON_INTEGER}, {_MAX_EXACT_JSON_INTEGER}]"
+            )
         return value
     if isinstance(value, float):
         if not math.isfinite(value):
