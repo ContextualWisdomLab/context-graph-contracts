@@ -65,6 +65,30 @@ def test_invalid_intervals_fail_closed(kwargs: dict[str, object], message: str) 
         BitemporalInterval(**kwargs)  # type: ignore[arg-type]
 
 
+@pytest.mark.parametrize(
+    ("field_name", "field_value"),
+    [
+        ("valid_from", "2026-01-01T00:00:00Z"),
+        ("recorded_at", 1),
+        ("valid_to", "2027-01-01T00:00:00Z"),
+        ("superseded_at", 1),
+    ],
+)
+def test_interval_constructor_rejects_non_datetime_fields(
+    field_name: str,
+    field_value: object,
+) -> None:
+    """Constructor timestamps fail at a stable runtime type boundary."""
+
+    kwargs: dict[str, object] = {
+        "valid_from": datetime(2026, 1, 1, tzinfo=UTC),
+        "recorded_at": datetime(2026, 1, 2, tzinfo=UTC),
+    }
+    kwargs[field_name] = field_value
+    with pytest.raises(TypeError, match=field_name):
+        BitemporalInterval(**kwargs)  # type: ignore[arg-type]
+
+
 def test_query_rejects_naive_instant() -> None:
     """Temporal queries require an explicit timezone."""
 
@@ -76,3 +100,16 @@ def test_query_rejects_naive_instant() -> None:
         interval.is_valid_at(datetime(2026, 1, 1))
     with pytest.raises(ValueError, match="instant"):
         interval.was_known_at(datetime(2026, 1, 1))
+
+
+@pytest.mark.parametrize("query_name", ["is_valid_at", "was_known_at"])
+def test_query_rejects_non_datetime_instant(query_name: str) -> None:
+    """Temporal query methods reject non-datetime values deliberately."""
+
+    interval = BitemporalInterval(
+        datetime(2026, 1, 1, tzinfo=UTC),
+        datetime(2026, 1, 1, tzinfo=UTC),
+    )
+    query = getattr(interval, query_name)
+    with pytest.raises(TypeError, match="instant"):
+        query("2026-01-01T00:00:00Z")
