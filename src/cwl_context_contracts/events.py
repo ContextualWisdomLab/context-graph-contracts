@@ -125,19 +125,30 @@ def _thaw_json_value(value: Any) -> Any:
     return value
 
 
-def _hashable_json_value(value: Any) -> Any:
-    """Convert frozen JSON state into an order-stable hashable structure."""
+def _canonical_json_value(value: Any) -> Any:
+    """Return an order-stable, type-tagged JSON value for equality and hashing."""
     if isinstance(value, Mapping):
-        return tuple(
-            (key, _hashable_json_value(item))
-            for key, item in sorted(value.items())
+        return (
+            "object",
+            tuple(
+                (key, _canonical_json_value(item))
+                for key, item in sorted(value.items())
+            ),
         )
     if isinstance(value, tuple):
-        return tuple(_hashable_json_value(item) for item in value)
-    return value
+        return ("array", tuple(_canonical_json_value(item) for item in value))
+    if value is None:
+        return ("null",)
+    if isinstance(value, bool):
+        return ("boolean", value)
+    if isinstance(value, int):
+        return ("integer", value)
+    if isinstance(value, float):
+        return ("number", value.hex())
+    return ("string", value)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, eq=False)
 class CloudEventEnvelope:
     """Validated CloudEvents 1.0.2 JSON event used between CWL services."""
 
@@ -173,20 +184,28 @@ class CloudEventEnvelope:
         object.__setattr__(self, "data", frozen_data)
         object.__setattr__(self, "extensions", frozen_extensions)
 
-    def __hash__(self) -> int:
-        """Hash semantic event content independently of mapping insertion order."""
-        return hash(
-            (
-                self.event_id,
-                self.source,
-                self.event_type,
-                self.subject,
-                self.event_time,
-                _hashable_json_value(self.data),
-                self.data_schema,
-                tuple(sorted(self.extensions.items())),
-            )
+    def _value_key(self) -> tuple[Any, ...]:
+        """Return exact semantic event content in a hashable representation."""
+        return (
+            self.event_id,
+            self.source,
+            self.event_type,
+            self.subject,
+            self.event_time,
+            _canonical_json_value(self.data),
+            self.data_schema,
+            tuple(sorted(self.extensions.items())),
         )
+
+    def __eq__(self, other: object) -> bool:
+        """Compare full event values with type-exact JSON semantics."""
+        return isinstance(other, CloudEventEnvelope) and self._value_key() == (
+            other._value_key()
+        )
+
+    def __hash__(self) -> int:
+        """Hash the same type-exact semantic value used by equality."""
+        return hash(self._value_key())
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> CloudEventEnvelope:
