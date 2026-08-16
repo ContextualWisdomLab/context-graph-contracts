@@ -1,7 +1,7 @@
 """Executable consistency checks for customer and contributor documentation."""
 
-from pathlib import Path
 import tomllib
+from pathlib import Path
 
 
 def test_contributing_python_matrix_matches_project_metadata() -> None:
