@@ -2,6 +2,8 @@
 
 AsyncAPI Initiative. (2026, January 31). *AsyncAPI specification* (Version 3.1.0). https://www.asyncapi.com/docs/reference/specification/v3.1.0
 
+Bray, T. (2017). *The JavaScript Object Notation (JSON) data interchange format* (RFC 8259). RFC Editor. https://www.rfc-editor.org/rfc/rfc8259
+
 Cloud Native Computing Foundation. (2022). *CloudEvents specification* (Version 1.0.2). https://github.com/cloudevents/spec/tree/v1.0.2
 
 Cyganiak, R., Wood, D., & Lanthaler, M. (Eds.). (2014). *RDF 1.1 concepts and abstract syntax*. World Wide Web Consortium. https://www.w3.org/TR/rdf11-concepts/
