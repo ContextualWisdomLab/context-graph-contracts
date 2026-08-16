@@ -7,9 +7,10 @@ interface here.
 
 ## Local development
 
-The reference package targets Python 3.11–3.13 and has no runtime third-party
-dependencies. Development extras provide pytest, coverage, jsonschema, and
-Ruff.
+The reference package is tested on Python 3.11, 3.12, 3.13, and 3.14 and has
+no runtime third-party dependencies. Development extras provide pytest,
+coverage, jsonschema, and Ruff. The supported test matrix is checked against
+project metadata so this page cannot silently drift from executable evidence.
 
 ```bash
 uv sync --extra dev
