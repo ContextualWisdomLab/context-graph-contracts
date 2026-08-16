@@ -40,3 +40,36 @@ def test_threat_model_preserves_contract_only_security_boundary() -> None:
     assert "same-tenant" in threat_model
     assert "replay" in threat_model
     assert "credentials" in threat_model
+
+
+def test_release_operator_docs_cover_shipped_evidence_and_stateless_rollback() -> None:
+    """Keep release evidence, rollback, and product-boundary guidance discoverable."""
+
+    required_content = {
+        "docs/OPERABILITY.md": (
+            "stateless",
+            "conformance",
+            "package-evidence-",
+        ),
+        "docs/PRODUCT_CAPABILITY_CROSSWALK.md": (
+            "contract-only",
+            "context assertion",
+            "out of scope",
+        ),
+        "docs/RELEASE_AND_ROLLBACK.md": (
+            "protected main",
+            "SHA256SUMS",
+            "rollback",
+        ),
+        "docs/PROVENANCE.md": (
+            "SPDX 3.0.1",
+            "SLSA",
+            "GitHub artifact attestation",
+        ),
+    }
+
+    for path_name, expected_tokens in required_content.items():
+        text = Path(path_name).read_text(encoding="utf-8")
+        lower_text = text.lower()
+        for token in expected_tokens:
+            assert token.lower() in lower_text, f"{path_name} must document {token}"
