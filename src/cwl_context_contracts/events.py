@@ -223,6 +223,8 @@ class CloudEventEnvelope:
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> CloudEventEnvelope:
         """Parse one coherent snapshot of a CloudEvents structured mapping."""
+        if not isinstance(value, Mapping):
+            raise TypeError("value must be a mapping")
         snapshot = _snapshot_event_mapping(value)
         required = {
             "specversion",
