@@ -6,23 +6,24 @@ import re
 from dataclasses import dataclass
 from uuid import RFC_4122, UUID
 
-_SEGMENT_PATTERN = re.compile(r"^[a-z][a-z0-9_]{1,62}$")
+_SEGMENT_GRAMMAR = r"[a-z][a-z0-9]+(?:_[a-z0-9]+)*"
+_SEGMENT_PATTERN = re.compile(rf"^{_SEGMENT_GRAMMAR}$")
 _AUTHORITY_URI_PATTERN = re.compile(
-    r"^urn:cwl:(?P<tenant>[a-z][a-z0-9_]{1,62}):"
-    r"(?P<authority>[a-z][a-z0-9_]{1,62})$"
+    rf"^urn:cwl:(?P<tenant>{_SEGMENT_GRAMMAR}):"
+    rf"(?P<authority>{_SEGMENT_GRAMMAR})$"
 )
 _ASSET_URI_PATTERN = re.compile(
-    r"^urn:cwl:(?P<tenant>[a-z][a-z0-9_]{1,62}):"
-    r"(?P<authority>[a-z][a-z0-9_]{1,62}):"
-    r"(?P<object_type>[a-z][a-z0-9_]{1,62}):"
+    rf"^urn:cwl:(?P<tenant>{_SEGMENT_GRAMMAR}):"
+    rf"(?P<authority>{_SEGMENT_GRAMMAR}):"
+    rf"(?P<object_type>{_SEGMENT_GRAMMAR}):"
     r"(?P<object_id>[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-"
     r"[89ab][0-9a-f]{3}-[0-9a-f]{12})$"
 )
 
 
 def _validate_segment(value: str, field_name: str) -> str:
-    """Return a valid lower-snake URI segment or raise ``ValueError``."""
-    if not _SEGMENT_PATTERN.fullmatch(value):
+    """Return a bounded canonical lower-snake segment or raise ``ValueError``."""
+    if not 2 <= len(value) <= 63 or not _SEGMENT_PATTERN.fullmatch(value):
         raise ValueError(f"{field_name} must be lower snake case and 2-63 chars")
     return value
 
