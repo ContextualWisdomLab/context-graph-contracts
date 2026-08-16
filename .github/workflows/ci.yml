@@ -81,6 +81,7 @@ jobs:
           sdist_path = next(Path("dist").glob("*.tar.gz"))
           required_suffixes = {
               "cwl_context_contracts/py.typed",
+              "cwl_context_contracts/contracts/context-fabric.asyncapi.json",
               "cwl_context_contracts/schemas/canonical-authority-uri.schema.json",
               "cwl_context_contracts/schemas/canonical-asset-uri.schema.json",
               "cwl_context_contracts/schemas/truth-status.schema.json",
@@ -107,14 +108,16 @@ jobs:
       - run: >-
           uv pip install --python .package-smoke/bin/python
           --no-index --find-links dist cwl-context-contracts
-      - name: Smoke-test installed schemas and conformance fixtures
+      - name: Smoke-test installed contracts, schemas, and conformance fixtures
         run: |
           .package-smoke/bin/python - <<'PY'
           from cwl_context_contracts import (
               CloudEventEnvelope,
               TruthStatus,
+              available_contract_names,
               available_fixture_names,
               available_schema_names,
+              load_contract,
               load_fixture,
               load_schema,
           )
@@ -124,6 +127,13 @@ jobs:
               schema = load_schema(schema_name)
               assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
               assert schema["$id"].startswith("https://schemas.contextualwisdomlab.org/")
+
+          assert available_contract_names() == ("context-fabric.asyncapi.json",)
+          asyncapi = load_contract("context-fabric.asyncapi.json")
+          assert asyncapi["asyncapi"] == "3.1.0"
+          assert "servers" not in asyncapi
+          assert "channels" not in asyncapi
+          assert "operations" not in asyncapi
 
           assert available_fixture_names() == ("valid-event.json", "invalid-event.json")
           valid_event = load_fixture("valid-event.json")
