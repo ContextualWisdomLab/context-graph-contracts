@@ -1,0 +1,10 @@
+{
+  "specversion": "1.0",
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "source": "urn:cwl:tenant_001:ea_core:application_record:550e8400-e29b-41d4-a716-446655440000",
+  "type": "org.contextualwisdomlab.ea.lifecycle.changed.v1",
+  "subject": "urn:cwl:tenant_001:ea_core:application_record:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+  "time": "2026-08-16T00:00:00Z",
+  "datacontenttype": "application/json",
+  "data": {}
+}

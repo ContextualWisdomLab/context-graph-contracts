@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contextualwisdomlab.org/context/bitemporal-interval.v1.schema.json",
+  "title": "CWL Bitemporal Interval",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["valid_from", "recorded_at"],
+  "properties": {
+    "valid_from": {"type": "string", "format": "date-time"},
+    "valid_to": {"type": ["string", "null"], "format": "date-time"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "superseded_at": {"type": ["string", "null"], "format": "date-time"}
+  }
+}

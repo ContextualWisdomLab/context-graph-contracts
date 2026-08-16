@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contextualwisdomlab.org/context/cloudevent-envelope.v1.schema.json",
+  "title": "CWL CloudEvent Envelope",
+  "type": "object",
+  "required": ["specversion", "id", "source", "type", "subject", "time", "datacontenttype", "data"],
+  "properties": {
+    "specversion": {"const": "1.0"},
+    "id": {"type": "string", "format": "uuid"},
+    "source": {"$ref": "https://schemas.contextualwisdomlab.org/context/canonical-asset-uri.v1.schema.json"},
+    "type": {"type": "string", "pattern": "^org\\.contextualwisdomlab\\.[a-z0-9_]+(?:\\.[a-z0-9_]+)*\\.v[1-9][0-9]*$"},
+    "subject": {"$ref": "https://schemas.contextualwisdomlab.org/context/canonical-asset-uri.v1.schema.json"},
+    "time": {"type": "string", "format": "date-time"},
+    "datacontenttype": {"const": "application/json"},
+    "data": {"type": "object"}
+  },
+  "propertyNames": {"pattern": "^[a-z][a-z0-9]{0,19}$"},
+  "additionalProperties": {"type": "string", "minLength": 1}
+}
