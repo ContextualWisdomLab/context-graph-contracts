@@ -20,10 +20,13 @@ def test_packaged_asyncapi_contract_is_provider_neutral() -> None:
     message = document["components"]["messages"]["ContextGraphCloudEvent"]
     assert message["contentType"] == "application/cloudevents+json"
     assert message["payload"] == {
-        "$ref": (
-            "https://schemas.contextualwisdomlab.org/context/"
-            "cloudevent-envelope.v1.schema.json"
-        )
+        "schemaFormat": "application/schema+json;version=draft-2020-12",
+        "schema": {
+            "$ref": (
+                "https://schemas.contextualwisdomlab.org/context/"
+                "cloudevent-envelope.v1.schema.json"
+            )
+        },
     }
 
 
