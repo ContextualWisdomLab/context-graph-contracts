@@ -66,3 +66,4 @@ def test_mapping_insertion_order_does_not_change_event_value(
 
     assert left == right
     assert hash(left) == hash(right)
+    assert left != object()
