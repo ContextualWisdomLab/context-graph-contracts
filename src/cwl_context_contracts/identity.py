@@ -22,7 +22,9 @@ _ASSET_URI_PATTERN = re.compile(
 
 
 def _validate_segment(value: str, field_name: str) -> str:
-    """Return a bounded canonical lower-snake segment or raise ``ValueError``."""
+    """Return a bounded canonical lower-snake segment or raise a contract error."""
+    if not isinstance(value, str):
+        raise TypeError(f"{field_name} must be a string")
     if not 2 <= len(value) <= 63 or not _SEGMENT_PATTERN.fullmatch(value):
         raise ValueError(f"{field_name} must be lower snake case and 2-63 chars")
     return value
@@ -54,6 +56,8 @@ class CanonicalAuthorityUri:
     @classmethod
     def parse(cls, value: str) -> CanonicalAuthorityUri:
         """Parse an exact CWL producer-authority URI."""
+        if not isinstance(value, str):
+            raise TypeError("value must be a string")
         match = _AUTHORITY_URI_PATTERN.fullmatch(value)
         if match is None:
             raise ValueError("value is not a canonical CWL authority URI")
@@ -101,6 +105,8 @@ class CanonicalAssetUri:
     @classmethod
     def parse(cls, value: str) -> CanonicalAssetUri:
         """Parse an exact CWL canonical asset URI."""
+        if not isinstance(value, str):
+            raise TypeError("value must be a string")
         match = _ASSET_URI_PATTERN.fullmatch(value)
         if match is None:
             raise ValueError("value is not a canonical CWL asset URI")
