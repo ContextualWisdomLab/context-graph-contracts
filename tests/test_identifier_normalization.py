@@ -38,7 +38,7 @@ def test_event_direct_text_identifier_matches_parsed_event(
         event_type="org.contextualwisdomlab.ea.lifecycle.changed.v1",
         subject=asset_uri,
         event_time=datetime(2026, 8, 16, tzinfo=UTC),
-        data={"phase": "phase_out"},
+        data={"phase": "phase_out", "path": ["legacy", "target"]},
     )
     parsed = CloudEventEnvelope.from_mapping(direct.to_mapping())
 
