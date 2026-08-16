@@ -3,8 +3,8 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-import pytest
 from jsonschema import Draft202012Validator, FormatChecker
+import pytest
 from referencing import Registry, Resource
 
 from cwl_context_contracts import (
