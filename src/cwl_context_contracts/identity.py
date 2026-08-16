@@ -51,7 +51,7 @@ class CanonicalAuthorityUri:
         _validate_segment(self.authority, "authority")
 
     @classmethod
-    def parse(cls, value: str) -> "CanonicalAuthorityUri":
+    def parse(cls, value: str) -> CanonicalAuthorityUri:
         """Parse an exact CWL producer-authority URI."""
         match = _AUTHORITY_URI_PATTERN.fullmatch(value)
         if match is None:
@@ -63,7 +63,7 @@ class CanonicalAuthorityUri:
         )
 
     @classmethod
-    def build(cls, *, tenant_id: str, authority: str) -> "CanonicalAuthorityUri":
+    def build(cls, *, tenant_id: str, authority: str) -> CanonicalAuthorityUri:
         """Build an authority URI from validated components."""
         return cls(tenant_id=tenant_id, authority=authority)
 
@@ -94,7 +94,7 @@ class CanonicalAssetUri:
         return CanonicalAuthorityUri(self.tenant_id, self.authority)
 
     @classmethod
-    def parse(cls, value: str) -> "CanonicalAssetUri":
+    def parse(cls, value: str) -> CanonicalAssetUri:
         """Parse an exact CWL canonical asset URI."""
         match = _ASSET_URI_PATTERN.fullmatch(value)
         if match is None:
@@ -115,7 +115,7 @@ class CanonicalAssetUri:
         authority: str,
         object_type: str,
         object_id: str | UUID,
-    ) -> "CanonicalAssetUri":
+    ) -> CanonicalAssetUri:
         """Build a canonical asset URI from validated components."""
         return cls(
             tenant_id=tenant_id,

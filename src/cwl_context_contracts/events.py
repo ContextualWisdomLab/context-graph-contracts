@@ -62,7 +62,7 @@ class CloudEventEnvelope:
                 raise ValueError(f"extension {name} must be a non-empty string")
 
     @classmethod
-    def from_mapping(cls, value: Mapping[str, Any]) -> "CloudEventEnvelope":
+    def from_mapping(cls, value: Mapping[str, Any]) -> CloudEventEnvelope:
         """Parse a CloudEvents structured JSON mapping."""
         if value.get("specversion") != "1.0":
             raise ValueError("specversion must be 1.0")
