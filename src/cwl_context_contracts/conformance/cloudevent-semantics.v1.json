@@ -1,0 +1,77 @@
+{
+  "profile_id": "urn:cwl:conformance:cloudevent-semantics:v1",
+  "title": "CWL CloudEvent Semantic Profile v1",
+  "normative_requirements": [
+    "Consumers MUST apply these semantic vectors in addition to Draft 2020-12 structural validation because the default format vocabulary is annotation-only and cross-field tenant invariants are not expressed by the structural schema.",
+    "When present, dataschema MUST be a non-empty absolute URI.",
+    "source and subject MUST identify the same tenant.",
+    "When present, the tenantid extension MUST equal the source tenant identifier."
+  ],
+  "valid_vectors": [
+    {
+      "name": "absolute_https_dataschema_same_tenant",
+      "value": {
+        "specversion": "1.0",
+        "id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": "urn:cwl:tenant_001:ea_core",
+        "type": "org.contextualwisdomlab.ea.lifecycle.changed.v1",
+        "subject": "urn:cwl:tenant_001:ea_core:application_record:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "time": "2026-08-16T00:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://schemas.contextualwisdomlab.org/ea/lifecycle-changed.v1.schema.json",
+        "tenantid": "tenant_001",
+        "data": {"phase": "phase_out"}
+      }
+    }
+  ],
+  "invalid_vectors": [
+    {
+      "name": "relative_dataschema",
+      "error_pattern": "dataschema must be an absolute URI",
+      "value": {
+        "specversion": "1.0",
+        "id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": "urn:cwl:tenant_001:ea_core",
+        "type": "org.contextualwisdomlab.ea.lifecycle.changed.v1",
+        "subject": "urn:cwl:tenant_001:ea_core:application_record:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "time": "2026-08-16T00:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "relative/schema.json",
+        "tenantid": "tenant_001",
+        "data": {"phase": "phase_out"}
+      }
+    },
+    {
+      "name": "source_subject_tenant_mismatch",
+      "error_pattern": "source and subject must belong to the same tenant",
+      "value": {
+        "specversion": "1.0",
+        "id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": "urn:cwl:tenant_001:ea_core",
+        "type": "org.contextualwisdomlab.ea.lifecycle.changed.v1",
+        "subject": "urn:cwl:tenant_002:ea_core:application_record:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "time": "2026-08-16T00:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://schemas.contextualwisdomlab.org/ea/lifecycle-changed.v1.schema.json",
+        "tenantid": "tenant_001",
+        "data": {"phase": "phase_out"}
+      }
+    },
+    {
+      "name": "tenant_extension_mismatch",
+      "error_pattern": "tenantid extension must match the source tenant",
+      "value": {
+        "specversion": "1.0",
+        "id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": "urn:cwl:tenant_001:ea_core",
+        "type": "org.contextualwisdomlab.ea.lifecycle.changed.v1",
+        "subject": "urn:cwl:tenant_001:ea_core:application_record:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "time": "2026-08-16T00:00:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://schemas.contextualwisdomlab.org/ea/lifecycle-changed.v1.schema.json",
+        "tenantid": "tenant_002",
+        "data": {"phase": "phase_out"}
+      }
+    }
+  ]
+}
