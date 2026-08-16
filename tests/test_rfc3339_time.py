@@ -1,7 +1,7 @@
 """Strict RFC 3339 regressions for CloudEvents timestamp handling."""
 
-import pytest
 from jsonschema import Draft202012Validator, FormatChecker
+import pytest
 from referencing import Registry, Resource
 
 from cwl_context_contracts import (
