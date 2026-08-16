@@ -7,6 +7,7 @@ from importlib.resources import files
 from typing import Any
 
 _SCHEMA_NAMES = (
+    "canonical-authority-uri.schema.json",
     "canonical-asset-uri.schema.json",
     "truth-status.schema.json",
     "bitemporal-interval.schema.json",
@@ -17,13 +18,11 @@ _SCHEMA_NAMES = (
 
 def available_schema_names() -> tuple[str, ...]:
     """Return packaged schema names in stable dependency order."""
-
     return _SCHEMA_NAMES
 
 
 def load_schema(name: str) -> dict[str, Any]:
     """Load one packaged JSON Schema by exact file name."""
-
     if name not in _SCHEMA_NAMES:
         raise ValueError(f"unknown schema name: {name}")
     text = files(__package__).joinpath(name).read_text(encoding="utf-8")

@@ -10,14 +10,18 @@ exchange references and evidence without surrendering their domain authority.
 
 ## Contract baseline
 
-- canonical asset URI: `urn:cwl:{tenant_id}:{authority}:{object_type}:{uuidv7}`
+- producer authority URI: `urn:cwl:{tenant_id}:{authority}`
+- canonical asset URI:
+  `urn:cwl:{tenant_id}:{authority}:{object_type}:{uuidv7}`
 - truth status: `authoritative`, `observed`, `inferred`, `proposed`,
   `superseded`, or `rejected`
 - bitemporal validity: real-world validity and system-recording time remain
   distinct
 - provenance: every material assertion can point to a source asset and a
   SHA-256 evidence digest
-- service events: CloudEvents 1.0.2 structured JSON with CWL extension fields
+- service events: CloudEvents 1.0.2 structured JSON; `source` identifies the
+  producer authority, `subject` identifies the affected asset, event IDs use
+  UUIDv7, and `dataschema` remains a core CloudEvents attribute
 - schema dialect: JSON Schema Draft 2020-12
 
 ## Repository boundary

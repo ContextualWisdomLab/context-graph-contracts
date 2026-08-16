@@ -7,6 +7,15 @@ third-party dependencies. JSON Schema resources use Draft 2020-12. CloudEvents
 structured JSON follows core version 1.0.2 while retaining the wire value
 `specversion: 1.0` required by the specification.
 
+## Identity requirements
+
+- Producer context uses a tenant-scoped canonical authority URI.
+- Asset subjects use authority-scoped UUIDv7 canonical asset URIs.
+- CloudEvents `id` values use RFC 9562 UUIDv7 and are unique with `source`.
+- `dataschema` is parsed and emitted as a CloudEvents core attribute, never as
+  an extension.
+- `dataschema`, when present, is an absolute URI.
+
 ## Compatibility policy
 
 - Schema `$id` values are immutable.

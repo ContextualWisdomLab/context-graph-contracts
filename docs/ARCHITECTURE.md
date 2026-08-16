@@ -18,11 +18,18 @@ Producer system of record
 This repository defines the middle wire contract only. Producers and consumers
 own their own storage, authorization, retries, and audit trails.
 
-## Authority model
+## Identity and authority model
 
-The `authority` URI segment names the system permitted to accept commands for an
+The producer authority is identified by
+`urn:cwl:{tenant_id}:{authority}`. In a CloudEvent, this authority URI is the
+`source`; the asset affected by the event is the `subject` and uses
+`urn:cwl:{tenant_id}:{authority}:{object_type}:{uuidv7}`.
+
+The `authority` segment names the system permitted to accept commands for an
 object. A read model may project another authority's object but must not reuse
-that authority's URI for a locally inferred object.
+that authority's asset URI for a locally inferred object. The separate source
+and subject types prevent an asset instance from being misrepresented as the
+producer context used for CloudEvents deduplication.
 
 ## Truth model
 
