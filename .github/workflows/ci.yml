@@ -33,7 +33,7 @@ jobs:
           enable-cache: false
       - run: uv sync --extra dev --python "${{ matrix.python-version }}"
       - run: uv run --extra dev --python "${{ matrix.python-version }}" python -m compileall -q src
-      - run: uv run --extra dev --python "${{ matrix.python-version }}" python -m ruff check .
+      - run: uv run --extra dev --python "${{ matrix.python-version }}" python -m ruff check . --output-format=github
       - run: uv run --extra dev --python "${{ matrix.python-version }}" python -m coverage run -m pytest -q
       - run: uv run --extra dev --python "${{ matrix.python-version }}" python -m coverage report
 
