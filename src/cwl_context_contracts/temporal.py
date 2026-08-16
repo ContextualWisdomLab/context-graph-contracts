@@ -7,8 +7,10 @@ from datetime import datetime
 
 
 def _require_aware(value: datetime, field_name: str) -> datetime:
-    """Return a timezone-aware datetime or raise ``ValueError``."""
+    """Return a timezone-aware datetime or raise a deliberate contract error."""
 
+    if not isinstance(value, datetime):
+        raise TypeError(f"{field_name} must be a datetime")
     if value.tzinfo is None or value.utcoffset() is None:
         raise ValueError(f"{field_name} must be timezone-aware")
     return value
@@ -24,7 +26,7 @@ class BitemporalInterval:
     superseded_at: datetime | None = None
 
     def __post_init__(self) -> None:
-        """Reject naive or non-forward temporal intervals."""
+        """Reject non-datetime, naive, or non-forward temporal intervals."""
 
         _require_aware(self.valid_from, "valid_from")
         _require_aware(self.recorded_at, "recorded_at")
