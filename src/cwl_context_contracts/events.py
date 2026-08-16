@@ -19,6 +19,11 @@ _EVENT_TYPE_PATTERN = re.compile(
 )
 _ABSOLUTE_URI_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:[^\s]+$")
 _EXTENSION_PATTERN = re.compile(r"^[a-z][a-z0-9]{0,19}$")
+_RFC3339_TIMESTAMP_PATTERN = re.compile(
+    r"^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt]"
+    r"[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?"
+    r"(?:[Zz]|[+-][0-9]{2}:[0-9]{2})$"
+)
 _MAX_JSON_DEPTH = 64
 _RESERVED_NAMES = {
     "specversion",
@@ -38,6 +43,21 @@ def _require_string(value: Any, field_name: str) -> str:
     if not isinstance(value, str):
         raise TypeError(f"{field_name} must be a string")
     return value
+
+
+def _parse_rfc3339_timestamp(value: str) -> datetime:
+    """Parse the RFC 3339 profile accepted by the CloudEvents timestamp type."""
+    if _RFC3339_TIMESTAMP_PATTERN.fullmatch(value) is None:
+        raise ValueError("time must be an RFC 3339 timestamp")
+    normalized = f"{value[:10]}T{value[11:]}"
+    if normalized[-1] in {"Z", "z"}:
+        normalized = f"{normalized[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise ValueError("time must be an RFC 3339 timestamp") from exc
+    _require_aware(parsed, "time")
+    return parsed
 
 
 def _validate_and_freeze_json_value(
@@ -253,13 +273,8 @@ class CloudEventEnvelope:
         event_type = _require_string(snapshot["type"], "type")
         subject_text = _require_string(snapshot["subject"], "subject")
         time_text = _require_string(snapshot["time"], "time")
-        try:
-            event_id = _validate_uuid7(event_id_text, "event_id")
-            event_time = datetime.fromisoformat(time_text.replace("Z", "+00:00"))
-        except (TypeError, ValueError) as exc:
-            if "UUIDv7" in str(exc) or "RFC 9562" in str(exc):
-                raise
-            raise ValueError("id or time is not parseable") from exc
+        event_id = _validate_uuid7(event_id_text, "event_id")
+        event_time = _parse_rfc3339_timestamp(time_text)
         extensions = {
             key: item
             for key, item in snapshot.items()
