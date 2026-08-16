@@ -1,6 +1,7 @@
 """Snapshot-once tests for top-level CloudEvents structured mappings."""
 
 from collections.abc import ItemsView, Iterator, KeysView, Mapping
+from datetime import UTC, datetime
 from typing import Any
 
 from cwl_context_contracts import CloudEventEnvelope
@@ -54,12 +55,7 @@ def test_from_mapping_uses_one_coherent_top_level_snapshot(
         source=authority_uri,
         event_type="org.contextualwisdomlab.ea.lifecycle.changed.v1",
         subject=asset_uri,
-        event_time=__import__("datetime").datetime(
-            2026,
-            8,
-            16,
-            tzinfo=__import__("datetime").UTC,
-        ),
+        event_time=datetime(2026, 8, 16, tzinfo=UTC),
         data={"safe": True},
         extensions={"correlationid": "original"},
     ).to_mapping()
