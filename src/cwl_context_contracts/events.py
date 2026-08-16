@@ -40,62 +40,65 @@ def _require_string(value: Any, field_name: str) -> str:
     return value
 
 
-def _validate_json_value(
+def _validate_and_freeze_json_value(
     value: Any,
     path: str = "$",
     *,
     depth: int = 0,
     ancestors: frozenset[int] = frozenset(),
-) -> None:
-    """Reject non-JSON values, cycles, and excessively deep containers."""
+) -> Any:
+    """Validate one JSON traversal and return a detached immutable snapshot."""
     if depth > _MAX_JSON_DEPTH:
         raise ValueError(f"JSON nesting depth exceeds {_MAX_JSON_DEPTH} at {path}")
     if value is None or isinstance(value, (str, bool, int)):
-        return
+        return value
     if isinstance(value, float):
         if not math.isfinite(value):
             raise ValueError(f"JSON number at {path} must be finite")
-        return
+        return value
     if isinstance(value, Mapping):
         container_id = id(value)
         if container_id in ancestors:
             raise ValueError(f"JSON container cycle detected at {path}")
         child_ancestors = ancestors | {container_id}
+        frozen_items: dict[str, Any] = {}
         for key, item in value.items():
             if not isinstance(key, str):
                 raise TypeError(f"JSON object key at {path} must be a string")
-            _validate_json_value(
+            frozen_items[key] = _validate_and_freeze_json_value(
                 item,
                 f"{path}.{key}",
                 depth=depth + 1,
                 ancestors=child_ancestors,
             )
-        return
+        return MappingProxyType(frozen_items)
     if isinstance(value, list):
         container_id = id(value)
         if container_id in ancestors:
             raise ValueError(f"JSON container cycle detected at {path}")
         child_ancestors = ancestors | {container_id}
-        for index, item in enumerate(value):
-            _validate_json_value(
+        return tuple(
+            _validate_and_freeze_json_value(
                 item,
                 f"{path}[{index}]",
                 depth=depth + 1,
                 ancestors=child_ancestors,
             )
-        return
+            for index, item in enumerate(value)
+        )
     raise TypeError(f"value at {path} is not JSON-compatible")
 
 
-def _freeze_json_value(value: Any) -> Any:
-    """Detach validated JSON state into recursively immutable containers."""
-    if isinstance(value, Mapping):
-        return MappingProxyType(
-            {key: _freeze_json_value(item) for key, item in value.items()}
-        )
-    if isinstance(value, list):
-        return tuple(_freeze_json_value(item) for item in value)
-    return value
+def _validate_and_freeze_extensions(value: Mapping[str, str]) -> Mapping[str, str]:
+    """Validate extension attributes while snapshotting the same traversal."""
+    frozen_items: dict[str, str] = {}
+    for name, item in value.items():
+        if name in _RESERVED_NAMES or not _EXTENSION_PATTERN.fullmatch(name):
+            raise ValueError(f"invalid CloudEvents extension name: {name}")
+        if not isinstance(item, str) or not item:
+            raise ValueError(f"extension {name} must be a non-empty string")
+        frozen_items[name] = item
+    return MappingProxyType(frozen_items)
 
 
 def _thaw_json_value(value: Any) -> Any:
@@ -128,23 +131,19 @@ class CloudEventEnvelope:
         _require_aware(self.event_time, "event_time")
         if not isinstance(self.data, Mapping):
             raise TypeError("data must be a mapping")
-        _validate_json_value(self.data)
+        frozen_data = _validate_and_freeze_json_value(self.data)
         if self.data_schema is not None and not _ABSOLUTE_URI_PATTERN.fullmatch(
             self.data_schema
         ):
             raise ValueError("dataschema must be an absolute URI")
         if self.source.tenant_id != self.subject.tenant_id:
             raise ValueError("source and subject must belong to the same tenant")
-        for name, value in self.extensions.items():
-            if name in _RESERVED_NAMES or not _EXTENSION_PATTERN.fullmatch(name):
-                raise ValueError(f"invalid CloudEvents extension name: {name}")
-            if not isinstance(value, str) or not value:
-                raise ValueError(f"extension {name} must be a non-empty string")
-        tenant_extension = self.extensions.get("tenantid")
+        frozen_extensions = _validate_and_freeze_extensions(self.extensions)
+        tenant_extension = frozen_extensions.get("tenantid")
         if tenant_extension is not None and tenant_extension != self.source.tenant_id:
             raise ValueError("tenantid extension must match the source tenant")
-        object.__setattr__(self, "data", _freeze_json_value(self.data))
-        object.__setattr__(self, "extensions", MappingProxyType(dict(self.extensions)))
+        object.__setattr__(self, "data", frozen_data)
+        object.__setattr__(self, "extensions", frozen_extensions)
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> CloudEventEnvelope:
