@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- README is now a customer and operator page; local test commands live in
+  `CONTRIBUTING.md`.
+- ADRs 0001–0005 now include Context, Decision, Consequences, and APA 7th
+  references for the standards this product already claims.
+
 ### Added
 
 - Canonical tenant-scoped producer authority URI contract.
