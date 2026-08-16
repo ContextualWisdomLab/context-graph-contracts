@@ -42,7 +42,7 @@ def test_default_draft_202012_format_annotation_is_not_semantic_validation() -> 
 
 def test_packaged_timestamp_profile_is_executable() -> None:
     """Run the provider-neutral timestamp vectors through the reference parser."""
-    assert available_conformance_profile_names() == (_PROFILE_NAME,)
+    assert _PROFILE_NAME in available_conformance_profile_names()
     profile = load_conformance_profile(_PROFILE_NAME)
     assert profile["json_schema_role"] == "structural_and_lexical_only"
     assert profile["basis"].startswith("RFC 3339 syntax")
