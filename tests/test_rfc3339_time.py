@@ -1,7 +1,7 @@
 """Strict RFC 3339 regressions for CloudEvents timestamp handling."""
 
-from jsonschema import Draft202012Validator, FormatChecker
 import pytest
+from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
 from cwl_context_contracts import (
@@ -17,6 +17,7 @@ _INVALID_RFC3339_TIMES = (
     "2026-08-16T12:00:00+0000",
     "2026-08-16T12:00:00+00:00:30",
     "2026-08-16T12:00:00,123Z",
+    "2026-02-30T12:00:00Z",
 )
 
 
