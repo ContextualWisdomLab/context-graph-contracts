@@ -69,8 +69,7 @@ def _is_rfc3986_uri_with_scheme(value: str) -> bool:
             # Accessing these properties makes ``urllib`` reject malformed
             # bracketed hosts and non-numeric/out-of-range ports. Scheme-level
             # host semantics remain the responsibility of the URI scheme.
-            parsed.hostname
-            parsed.port
+            _ = parsed.hostname, parsed.port
     except ValueError:
         return False
     return True
