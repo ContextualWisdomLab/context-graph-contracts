@@ -25,15 +25,21 @@ surrendering their domain authority.
   share one tenant boundary, event IDs use UUIDv7, `dataschema` remains a core
   CloudEvents attribute, and `data` accepts only finite, acyclic, bounded
   JSON-native values
+- context assertion: a typed subject-predicate-object statement with truth
+  status, bitemporal validity, optional provenance, and one or more context
+  memberships so consumers can exchange graph edges without sharing a store
 - schema dialect: JSON Schema Draft 2020-12
 - message contract: AsyncAPI 3.1.0 reusable components for the shared
-  CloudEvent payload, deliberately without servers, channels, operations,
-  broker addresses, or runtime topology
+  CloudEvent payload and the context-assertion payload, deliberately without
+  servers, channels, operations, broker addresses, or runtime topology
 
 The Python reference package exposes `load_schema()` for JSON Schema resources,
-`load_contract()` for the packaged AsyncAPI document, and conformance fixtures
-for consumer validation. These are interoperability artifacts; they do not grant
-a consumer authority to mutate another product's store.
+`load_contract()` for the packaged AsyncAPI document, `ContextAssertion` for
+typed graph edges, and conformance fixtures for consumer validation. These are
+interoperability artifacts; they do not grant a consumer authority to mutate
+another product's store. Parse an assertion, keep its truth status, and project
+it into your own store. Do not promote `observed`, `inferred`, or `proposed`
+edges to `authoritative` inside an adapter.
 
 ## Repository boundary
 

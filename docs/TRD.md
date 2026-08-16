@@ -2,10 +2,11 @@
 
 ## Runtime
 
-The Python reference package supports Python 3.11-3.13 and has no runtime
+The Python reference package supports Python 3.11-3.14 and has no runtime
 third-party dependencies. JSON Schema resources use Draft 2020-12. CloudEvents
 structured JSON follows core version 1.0.2 while retaining the wire value
-`specversion: 1.0` required by the specification.
+`specversion: 1.0` required by the specification. Development installs are
+reproduced from the committed `uv.lock`.
 
 ## Identity requirements
 
@@ -21,6 +22,14 @@ structured JSON follows core version 1.0.2 while retaining the wire value
 - Event `data` accepts only native JSON objects, arrays, strings, booleans,
   integers, finite numbers, and null; cycles and nesting beyond 64 levels are
   rejected before serialization.
+- Context assertions use UUIDv7 identity, canonical asset URIs for subject and
+  object, a lower-snake predicate, a six-value truth status, a bitemporal
+  interval, one to sixteen unique memberships, and provenance whenever the
+  status is `observed` or `authoritative`.
+- Parsers expose `refuse_truth_promotion()` so adapters cannot raise trust.
+- Membership `membership_level` is an integer 0-15; `bool` is rejected.
+- RFC 3339 timestamps are parsed and serialized by the shared helpers used by
+  events and intervals.
 
 ## Compatibility policy
 

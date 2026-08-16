@@ -27,6 +27,11 @@ approved facts.
 5. Provenance must bind an evidence reference to an exact SHA-256 digest.
 6. Contracts must be usable without importing a CWL runtime service.
 7. Schemas, code, and fixtures must be versioned and backward-compatible.
+8. Independent products must be able to exchange a typed context assertion
+   (subject, predicate, object, truth status, time, provenance, memberships)
+   without sharing a graph store.
+9. An assertion must name at least one context membership and may name several,
+   so consumers cannot collapse a person, record, or asset into a single group.
 
 ## Excluded from P0
 

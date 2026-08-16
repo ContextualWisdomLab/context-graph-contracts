@@ -22,3 +22,11 @@ All notable changes to this project are documented in this file.
 - JSON Schema Draft 2020-12 resources and positive/negative conformance
   fixtures.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
+- Typed context-assertion contract with subject-predicate-object identity,
+  non-promotable truth status, bitemporal validity, optional provenance, and
+  multilevel context memberships.
+- Wire mappings for bitemporal intervals and provenance references.
+- Shared RFC 3339 parse/format helpers used by events and intervals.
+- Committed `uv.lock` and lock-checked CI so consumer installs are reproducible.
+- APA 7th doctoring for RFC 3339, TSQL2/bitemporal semantics, PROV-DM, RDF 1.1,
+  and multilevel-membership research.

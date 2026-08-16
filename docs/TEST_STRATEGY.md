@@ -7,7 +7,11 @@
 - JSON Schema tests validate all schemas against Draft 2020-12.
 - Positive and negative fixtures are packaged as executable conformance
   evidence.
-- The CI matrix covers Python 3.11-3.13.
+- Assertion tests use consumer-shaped cases: a LineageWeave inferred
+  `derived_from` edge, an enterprise-architecture `proposed` `realized_by`
+  edge, cross-classified analysis-run plus employment-group membership, and
+  exclusive-end temporal reconstruction.
+- The CI matrix covers Python 3.11-3.14 and verifies the committed lockfile.
 - Statement and branch coverage must both remain 100%.
 - Package smoke tests install the built wheel outside the source tree.
 
