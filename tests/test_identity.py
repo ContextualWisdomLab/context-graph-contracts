@@ -7,6 +7,16 @@ import pytest
 from cwl_context_contracts import CanonicalAssetUri, CanonicalAuthorityUri
 from tests.conftest import UUID7_TEXT
 
+INVALID_SEGMENTS = [
+    "Tenant",
+    "a",
+    "has-hyphen",
+    "x" * 64,
+    "tenant__001",
+    "tenant_",
+    "t_enant",
+]
+
 
 def test_authority_build_parse_and_render_round_trip() -> None:
     """A valid tenant-scoped authority identifier round-trips exactly."""
@@ -31,11 +41,18 @@ def test_asset_build_parse_and_render_round_trip() -> None:
     assert value.authority_uri == CanonicalAuthorityUri("tenant_001", "sdp_core")
 
 
-@pytest.mark.parametrize("field", ["Tenant", "a", "has-hyphen", "x" * 64])
+@pytest.mark.parametrize("field", INVALID_SEGMENTS)
 def test_authority_build_rejects_invalid_segments(field: str) -> None:
-    """Authority URI segments must use bounded lower-snake identifiers."""
+    """Authority URI segments must use bounded canonical lower-snake words."""
     with pytest.raises(ValueError, match="lower snake"):
         CanonicalAuthorityUri.build(tenant_id=field, authority="ea_core")
+
+
+@pytest.mark.parametrize("field", INVALID_SEGMENTS)
+def test_authority_parse_rejects_invalid_segments(field: str) -> None:
+    """Authority parsing rejects ambiguous lower-snake spellings."""
+    with pytest.raises(ValueError, match="authority"):
+        CanonicalAuthorityUri.parse(f"urn:cwl:{field}:ea_core")
 
 
 def test_authority_parse_rejects_asset_uri() -> None:
@@ -46,15 +63,24 @@ def test_authority_parse_rejects_asset_uri() -> None:
         )
 
 
-@pytest.mark.parametrize("field", ["Tenant", "a", "has-hyphen", "x" * 64])
+@pytest.mark.parametrize("field", INVALID_SEGMENTS)
 def test_asset_build_rejects_invalid_segments(field: str) -> None:
-    """Asset URI segments must use bounded lower-snake identifiers."""
+    """Asset URI segments must use bounded canonical lower-snake words."""
     with pytest.raises(ValueError, match="lower snake"):
         CanonicalAssetUri.build(
             tenant_id=field,
             authority="ea_core",
             object_type="application_record",
             object_id=UUID7_TEXT,
+        )
+
+
+@pytest.mark.parametrize("field", INVALID_SEGMENTS)
+def test_asset_parse_rejects_invalid_segments(field: str) -> None:
+    """Asset parsing rejects ambiguous lower-snake spellings."""
+    with pytest.raises(ValueError, match="asset"):
+        CanonicalAssetUri.parse(
+            f"urn:cwl:{field}:ea_core:application_record:{UUID7_TEXT}"
         )
 
 
