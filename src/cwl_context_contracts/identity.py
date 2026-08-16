@@ -83,11 +83,15 @@ class CanonicalAssetUri:
     object_id: UUID
 
     def __post_init__(self) -> None:
-        """Validate all asset URI components after construction."""
+        """Validate and normalize all asset URI components after construction."""
         _validate_segment(self.tenant_id, "tenant_id")
         _validate_segment(self.authority, "authority")
         _validate_segment(self.object_type, "object_type")
-        _validate_uuid7(self.object_id, "object_id")
+        object.__setattr__(
+            self,
+            "object_id",
+            _validate_uuid7(self.object_id, "object_id"),
+        )
 
     @property
     def authority_uri(self) -> CanonicalAuthorityUri:
