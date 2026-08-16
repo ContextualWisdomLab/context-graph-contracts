@@ -59,18 +59,13 @@ def _is_rfc3986_uri_with_scheme(value: str) -> bool:
         return False
     try:
         parsed = urlsplit(value)
-        if not parsed.scheme:
-            return False
-        if any(character in parsed.path for character in "[]"):
-            return False
-        if any(character in parsed.query for character in "[]"):
-            return False
-        if any(character in parsed.fragment for character in "[]#"):
+        if any(
+            bracket in component
+            for component in (parsed.path, parsed.query, parsed.fragment)
+            for bracket in "[]"
+        ):
             return False
         if parsed.netloc:
-            userinfo = parsed.netloc.rpartition("@")[0]
-            if userinfo and any(character in userinfo for character in "[]"):
-                return False
             # Accessing these properties makes ``urllib`` reject malformed
             # bracketed hosts and non-numeric/out-of-range ports. Scheme-level
             # host semantics remain the responsibility of the URI scheme.
