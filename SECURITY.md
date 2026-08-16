@@ -3,7 +3,7 @@
 ## Supported versions
 
 Security fixes are applied to the latest released minor version and the current
-`main` branch.
+default branch.
 
 ## Security invariants
 
@@ -12,6 +12,11 @@ Security fixes are applied to the latest released minor version and the current
 - Canonical URI parsing is fail-closed and rejects encoded delimiters,
   whitespace, non-UUIDv7 identifiers, and unknown authorities at consumer
   policy boundaries.
+- Event producer and subject references remain inside one tenant boundary; a
+  redundant `tenantid` extension cannot contradict the producer authority.
+- Structured-event core attributes are never silently coerced from non-string
+  values. Event data rejects non-finite numbers, non-string keys, Python-only
+  objects, cyclic containers, and nesting deeper than 64 levels.
 - Provenance digests are lowercase SHA-256 values. A digest proves byte
   identity, not trustworthiness or authorization.
 - Schema validation does not authorize an event. Consumers must still verify

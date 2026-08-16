@@ -20,8 +20,10 @@ exchange references and evidence without surrendering their domain authority.
 - provenance: every material assertion can point to a source asset and a
   SHA-256 evidence digest
 - service events: CloudEvents 1.0.2 structured JSON; `source` identifies the
-  producer authority, `subject` identifies the affected asset, event IDs use
-  UUIDv7, and `dataschema` remains a core CloudEvents attribute
+  producer authority, `subject` identifies the affected asset, both references
+  share one tenant boundary, event IDs use UUIDv7, `dataschema` remains a core
+  CloudEvents attribute, and `data` accepts only finite, acyclic, bounded
+  JSON-native values
 - schema dialect: JSON Schema Draft 2020-12
 
 ## Repository boundary

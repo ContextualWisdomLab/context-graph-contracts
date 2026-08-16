@@ -1,6 +1,9 @@
 # Test Strategy
 
 - Unit tests exercise every validation branch in the Python reference package.
+- Structured-event tests cover tenant mismatches, type confusion, non-finite
+  numbers, non-string JSON keys, Python-only values, cycles, and excessive
+  nesting.
 - JSON Schema tests validate all schemas against Draft 2020-12.
 - Positive and negative fixtures are packaged as executable conformance
   evidence.

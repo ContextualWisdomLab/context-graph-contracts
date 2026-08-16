@@ -15,6 +15,12 @@ structured JSON follows core version 1.0.2 while retaining the wire value
 - `dataschema` is parsed and emitted as a CloudEvents core attribute, never as
   an extension.
 - `dataschema`, when present, is an absolute URI.
+- Event `source` and `subject` must resolve to the same tenant; a supplied
+  `tenantid` extension must agree with that tenant.
+- Structured-event core string attributes are type-checked without coercion.
+- Event `data` accepts only native JSON objects, arrays, strings, booleans,
+  integers, finite numbers, and null; cycles and nesting beyond 64 levels are
+  rejected before serialization.
 
 ## Compatibility policy
 

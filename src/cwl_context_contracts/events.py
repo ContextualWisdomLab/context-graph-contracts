@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -17,6 +18,7 @@ _EVENT_TYPE_PATTERN = re.compile(
 )
 _ABSOLUTE_URI_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:[^\s]+$")
 _EXTENSION_PATTERN = re.compile(r"^[a-z][a-z0-9]{0,19}$")
+_MAX_JSON_DEPTH = 64
 _RESERVED_NAMES = {
     "specversion",
     "id",
@@ -28,6 +30,60 @@ _RESERVED_NAMES = {
     "dataschema",
     "data",
 }
+
+
+def _require_string(value: Any, field_name: str) -> str:
+    """Return a string attribute or raise ``TypeError`` without coercion."""
+    if not isinstance(value, str):
+        raise TypeError(f"{field_name} must be a string")
+    return value
+
+
+def _validate_json_value(
+    value: Any,
+    path: str = "$",
+    *,
+    depth: int = 0,
+    ancestors: frozenset[int] = frozenset(),
+) -> None:
+    """Reject non-JSON values, cycles, and excessively deep containers."""
+    if depth > _MAX_JSON_DEPTH:
+        raise ValueError(f"JSON nesting depth exceeds {_MAX_JSON_DEPTH} at {path}")
+    if value is None or isinstance(value, (str, bool, int)):
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError(f"JSON number at {path} must be finite")
+        return
+    if isinstance(value, Mapping):
+        container_id = id(value)
+        if container_id in ancestors:
+            raise ValueError(f"JSON container cycle detected at {path}")
+        child_ancestors = ancestors | {container_id}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise TypeError(f"JSON object key at {path} must be a string")
+            _validate_json_value(
+                item,
+                f"{path}.{key}",
+                depth=depth + 1,
+                ancestors=child_ancestors,
+            )
+        return
+    if isinstance(value, list):
+        container_id = id(value)
+        if container_id in ancestors:
+            raise ValueError(f"JSON container cycle detected at {path}")
+        child_ancestors = ancestors | {container_id}
+        for index, item in enumerate(value):
+            _validate_json_value(
+                item,
+                f"{path}[{index}]",
+                depth=depth + 1,
+                ancestors=child_ancestors,
+            )
+        return
+    raise TypeError(f"value at {path} is not JSON-compatible")
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,48 +107,79 @@ class CloudEventEnvelope:
         _require_aware(self.event_time, "event_time")
         if not isinstance(self.data, Mapping):
             raise TypeError("data must be a mapping")
+        _validate_json_value(self.data)
         if self.data_schema is not None and not _ABSOLUTE_URI_PATTERN.fullmatch(
             self.data_schema
         ):
             raise ValueError("dataschema must be an absolute URI")
+        if self.source.tenant_id != self.subject.tenant_id:
+            raise ValueError("source and subject must belong to the same tenant")
         for name, value in self.extensions.items():
             if name in _RESERVED_NAMES or not _EXTENSION_PATTERN.fullmatch(name):
                 raise ValueError(f"invalid CloudEvents extension name: {name}")
             if not isinstance(value, str) or not value:
                 raise ValueError(f"extension {name} must be a non-empty string")
+        tenant_extension = self.extensions.get("tenantid")
+        if tenant_extension is not None and tenant_extension != self.source.tenant_id:
+            raise ValueError("tenantid extension must match the source tenant")
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> CloudEventEnvelope:
         """Parse a CloudEvents structured JSON mapping."""
-        if value.get("specversion") != "1.0":
-            raise ValueError("specversion must be 1.0")
-        if value.get("datacontenttype") != "application/json":
-            raise ValueError("datacontenttype must be application/json")
-        required = {"id", "source", "type", "subject", "time", "data"}
+        required = {
+            "specversion",
+            "id",
+            "source",
+            "type",
+            "subject",
+            "time",
+            "datacontenttype",
+            "data",
+        }
         missing = required - value.keys()
         if missing:
             raise ValueError(f"missing required attributes: {sorted(missing)!r}")
+        specversion = _require_string(value["specversion"], "specversion")
+        if specversion != "1.0":
+            raise ValueError("specversion must be 1.0")
+        content_type = _require_string(
+            value["datacontenttype"],
+            "datacontenttype",
+        )
+        if content_type != "application/json":
+            raise ValueError("datacontenttype must be application/json")
+        event_id_text = _require_string(value["id"], "id")
+        source_text = _require_string(value["source"], "source")
+        event_type = _require_string(value["type"], "type")
+        subject_text = _require_string(value["subject"], "subject")
+        time_text = _require_string(value["time"], "time")
         try:
-            event_id = _validate_uuid7(str(value["id"]), "event_id")
-            event_time = datetime.fromisoformat(
-                str(value["time"]).replace("Z", "+00:00")
-            )
+            event_id = _validate_uuid7(event_id_text, "event_id")
+            event_time = datetime.fromisoformat(time_text.replace("Z", "+00:00"))
         except (TypeError, ValueError) as exc:
             if "UUIDv7" in str(exc) or "RFC 9562" in str(exc):
                 raise
             raise ValueError("id or time is not parseable") from exc
-        extensions = {
-            key: item for key, item in value.items() if key not in _RESERVED_NAMES
-        }
-        data_schema = value.get("dataschema")
+        extensions: dict[str, Any] = {}
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise TypeError("CloudEvents attribute names must be strings")
+            if key not in _RESERVED_NAMES:
+                extensions[key] = item
+        raw_data_schema = value.get("dataschema")
+        data_schema = (
+            None
+            if raw_data_schema is None
+            else _require_string(raw_data_schema, "dataschema")
+        )
         return cls(
             event_id=event_id,
-            source=CanonicalAuthorityUri.parse(str(value["source"])),
-            event_type=str(value["type"]),
-            subject=CanonicalAssetUri.parse(str(value["subject"])),
+            source=CanonicalAuthorityUri.parse(source_text),
+            event_type=event_type,
+            subject=CanonicalAssetUri.parse(subject_text),
             event_time=event_time,
             data=value["data"],
-            data_schema=None if data_schema is None else str(data_schema),
+            data_schema=data_schema,
             extensions=extensions,
         )
 
