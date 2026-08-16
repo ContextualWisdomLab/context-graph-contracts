@@ -1,5 +1,8 @@
 """Strict RFC 3339 regressions for CloudEvents timestamp handling."""
 
+from datetime import UTC, datetime
+from uuid import UUID
+
 import pytest
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
@@ -23,9 +26,6 @@ _INVALID_RFC3339_TIMES = (
 
 def _valid_mapping(authority_uri, asset_uri) -> dict[str, object]:
     """Return one valid event mapping suitable for timestamp mutation."""
-    from datetime import UTC, datetime
-    from uuid import UUID
-
     event = CloudEventEnvelope(
         event_id=UUID("0195d145-64e8-7f4f-8a23-a0cc784cb799"),
         source=authority_uri,
