@@ -3,8 +3,8 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from jsonschema import Draft202012Validator, FormatChecker
 import pytest
+from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
 from cwl_context_contracts import (
@@ -12,7 +12,6 @@ from cwl_context_contracts import (
     available_schema_names,
     load_schema,
 )
-
 
 _INVALID_RFC3339_TIMES = (
     "2026-08-16 12:00:00+00:00",
