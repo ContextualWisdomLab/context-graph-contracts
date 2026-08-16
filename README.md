@@ -38,28 +38,43 @@ origin, not confidence. Consumers must not promote `observed`, `inferred`, or
 
 **Bitemporal validity.**
 Real-world validity (`valid_from` / `valid_to`) stays distinct from
-system-recording time (`recorded_at` / `superseded_at`). Open intervals omit
-the end value; they do not use sentinel dates.
+system-recording time (`recorded_at` / `superseded_at`). Open intervals use
+`null` on the wire; they do not use sentinel dates.
+
+**Timestamp profile.**
+CWL Timestamp Profile v1 is an explicitly named, leap-second-free subset of
+RFC 3339 used by the temporal and event contracts. JSON Schema provides the
+structural and lexical gate; consumers must also execute the packaged semantic
+conformance vectors so impossible calendar values cannot pass merely because
+`format` is annotation-only.
 
 **Provenance.**
 A material assertion can point to a source asset and a SHA-256 digest of the
 exact evidence bytes. A digest proves byte identity, not trust or
 authorization.
 
+**Context assertion.**
+A typed subject-predicate-object assertion carries truth status, bitemporal
+validity, optional provenance, and one or more context memberships. Packaged
+semantic vectors cover cross-field rules that JSON Schema cannot express
+portably, including same-tenant references, non-self edges, and unique context
+memberships.
+
 **Service events.**
 Notifications use CloudEvents 1.0.2 structured JSON. `source` and `subject`
 share one tenant. Event IDs are UUIDv7. `dataschema` remains a core
 CloudEvents attribute. Payloads accept only finite, acyclic, bounded
-JSON-native values.
+JSON-native values and interoperable integers in the exact range required by
+the CWL JSON interoperability profile.
 
 The published surface is JSON Schema Draft 2020-12 plus AsyncAPI 3.1.0
-reusable components for the shared CloudEvent payload. The AsyncAPI document
-does not define servers, channels, operations, broker addresses, or runtime
-topology.
+reusable components for the shared CloudEvent and Context Assertion payloads.
+The AsyncAPI document does not define servers, channels, operations, broker
+addresses, or runtime topology.
 
-The Python reference package exposes `load_schema()` and `load_contract()`
-plus conformance fixtures. These artifacts do not grant a consumer authority
-to mutate another product's store.
+The Python reference package exposes `load_schema()`, `load_contract()`,
+`ContextAssertion`, and packaged conformance profiles and fixtures. These
+artifacts do not grant a consumer authority to mutate another product's store.
 
 ## Who consumes these contracts
 
