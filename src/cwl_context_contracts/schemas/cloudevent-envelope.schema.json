@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.contextualwisdomlab.org/context/cloudevent-envelope.v1.schema.json",
-  "$comment": "The time pattern is a lexical guard. Under the default Draft 2020-12 meta-schema, format is annotation; consumers MUST also satisfy the packaged cwl-timestamp-profile.v1.json semantic conformance vectors.",
+  "$comment": "The time and URI formats are structural/lexical annotations under the default Draft 2020-12 meta-schema. Consumers MUST also satisfy the packaged cwl-timestamp-profile.v1.json and cloudevent-semantics.v1.json semantic conformance vectors.",
   "title": "CWL CloudEvent Envelope",
   "type": "object",
   "required": ["specversion", "id", "source", "type", "subject", "time", "datacontenttype", "data"],
