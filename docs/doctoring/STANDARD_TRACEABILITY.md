@@ -6,7 +6,7 @@
 | Producer `source` plus unique `id` | Cloud Native Computing Foundation (2022) | authority URI and envelope tests |
 | Structured service event | Cloud Native Computing Foundation (2022) | envelope class and event schema |
 | Core `dataschema` handling | Cloud Native Computing Foundation (2022) | envelope round-trip and negative tests |
-| RFC 3339 timestamp syntax and semantic validity | Klyne and Newman (2002); JSON Schema (2022b, §7.2) | shared parser, default-format-annotation regression, packaged `rfc3339-timestamp-profile.v1.json` vectors, interval mapping tests |
+| CWL Timestamp Profile v1: RFC 3339-derived syntax, semantic calendar/clock/offset validation, leap seconds excluded | Klyne and Newman (2002); JSON Schema (2022b, §7.2) | ADR 0007, `parse_cwl_timestamp`, default-format-annotation regression, packaged `cwl-timestamp-profile.v1.json` vectors, interval mapping tests |
 | Separate valid/system time | Jensen and Snodgrass (1996); Snodgrass (1995) | interval class, mapping, and reconstruction tests |
 | Subject-predicate-object assertion | Cyganiak et al. (2014) | `ContextAssertion` and assertion schema |
 | Provenance reference model | Lebo et al. (2013); Moreau and Missier (2013) | provenance-reference schema and mapping |

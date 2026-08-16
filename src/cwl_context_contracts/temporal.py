@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-_RFC3339_TIMESTAMP_PATTERN = re.compile(
+_CWL_TIMESTAMP_PATTERN = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt]"
     r"[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?"
     r"(?:[Zz]|[+-][0-9]{2}:[0-9]{2})$"
@@ -28,29 +28,38 @@ def _require_aware(value: datetime, field_name: str) -> datetime:
     return value
 
 
-def parse_rfc3339_timestamp(value: str, field_name: str = "timestamp") -> datetime:
-    """Parse the RFC 3339 profile used by CloudEvents timestamps."""
+def parse_cwl_timestamp(value: str, field_name: str = "timestamp") -> datetime:
+    """Parse the CWL timestamp profile, a leap-second-free RFC 3339 subset."""
     if not isinstance(value, str):
         raise TypeError(f"{field_name} must be a string")
-    if _RFC3339_TIMESTAMP_PATTERN.fullmatch(value) is None:
-        raise ValueError(f"{field_name} must be an RFC 3339 timestamp")
+    if _CWL_TIMESTAMP_PATTERN.fullmatch(value) is None:
+        raise ValueError(
+            f"{field_name} must satisfy the CWL timestamp profile (RFC 3339-derived)"
+        )
     normalized = f"{value[:10]}T{value[11:]}"
     if normalized[-1] in {"Z", "z"}:
         normalized = f"{normalized[:-1]}+00:00"
     try:
         parsed = datetime.fromisoformat(normalized)
     except ValueError as exc:
-        raise ValueError(f"{field_name} must be an RFC 3339 timestamp") from exc
+        raise ValueError(
+            f"{field_name} must satisfy the CWL timestamp profile (RFC 3339-derived)"
+        ) from exc
     return _require_aware(parsed, field_name)
 
 
-def format_rfc3339_timestamp(
+def format_cwl_timestamp(
     value: datetime,
     field_name: str = "timestamp",
 ) -> str:
-    """Serialize a timezone-aware instant to a canonical RFC 3339 string."""
+    """Serialize an aware instant to the canonical CWL timestamp profile."""
     _require_aware(value, field_name)
     return value.isoformat().replace("+00:00", "Z")
+
+
+# Pre-release compatibility aliases. The contract name is CWL Timestamp Profile v1.
+parse_rfc3339_timestamp = parse_cwl_timestamp
+format_rfc3339_timestamp = format_cwl_timestamp
 
 
 @dataclass(frozen=True, slots=True)
@@ -93,19 +102,19 @@ class BitemporalInterval:
         )
 
     def to_mapping(self) -> dict[str, str | None]:
-        """Serialize both time dimensions to RFC 3339 wire fields."""
+        """Serialize both time dimensions to CWL timestamp wire fields."""
         return {
-            "valid_from": format_rfc3339_timestamp(self.valid_from, "valid_from"),
-            "recorded_at": format_rfc3339_timestamp(self.recorded_at, "recorded_at"),
+            "valid_from": format_cwl_timestamp(self.valid_from, "valid_from"),
+            "recorded_at": format_cwl_timestamp(self.recorded_at, "recorded_at"),
             "valid_to": (
                 None
                 if self.valid_to is None
-                else format_rfc3339_timestamp(self.valid_to, "valid_to")
+                else format_cwl_timestamp(self.valid_to, "valid_to")
             ),
             "superseded_at": (
                 None
                 if self.superseded_at is None
-                else format_rfc3339_timestamp(self.superseded_at, "superseded_at")
+                else format_cwl_timestamp(self.superseded_at, "superseded_at")
             ),
         }
 
@@ -123,19 +132,19 @@ class BitemporalInterval:
         raw_valid_to = snapshot.get("valid_to")
         raw_superseded_at = snapshot.get("superseded_at")
         return cls(
-            valid_from=parse_rfc3339_timestamp(snapshot["valid_from"], "valid_from"),
-            recorded_at=parse_rfc3339_timestamp(
+            valid_from=parse_cwl_timestamp(snapshot["valid_from"], "valid_from"),
+            recorded_at=parse_cwl_timestamp(
                 snapshot["recorded_at"],
                 "recorded_at",
             ),
             valid_to=(
                 None
                 if raw_valid_to is None
-                else parse_rfc3339_timestamp(raw_valid_to, "valid_to")
+                else parse_cwl_timestamp(raw_valid_to, "valid_to")
             ),
             superseded_at=(
                 None
                 if raw_superseded_at is None
-                else parse_rfc3339_timestamp(raw_superseded_at, "superseded_at")
+                else parse_cwl_timestamp(raw_superseded_at, "superseded_at")
             ),
         )

@@ -28,8 +28,9 @@ reproduced from the committed `uv.lock`.
   status is `observed` or `authoritative`.
 - Parsers expose `refuse_truth_promotion()` so adapters cannot raise trust.
 - Membership `membership_level` is an integer 0-15; `bool` is rejected.
-- RFC 3339 timestamps are parsed and serialized by the shared helpers used by
-  events and intervals.
+- Timestamp-bearing contracts use CWL Timestamp Profile v1, whose syntax is
+  derived from RFC 3339 but whose semantic contract deliberately excludes leap
+  seconds so all supported SDK baselines can represent the same instants.
 
 ## Timestamp semantic conformance
 
@@ -38,24 +39,26 @@ Draft 2020-12's default meta-schema treats `format` as an annotation. Therefore
 evidence; it is not sufficient to establish that a calendar date, clock time,
 or UTC offset is semantically valid.
 
-The packaged `rfc3339-timestamp-profile.v1.json` is the provider-neutral
-semantic conformance contract. Every consumer of a timestamp-bearing contract
-MUST accept each `valid_values` vector and reject each `invalid_values` vector
-before claiming semantic conformance. A consumer that cannot execute an
-equivalent check MUST refuse semantic conformance rather than silently relying
-on JSON Schema format annotation. The v1 CWL profile is a strict RFC 3339
-subset and intentionally rejects leap-second lexical `:60` so implementations
-without leap-second datetime support converge on the same result.
+The packaged `cwl-timestamp-profile.v1.json` is the provider-neutral semantic
+conformance contract. Every consumer of a timestamp-bearing contract MUST
+accept each `valid_values` vector and reject each `invalid_values` vector before
+claiming semantic conformance. A consumer that cannot execute an equivalent
+check MUST refuse semantic conformance rather than silently relying on JSON
+Schema format annotation. CWL Timestamp Profile v1 is a strict subset of RFC
+3339 and intentionally rejects leap-second lexical `:60`; it therefore has a
+distinct contract name rather than claiming complete RFC 3339 acceptance.
 
 ## Compatibility policy
 
-- Schema `$id` values are immutable.
+- Schema `$id` values are immutable after release.
 - Compatible additions use optional properties or new enum-neutral extension
   fields.
 - Removing an enum member, narrowing a pattern, or changing field meaning
-  requires a new schema ID and major package version.
+  after release requires a new schema ID and major package version.
 - Consumers must reject unknown truth-status values rather than map them to a
   more trusted status.
+- ADR 0007 fixes the timestamp contract name before the first release; no
+  released schema or package is being narrowed by that pre-release correction.
 
 ## Security requirements
 

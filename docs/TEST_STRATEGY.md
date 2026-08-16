@@ -9,9 +9,10 @@
   evidence.
 - Timestamp tests deliberately run Draft 2020-12 without a format checker to
   prove that default `format` annotation cannot establish semantic validity,
-  then execute the packaged provider-neutral timestamp vectors through the
-  reference parser. Calendar-impossible dates, invalid clock values, invalid
-  offsets, and the v1 profile's unsupported leap-second lexical form must fail.
+  then execute the packaged provider-neutral CWL Timestamp Profile v1 vectors
+  through the reference parser. Calendar-impossible dates, invalid clock
+  values, invalid offsets, and leap-second lexical `:60` must fail this named
+  profile even though RFC 3339 itself can represent leap seconds.
 - Assertion tests use consumer-shaped cases: a LineageWeave inferred
   `derived_from` edge, an enterprise-architecture `proposed` `realized_by`
   edge, cross-classified analysis-run plus employment-group membership, and

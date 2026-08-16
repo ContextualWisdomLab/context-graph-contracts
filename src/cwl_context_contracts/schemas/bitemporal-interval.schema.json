@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://schemas.contextualwisdomlab.org/context/bitemporal-interval.v1.schema.json",
-  "$comment": "Timestamp patterns are lexical guards. Under the default Draft 2020-12 meta-schema, format is annotation; consumers MUST also satisfy the packaged rfc3339-timestamp-profile.v1.json semantic conformance vectors.",
+  "$comment": "Timestamp patterns are lexical guards. Under the default Draft 2020-12 meta-schema, format is annotation; consumers MUST also satisfy the packaged cwl-timestamp-profile.v1.json semantic conformance vectors.",
   "title": "CWL Bitemporal Interval",
   "type": "object",
   "additionalProperties": false,

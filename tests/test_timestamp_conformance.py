@@ -9,10 +9,10 @@ from cwl_context_contracts import (
     available_schema_names,
     load_conformance_profile,
     load_schema,
-    parse_rfc3339_timestamp,
+    parse_cwl_timestamp,
 )
 
-_PROFILE_NAME = "rfc3339-timestamp-profile.v1.json"
+_PROFILE_NAME = "cwl-timestamp-profile.v1.json"
 
 
 def _schema_registry() -> Registry:
@@ -42,12 +42,13 @@ def test_packaged_timestamp_profile_is_executable() -> None:
     assert available_conformance_profile_names() == (_PROFILE_NAME,)
     profile = load_conformance_profile(_PROFILE_NAME)
     assert profile["json_schema_role"] == "structural_and_lexical_only"
+    assert profile["basis"].startswith("RFC 3339 syntax")
 
     for value in profile["valid_values"]:
-        parse_rfc3339_timestamp(value)
+        parse_cwl_timestamp(value)
     for value in profile["invalid_values"]:
-        with pytest.raises(ValueError, match="RFC 3339 timestamp"):
-            parse_rfc3339_timestamp(value)
+        with pytest.raises(ValueError, match="CWL timestamp profile"):
+            parse_cwl_timestamp(value)
 
 
 def test_unknown_conformance_profile_fails_closed() -> None:

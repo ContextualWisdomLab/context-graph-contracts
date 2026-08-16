@@ -1,6 +1,7 @@
 {
-  "profile_id": "urn:cwl:context-contracts:rfc3339-timestamp-profile:v1",
+  "profile_id": "urn:cwl:context-contracts:cwl-timestamp-profile:v1",
   "profile_version": 1,
+  "basis": "RFC 3339 syntax with explicit CWL semantic restrictions",
   "json_schema_role": "structural_and_lexical_only",
   "normative_requirement": "A consumer MUST accept every valid_values entry and reject every invalid_values entry before treating a timestamp-bearing CWL Context Fabric contract as semantically conformant. Draft 2020-12 format: date-time under the default meta-schema is annotation, not sufficient semantic validation.",
   "valid_values": [
@@ -15,11 +16,12 @@
     "2026-13-01T12:00:00Z",
     "2026-01-01T24:00:00Z",
     "2026-01-01T12:60:00Z",
-    "2026-01-01T12:00:60Z",
+    "2016-12-31T23:59:60Z",
+    "2016-12-30T23:59:60Z",
     "2026-01-01T12:00:00+24:00"
   ],
   "profile_notes": [
-    "This v1 CWL profile is a strict subset of RFC 3339 and intentionally rejects leap-second lexical :60 so implementations without leap-second datetime support converge on the same result.",
+    "CWL Timestamp Profile v1 is deliberately named separately from RFC 3339 because it is a strict subset: leap-second lexical :60 is not representable by the required cross-language datetime baseline and is rejected.",
     "Consumers that cannot execute an equivalent semantic check MUST refuse semantic conformance rather than relying on JSON Schema format annotation alone."
   ]
 }

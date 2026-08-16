@@ -82,7 +82,7 @@ jobs:
           required_suffixes = {
               "cwl_context_contracts/py.typed",
               "cwl_context_contracts/contracts/context-fabric.asyncapi.json",
-              "cwl_context_contracts/conformance/rfc3339-timestamp-profile.v1.json",
+              "cwl_context_contracts/conformance/cwl-timestamp-profile.v1.json",
               "cwl_context_contracts/schemas/canonical-authority-uri.schema.json",
               "cwl_context_contracts/schemas/canonical-asset-uri.schema.json",
               "cwl_context_contracts/schemas/truth-status.schema.json",
@@ -128,7 +128,7 @@ jobs:
               load_contract,
               load_fixture,
               load_schema,
-              parse_rfc3339_timestamp,
+              parse_cwl_timestamp,
           )
 
           assert TruthStatus.OBSERVED.value == "observed"
@@ -145,16 +145,16 @@ jobs:
           assert "operations" not in asyncapi
 
           assert available_conformance_profile_names() == (
-              "rfc3339-timestamp-profile.v1.json",
+              "cwl-timestamp-profile.v1.json",
           )
           timestamp_profile = load_conformance_profile(
-              "rfc3339-timestamp-profile.v1.json"
+              "cwl-timestamp-profile.v1.json"
           )
           for timestamp_value in timestamp_profile["valid_values"]:
-              parse_rfc3339_timestamp(timestamp_value)
+              parse_cwl_timestamp(timestamp_value)
           for timestamp_value in timestamp_profile["invalid_values"]:
               try:
-                  parse_rfc3339_timestamp(timestamp_value)
+                  parse_cwl_timestamp(timestamp_value)
               except ValueError:
                   pass
               else:

@@ -6,7 +6,7 @@ import json
 from importlib.resources import files
 from typing import Any
 
-_PROFILE_NAMES = ("rfc3339-timestamp-profile.v1.json",)
+_PROFILE_NAMES = ("cwl-timestamp-profile.v1.json",)
 
 
 def available_conformance_profile_names() -> tuple[str, ...]:
