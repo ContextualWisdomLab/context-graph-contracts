@@ -84,6 +84,7 @@ jobs:
               "cwl_context_contracts/contracts/context-fabric.asyncapi.json",
               "cwl_context_contracts/conformance/cwl-timestamp-profile.v1.json",
               "cwl_context_contracts/conformance/context-assertion-semantics.v1.json",
+              "cwl_context_contracts/conformance/cloudevent-semantics.v1.json",
               "cwl_context_contracts/conformance/cwl-json-interoperability.v1.json",
               "cwl_context_contracts/schemas/canonical-authority-uri.schema.json",
               "cwl_context_contracts/schemas/canonical-asset-uri.schema.json",
@@ -149,6 +150,7 @@ jobs:
           assert available_conformance_profile_names() == (
               "cwl-timestamp-profile.v1.json",
               "context-assertion-semantics.v1.json",
+              "cloudevent-semantics.v1.json",
               "cwl-json-interoperability.v1.json",
           )
           timestamp_profile = load_conformance_profile(
@@ -178,6 +180,21 @@ jobs:
                   raise AssertionError(
                       f"negative assertion vector unexpectedly parsed: {vector['case_id']}"
                   )
+
+          event_profile = load_conformance_profile("cloudevent-semantics.v1.json")
+          for vector in event_profile["invalid_vectors"]:
+              try:
+                  CloudEventEnvelope.from_mapping(vector["value"])
+              except ValueError as exc:
+                  assert vector["error_pattern"] in str(exc)
+              else:
+                  raise AssertionError(
+                      f"negative event vector unexpectedly parsed: {vector['case_id']}"
+                  )
+          for vector in event_profile["valid_vectors"]:
+              assert CloudEventEnvelope.from_mapping(vector["value"]).to_mapping() == (
+                  vector["value"]
+              )
 
           assert available_fixture_names() == (
               "valid-event.json",
