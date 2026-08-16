@@ -10,7 +10,7 @@ from cwl_context_contracts import (
 
 
 def test_packaged_fixture_corpus_is_complete_and_parseable() -> None:
-    """Consumers can execute positive and negative conformance cases from the package."""
+    """Consumers can execute packaged positive and negative conformance cases."""
     assert available_fixture_names() == ("valid-event.json", "invalid-event.json")
     valid_event = load_fixture("valid-event.json")
     invalid_event = load_fixture("invalid-event.json")
