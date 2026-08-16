@@ -262,7 +262,7 @@ class CloudEventEnvelope:
             event_type=event_type,
             subject=CanonicalAssetUri.parse(subject_text),
             event_time=event_time,
-            data=snapshot["data"],
+            data=_thaw_json_value(snapshot["data"]),
             data_schema=data_schema,
             extensions=extensions,
         )
