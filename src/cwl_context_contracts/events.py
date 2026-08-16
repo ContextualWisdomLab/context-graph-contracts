@@ -108,6 +108,8 @@ def _validate_and_freeze_extensions(value: Mapping[str, str]) -> Mapping[str, st
     """Validate extension attributes while snapshotting the same traversal."""
     frozen_items: dict[str, str] = {}
     for name, item in value.items():
+        if not isinstance(name, str):
+            raise TypeError("CloudEvents extension names must be strings")
         if name in _RESERVED_NAMES or not _EXTENSION_PATTERN.fullmatch(name):
             raise ValueError(f"invalid CloudEvents extension name: {name}")
         if not isinstance(item, str) or not item:
@@ -164,18 +166,29 @@ class CloudEventEnvelope:
     def __post_init__(self) -> None:
         """Validate and normalize event identity, time, data, and extensions."""
         normalized_event_id = _validate_uuid7(self.event_id, "event_id")
+        if type(self.source) is not CanonicalAuthorityUri:
+            raise TypeError("source must be a CanonicalAuthorityUri")
+        if not isinstance(self.event_type, str):
+            raise TypeError("event_type must be a string")
         if not _EVENT_TYPE_PATTERN.fullmatch(self.event_type):
             raise ValueError("event_type does not follow the CWL reverse-DNS grammar")
+        if type(self.subject) is not CanonicalAssetUri:
+            raise TypeError("subject must be a CanonicalAssetUri")
+        if not isinstance(self.event_time, datetime):
+            raise TypeError("event_time must be a datetime")
         _require_aware(self.event_time, "event_time")
         if not isinstance(self.data, Mapping):
             raise TypeError("data must be a mapping")
         frozen_data = _validate_and_freeze_json_value(self.data)
-        if self.data_schema is not None and not _ABSOLUTE_URI_PATTERN.fullmatch(
-            self.data_schema
-        ):
-            raise ValueError("dataschema must be an absolute URI")
+        if self.data_schema is not None:
+            if not isinstance(self.data_schema, str):
+                raise TypeError("data_schema must be a string when present")
+            if not _ABSOLUTE_URI_PATTERN.fullmatch(self.data_schema):
+                raise ValueError("dataschema must be an absolute URI")
         if self.source.tenant_id != self.subject.tenant_id:
             raise ValueError("source and subject must belong to the same tenant")
+        if not isinstance(self.extensions, Mapping):
+            raise TypeError("extensions must be a mapping")
         frozen_extensions = _validate_and_freeze_extensions(self.extensions)
         tenant_extension = frozen_extensions.get("tenantid")
         if tenant_extension is not None and tenant_extension != self.source.tenant_id:
