@@ -10,8 +10,8 @@ from typing import Any
 
 _CWL_TIMESTAMP_PATTERN = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}[Tt]"
-    r"[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]+)?"
-    r"(?:[Zz]|[+-][0-9]{2}:[0-9]{2})$"
+    r"(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](?:\.[0-9]+)?"
+    r"(?:[Zz]|[+-](?:[01][0-9]|2[0-3]):[0-5][0-9])$"
 )
 _INTERVAL_FIELDS = frozenset(
     {"valid_from", "recorded_at", "valid_to", "superseded_at"}
