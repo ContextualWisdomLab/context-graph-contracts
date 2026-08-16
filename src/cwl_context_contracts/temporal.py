@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 _CWL_TIMESTAMP_PATTERN = re.compile(
@@ -53,8 +53,17 @@ def format_cwl_timestamp(
     field_name: str = "timestamp",
 ) -> str:
     """Serialize an aware instant to the canonical CWL timestamp profile."""
-    _require_aware(value, field_name)
-    return value.isoformat().replace("+00:00", "Z")
+    aware_value = _require_aware(value, field_name)
+    offset = aware_value.utcoffset()
+    assert offset is not None  # guaranteed by _require_aware
+    if offset % timedelta(minutes=1) != timedelta(0):
+        raise ValueError(f"{field_name} must use a whole-minute UTC offset")
+    serialized = aware_value.isoformat()
+    if offset == timedelta(0):
+        if not serialized.endswith("+00:00"):
+            raise ValueError(f"{field_name} could not be serialized canonically")
+        return f"{serialized[:-6]}Z"
+    return serialized
 
 
 # Pre-release compatibility aliases. The contract name is CWL Timestamp Profile v1.
