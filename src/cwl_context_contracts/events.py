@@ -124,8 +124,8 @@ class CloudEventEnvelope:
     extensions: Mapping[str, str] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        """Validate event identity, type, time, schema, data, and extensions."""
-        _validate_uuid7(self.event_id, "event_id")
+        """Validate and normalize event identity, time, data, and extensions."""
+        normalized_event_id = _validate_uuid7(self.event_id, "event_id")
         if not _EVENT_TYPE_PATTERN.fullmatch(self.event_type):
             raise ValueError("event_type does not follow the CWL reverse-DNS grammar")
         _require_aware(self.event_time, "event_time")
@@ -142,6 +142,7 @@ class CloudEventEnvelope:
         tenant_extension = frozen_extensions.get("tenantid")
         if tenant_extension is not None and tenant_extension != self.source.tenant_id:
             raise ValueError("tenantid extension must match the source tenant")
+        object.__setattr__(self, "event_id", normalized_event_id)
         object.__setattr__(self, "data", frozen_data)
         object.__setattr__(self, "extensions", frozen_extensions)
 
