@@ -10,7 +10,9 @@ Diez-Roux, A. V. (1998). Bringing context back into epidemiology: Variables and 
 
 Jensen, C. S., & Snodgrass, R. T. (1996). Semantics of time-varying information. *Information Systems, 21*(4), 311–352. https://doi.org/10.1016/0306-4379(96)00016-8
 
-JSON Schema. (2022, June 16). *JSON Schema: A media type for describing JSON documents* (Draft 2020-12). https://json-schema.org/draft/2020-12/json-schema-core
+JSON Schema. (2022a, June 16). *JSON Schema: A media type for describing JSON documents* (Draft 2020-12). https://json-schema.org/draft/2020-12/json-schema-core
+
+JSON Schema. (2022b, June 16). *JSON Schema validation: A vocabulary for structural validation of JSON* (Draft 2020-12). https://json-schema.org/draft/2020-12/json-schema-validation
 
 Klyne, G., & Newman, C. (2002). *Date and time on the Internet: Timestamps* (RFC 3339). RFC Editor. https://www.rfc-editor.org/rfc/rfc3339
 

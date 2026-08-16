@@ -82,6 +82,7 @@ jobs:
           required_suffixes = {
               "cwl_context_contracts/py.typed",
               "cwl_context_contracts/contracts/context-fabric.asyncapi.json",
+              "cwl_context_contracts/conformance/rfc3339-timestamp-profile.v1.json",
               "cwl_context_contracts/schemas/canonical-authority-uri.schema.json",
               "cwl_context_contracts/schemas/canonical-asset-uri.schema.json",
               "cwl_context_contracts/schemas/truth-status.schema.json",
@@ -119,12 +120,15 @@ jobs:
               CloudEventEnvelope,
               ContextAssertion,
               TruthStatus,
+              available_conformance_profile_names,
               available_contract_names,
               available_fixture_names,
               available_schema_names,
+              load_conformance_profile,
               load_contract,
               load_fixture,
               load_schema,
+              parse_rfc3339_timestamp,
           )
 
           assert TruthStatus.OBSERVED.value == "observed"
@@ -139,6 +143,24 @@ jobs:
           assert "servers" not in asyncapi
           assert "channels" not in asyncapi
           assert "operations" not in asyncapi
+
+          assert available_conformance_profile_names() == (
+              "rfc3339-timestamp-profile.v1.json",
+          )
+          timestamp_profile = load_conformance_profile(
+              "rfc3339-timestamp-profile.v1.json"
+          )
+          for timestamp_value in timestamp_profile["valid_values"]:
+              parse_rfc3339_timestamp(timestamp_value)
+          for timestamp_value in timestamp_profile["invalid_values"]:
+              try:
+                  parse_rfc3339_timestamp(timestamp_value)
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError(
+                      f"negative timestamp vector unexpectedly parsed: {timestamp_value}"
+                  )
 
           assert available_fixture_names() == (
               "valid-event.json",

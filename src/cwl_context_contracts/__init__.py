@@ -1,6 +1,10 @@
 """Public contracts for the ContextualWisdomLab Context Fabric."""
 
 from .assertion import ContextAssertion, ContextMembership
+from .conformance import (
+    available_conformance_profile_names,
+    load_conformance_profile,
+)
 from .contracts import available_contract_names, load_contract
 from .events import CloudEventEnvelope
 from .fixtures import available_fixture_names, load_fixture
@@ -29,10 +33,12 @@ __all__ = [
     "ContextMembership",
     "ProvenanceReference",
     "TruthStatus",
+    "available_conformance_profile_names",
     "available_contract_names",
     "available_fixture_names",
     "available_schema_names",
     "format_rfc3339_timestamp",
+    "load_conformance_profile",
     "load_contract",
     "load_fixture",
     "load_schema",
