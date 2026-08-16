@@ -9,6 +9,7 @@ from typing import Any
 _PROFILE_NAMES = (
     "cwl-timestamp-profile.v1.json",
     "context-assertion-semantics.v1.json",
+    "cloudevent-semantics.v1.json",
     "cwl-json-interoperability.v1.json",
 )
 
