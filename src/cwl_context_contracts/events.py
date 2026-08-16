@@ -89,6 +89,21 @@ def _validate_and_freeze_json_value(
     raise TypeError(f"value at {path} is not JSON-compatible")
 
 
+def _snapshot_event_mapping(value: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Capture one coherent top-level structured-event traversal."""
+    frozen_items: dict[str, Any] = {}
+    top_level_ancestors = frozenset({id(value)})
+    for key, item in value.items():
+        if not isinstance(key, str):
+            raise TypeError("CloudEvents attribute names must be strings")
+        frozen_items[key] = _validate_and_freeze_json_value(
+            item,
+            f"$.{key}",
+            ancestors=top_level_ancestors,
+        )
+    return MappingProxyType(frozen_items)
+
+
 def _validate_and_freeze_extensions(value: Mapping[str, str]) -> Mapping[str, str]:
     """Validate extension attributes while snapshotting the same traversal."""
     frozen_items: dict[str, str] = {}
@@ -175,7 +190,8 @@ class CloudEventEnvelope:
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> CloudEventEnvelope:
-        """Parse a CloudEvents structured JSON mapping."""
+        """Parse one coherent snapshot of a CloudEvents structured mapping."""
+        snapshot = _snapshot_event_mapping(value)
         required = {
             "specversion",
             "id",
@@ -186,23 +202,23 @@ class CloudEventEnvelope:
             "datacontenttype",
             "data",
         }
-        missing = required - value.keys()
+        missing = required - snapshot.keys()
         if missing:
             raise ValueError(f"missing required attributes: {sorted(missing)!r}")
-        specversion = _require_string(value["specversion"], "specversion")
+        specversion = _require_string(snapshot["specversion"], "specversion")
         if specversion != "1.0":
             raise ValueError("specversion must be 1.0")
         content_type = _require_string(
-            value["datacontenttype"],
+            snapshot["datacontenttype"],
             "datacontenttype",
         )
         if content_type != "application/json":
             raise ValueError("datacontenttype must be application/json")
-        event_id_text = _require_string(value["id"], "id")
-        source_text = _require_string(value["source"], "source")
-        event_type = _require_string(value["type"], "type")
-        subject_text = _require_string(value["subject"], "subject")
-        time_text = _require_string(value["time"], "time")
+        event_id_text = _require_string(snapshot["id"], "id")
+        source_text = _require_string(snapshot["source"], "source")
+        event_type = _require_string(snapshot["type"], "type")
+        subject_text = _require_string(snapshot["subject"], "subject")
+        time_text = _require_string(snapshot["time"], "time")
         try:
             event_id = _validate_uuid7(event_id_text, "event_id")
             event_time = datetime.fromisoformat(time_text.replace("Z", "+00:00"))
@@ -210,13 +226,12 @@ class CloudEventEnvelope:
             if "UUIDv7" in str(exc) or "RFC 9562" in str(exc):
                 raise
             raise ValueError("id or time is not parseable") from exc
-        extensions: dict[str, Any] = {}
-        for key, item in value.items():
-            if not isinstance(key, str):
-                raise TypeError("CloudEvents attribute names must be strings")
-            if key not in _RESERVED_NAMES:
-                extensions[key] = item
-        raw_data_schema = value.get("dataschema")
+        extensions = {
+            key: item
+            for key, item in snapshot.items()
+            if key not in _RESERVED_NAMES
+        }
+        raw_data_schema = snapshot.get("dataschema")
         data_schema = (
             None
             if raw_data_schema is None
@@ -228,7 +243,7 @@ class CloudEventEnvelope:
             event_type=event_type,
             subject=CanonicalAssetUri.parse(subject_text),
             event_time=event_time,
-            data=value["data"],
+            data=snapshot["data"],
             data_schema=data_schema,
             extensions=extensions,
         )
