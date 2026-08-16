@@ -6,7 +6,7 @@
 
 **Architecture:** JSON Schema resources define the language-neutral wire format. A dependency-free Python package implements the same invariants and provides executable conformance fixtures.
 
-**Tech Stack:** Python 3.11-3.13, JSON Schema Draft 2020-12, CloudEvents 1.0.2, pytest, coverage.py, uv.
+**Tech Stack:** Python 3.11-3.14, JSON Schema Draft 2020-12, CloudEvents 1.0.2, pytest, coverage.py, uv.
 
 ## Global Constraints
 
@@ -51,3 +51,12 @@
 - [x] Document authority, truth, time, and compatibility boundaries.
 - [x] Pin GitHub Actions by immutable SHA.
 - [x] Run final validation and open a draft PR.
+
+### Task 5: Typed assertion and lock reproducibility
+
+**Files:** `assertion.py`, interval/provenance mappings, schemas, fixtures, lockfile.
+
+- [x] Add context-assertion and membership contracts with consumer-shaped tests.
+- [x] Add interval and provenance wire mappings plus RFC 3339 helpers.
+- [x] Commit `uv.lock` and switch CI to `uv lock --check`.
+- [x] Trace RFC 3339, bitemporal, PROV-DM, RDF, and multilevel-membership sources.

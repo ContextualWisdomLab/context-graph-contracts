@@ -15,6 +15,7 @@ other SDKs, but all SDKs must pass the same fixture corpus.
 ## Scope
 
 This foundation includes canonical URI, truth status, bitemporal interval,
-provenance reference, CloudEvents envelope, fixtures, CI, doctoring, and ADRs.
+provenance reference, CloudEvents envelope, context assertion, multilevel
+membership, fixtures, CI, doctoring, and ADRs.
 It excludes graph storage, product UIs, provider adapters, and generated
 TypeScript/Rust SDKs, which are separate review units.

@@ -1,0 +1,21 @@
+{
+  "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb701",
+  "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+  "predicate": "derived_from",
+  "object": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb703",
+  "truth_status": "authoritative",
+  "interval": {
+    "valid_from": "2026-01-15T09:00:00Z",
+    "recorded_at": "2026-01-15T09:05:00Z",
+    "valid_to": null,
+    "superseded_at": null
+  },
+  "provenance": null,
+  "memberships": [
+    {
+      "context_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+      "membership_level": 0,
+      "parent_context_ref": null
+    }
+  ]
+}

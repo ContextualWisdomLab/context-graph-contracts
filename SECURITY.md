@@ -21,6 +21,13 @@ default branch.
   identity, not trustworthiness or authorization.
 - Schema validation does not authorize an event. Consumers must still verify
   issuer, tenant, purpose, and signature according to their own policy.
+- Interchange metadata uses opaque asset URIs. Do not put credentials, DSNs,
+  raw personal data, or source payloads in envelopes or assertion bodies.
+- Masking personal data in a system of record is not a substitute for access
+  control, purpose limitation, and audit. This contract layer therefore does
+  not mask producer data; it keeps personal data in the owning product and
+  exchanges references. That is the SOC 2 CC6 / CSAP-aligned alternative to
+  envelope-level masking that would break downstream work.
 
 Report vulnerabilities privately to the organization maintainers rather than
 opening a public issue.

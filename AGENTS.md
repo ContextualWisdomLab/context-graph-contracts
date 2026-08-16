@@ -3,9 +3,11 @@
 ## Authority boundary
 
 - This repository defines interchange contracts; it must not become a runtime
-  catalog, graph database, or enterprise-architecture system of record.
+ catalog, graph database, or enterprise-architecture system of record.
+- Typed context assertions are interchange facts. They are not rows in a shared
+ graph store and they must carry at least one context membership.
 - Never promote `observed`, `inferred`, or `proposed` assertions to
-  `authoritative` inside a parser or adapter.
+ `authoritative` inside a parser or adapter.
 - Contract changes are backward-compatible by default. Breaking changes require
   a new schema identifier and a major version.
 

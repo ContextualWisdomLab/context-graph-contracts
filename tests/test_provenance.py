@@ -34,3 +34,28 @@ def test_provenance_reference_rejects_invalid_locator(asset_uri, locator: str) -
 
     with pytest.raises(ValueError, match="source_locator"):
         ProvenanceReference(asset_uri, "a" * 64, locator)
+
+
+def test_provenance_mapping_round_trips_optional_locator(asset_uri) -> None:
+    """JSON mappings preserve digest-only and locator-bearing evidence refs."""
+    with_locator = ProvenanceReference(asset_uri, "a" * 64, "$.rows[0]")
+    digest_only = ProvenanceReference(asset_uri, "b" * 64)
+    assert ProvenanceReference.from_mapping(with_locator.to_mapping()) == with_locator
+    assert ProvenanceReference.from_mapping(digest_only.to_mapping()) == digest_only
+
+
+def test_provenance_mapping_rejects_hostile_or_incomplete_input() -> None:
+    """Provenance parsers snapshot once and fail closed."""
+    with pytest.raises(TypeError, match="mapping"):
+        ProvenanceReference.from_mapping([])  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="unknown provenance fields"):
+        ProvenanceReference.from_mapping(
+            {
+                "evidence_ref": "urn:cwl:tenant_001:ea_core:application_record:"
+                "0195d145-64e8-7f4f-8a23-a0cc784cb711",
+                "sha256": "a" * 64,
+                "extra": "no",
+            }
+        )
+    with pytest.raises(ValueError, match="requires evidence_ref"):
+        ProvenanceReference.from_mapping({"sha256": "a" * 64})

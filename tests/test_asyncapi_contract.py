@@ -28,6 +28,11 @@ def test_packaged_asyncapi_contract_is_provider_neutral() -> None:
             )
         },
     }
+    assertion_message = document["components"]["messages"]["ContextAssertionEvent"]
+    assert assertion_message["payload"]["schema"]["$ref"] == (
+        "https://schemas.contextualwisdomlab.org/context/"
+        "context-assertion.v1.schema.json"
+    )
 
 
 def test_unknown_asyncapi_contract_is_rejected() -> None:

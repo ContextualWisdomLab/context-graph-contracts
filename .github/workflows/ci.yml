@@ -31,7 +31,7 @@ jobs:
         with:
           version: "0.11.32"
           enable-cache: false
-      - run: uv lock
+      - run: uv lock --check
       - run: uv sync --frozen --extra dev --python "${{ matrix.python-version }}"
       - run: >-
           uv run --frozen --extra dev --python "${{ matrix.python-version }}"
@@ -60,7 +60,7 @@ jobs:
         with:
           version: "0.11.32"
           enable-cache: false
-      - run: uv lock
+      - run: uv lock --check
       - name: Capture dependency lock for source commit
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -82,14 +82,21 @@ jobs:
           required_suffixes = {
               "cwl_context_contracts/py.typed",
               "cwl_context_contracts/contracts/context-fabric.asyncapi.json",
+              "cwl_context_contracts/conformance/cwl-timestamp-profile.v1.json",
+              "cwl_context_contracts/conformance/context-assertion-semantics.v1.json",
+              "cwl_context_contracts/conformance/cwl-json-interoperability.v1.json",
               "cwl_context_contracts/schemas/canonical-authority-uri.schema.json",
               "cwl_context_contracts/schemas/canonical-asset-uri.schema.json",
               "cwl_context_contracts/schemas/truth-status.schema.json",
               "cwl_context_contracts/schemas/bitemporal-interval.schema.json",
               "cwl_context_contracts/schemas/provenance-reference.schema.json",
               "cwl_context_contracts/schemas/cloudevent-envelope.schema.json",
+              "cwl_context_contracts/schemas/context-membership.schema.json",
+              "cwl_context_contracts/schemas/context-assertion.schema.json",
               "cwl_context_contracts/fixtures/valid-event.json",
               "cwl_context_contracts/fixtures/invalid-event.json",
+              "cwl_context_contracts/fixtures/valid-assertion.json",
+              "cwl_context_contracts/fixtures/invalid-assertion.json",
           }
 
           with zipfile.ZipFile(wheel_path) as wheel_file:
@@ -113,13 +120,17 @@ jobs:
           .package-smoke/bin/python - <<'PY'
           from cwl_context_contracts import (
               CloudEventEnvelope,
+              ContextAssertion,
               TruthStatus,
+              available_conformance_profile_names,
               available_contract_names,
               available_fixture_names,
               available_schema_names,
+              load_conformance_profile,
               load_contract,
               load_fixture,
               load_schema,
+              parse_cwl_timestamp,
           )
 
           assert TruthStatus.OBSERVED.value == "observed"
@@ -135,7 +146,45 @@ jobs:
           assert "channels" not in asyncapi
           assert "operations" not in asyncapi
 
-          assert available_fixture_names() == ("valid-event.json", "invalid-event.json")
+          assert available_conformance_profile_names() == (
+              "cwl-timestamp-profile.v1.json",
+              "context-assertion-semantics.v1.json",
+              "cwl-json-interoperability.v1.json",
+          )
+          timestamp_profile = load_conformance_profile(
+              "cwl-timestamp-profile.v1.json"
+          )
+          for timestamp_value in timestamp_profile["valid_values"]:
+              parse_cwl_timestamp(timestamp_value)
+          for timestamp_value in timestamp_profile["invalid_values"]:
+              try:
+                  parse_cwl_timestamp(timestamp_value)
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError(
+                      f"negative timestamp vector unexpectedly parsed: {timestamp_value}"
+                  )
+
+          assertion_profile = load_conformance_profile(
+              "context-assertion-semantics.v1.json"
+          )
+          for vector in assertion_profile["invalid_vectors"]:
+              try:
+                  ContextAssertion.from_mapping(vector["value"])
+              except ValueError as exc:
+                  assert vector["error_pattern"] in str(exc)
+              else:
+                  raise AssertionError(
+                      f"negative assertion vector unexpectedly parsed: {vector['case_id']}"
+                  )
+
+          assert available_fixture_names() == (
+              "valid-event.json",
+              "invalid-event.json",
+              "valid-assertion.json",
+              "invalid-assertion.json",
+          )
           valid_event = load_fixture("valid-event.json")
           invalid_event = load_fixture("invalid-event.json")
           assert CloudEventEnvelope.from_mapping(valid_event).to_mapping() == valid_event
@@ -145,4 +194,43 @@ jobs:
               assert "UUIDv7" in str(exc) or "RFC 9562" in str(exc)
           else:
               raise AssertionError("negative conformance fixture unexpectedly parsed")
+
+          json_profile = load_conformance_profile(
+              "cwl-json-interoperability.v1.json"
+          )
+          for integer_value in json_profile["valid_integer_values"]:
+              event_mapping = {
+                  **valid_event,
+                  "data": {"nested": [{"count": integer_value}]},
+              }
+              assert (
+                  CloudEventEnvelope.from_mapping(event_mapping)
+                  .to_mapping()["data"]["nested"][0]["count"]
+                  == integer_value
+              )
+          for integer_value in json_profile["invalid_integer_values"]:
+              event_mapping = {
+                  **valid_event,
+                  "data": {"nested": [{"count": integer_value}]},
+              }
+              try:
+                  CloudEventEnvelope.from_mapping(event_mapping)
+              except ValueError as exc:
+                  assert "exact interoperable range" in str(exc)
+              else:
+                  raise AssertionError(
+                      f"out-of-range integer unexpectedly parsed: {integer_value}"
+                  )
+
+          valid_assertion = load_fixture("valid-assertion.json")
+          invalid_assertion = load_fixture("invalid-assertion.json")
+          assert ContextAssertion.from_mapping(valid_assertion).to_mapping() == (
+              valid_assertion
+          )
+          try:
+              ContextAssertion.from_mapping(invalid_assertion)
+          except ValueError as exc:
+              assert "provenance" in str(exc)
+          else:
+              raise AssertionError("negative assertion fixture unexpectedly parsed")
           PY
