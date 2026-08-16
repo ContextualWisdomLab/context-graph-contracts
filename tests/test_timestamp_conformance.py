@@ -1,5 +1,7 @@
 """Portable timestamp conformance contract tests."""
 
+from datetime import UTC, datetime, timedelta, timezone
+
 import pytest
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
@@ -7,6 +9,7 @@ from referencing import Registry, Resource
 from cwl_context_contracts import (
     available_conformance_profile_names,
     available_schema_names,
+    format_cwl_timestamp,
     load_conformance_profile,
     load_schema,
     parse_cwl_timestamp,
@@ -49,6 +52,38 @@ def test_packaged_timestamp_profile_is_executable() -> None:
     for value in profile["invalid_values"]:
         with pytest.raises(ValueError, match="CWL timestamp profile"):
             parse_cwl_timestamp(value)
+
+
+@pytest.mark.parametrize("offset_seconds", [30, -30])
+def test_formatter_fails_closed_for_sub_minute_offsets(offset_seconds: int) -> None:
+    """The formatter must never emit Python-only offset-second wire syntax."""
+    value = datetime(
+        2026,
+        8,
+        16,
+        12,
+        0,
+        tzinfo=timezone(timedelta(seconds=offset_seconds)),
+    )
+
+    with pytest.raises(ValueError, match="whole-minute UTC offset"):
+        format_cwl_timestamp(value)
+
+
+@pytest.mark.parametrize(
+    "zone",
+    [UTC, timezone(timedelta(hours=9)), timezone(-timedelta(hours=3, minutes=30))],
+)
+def test_formatter_output_round_trips_through_profile_parser(zone) -> None:
+    """Every emitted timestamp is accepted and preserves the represented instant."""
+    value = datetime(2026, 8, 16, 12, 0, 0, 123456, tzinfo=zone)
+
+    serialized = format_cwl_timestamp(value)
+    parsed = parse_cwl_timestamp(serialized)
+
+    assert parsed == value
+    assert parsed.timestamp() == value.timestamp()
+    assert (serialized.endswith("Z")) is (value.utcoffset() == timedelta(0))
 
 
 def test_unknown_conformance_profile_fails_closed() -> None:
