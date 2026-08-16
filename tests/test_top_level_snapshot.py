@@ -69,3 +69,22 @@ def test_from_mapping_uses_one_coherent_top_level_snapshot(
     assert parsed.to_mapping()["data"] == {"safe": True}
     assert parsed.to_mapping()["correlationid"] == "original"
     assert changing.items_calls == 1
+
+
+def test_from_mapping_round_trips_nested_json_arrays(
+    authority_uri,
+    asset_uri,
+) -> None:
+    """Internal snapshots preserve wire arrays without accepting Python tuples."""
+    original = CloudEventEnvelope(
+        event_id="0198b84f-d6ce-7b60-8f8c-74eab2d62412",  # type: ignore[arg-type]
+        source=authority_uri,
+        event_type="org.contextualwisdomlab.ea.lifecycle.changed.v1",
+        subject=asset_uri,
+        event_time=datetime(2026, 8, 16, tzinfo=UTC),
+        data={"items": [1, {"nested": [True, None]}]},
+    )
+
+    parsed = CloudEventEnvelope.from_mapping(original.to_mapping())
+
+    assert parsed.to_mapping() == original.to_mapping()
