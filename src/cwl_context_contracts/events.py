@@ -110,6 +110,18 @@ def _thaw_json_value(value: Any) -> Any:
     return value
 
 
+def _hashable_json_value(value: Any) -> Any:
+    """Convert frozen JSON state into an order-stable hashable structure."""
+    if isinstance(value, Mapping):
+        return tuple(
+            (key, _hashable_json_value(item))
+            for key, item in sorted(value.items())
+        )
+    if isinstance(value, tuple):
+        return tuple(_hashable_json_value(item) for item in value)
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class CloudEventEnvelope:
     """Validated CloudEvents 1.0.2 JSON event used between CWL services."""
@@ -145,6 +157,21 @@ class CloudEventEnvelope:
         object.__setattr__(self, "event_id", normalized_event_id)
         object.__setattr__(self, "data", frozen_data)
         object.__setattr__(self, "extensions", frozen_extensions)
+
+    def __hash__(self) -> int:
+        """Hash semantic event content independently of mapping insertion order."""
+        return hash(
+            (
+                self.event_id,
+                self.source,
+                self.event_type,
+                self.subject,
+                self.event_time,
+                _hashable_json_value(self.data),
+                self.data_schema,
+                tuple(sorted(self.extensions.items())),
+            )
+        )
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> CloudEventEnvelope:
