@@ -2,6 +2,8 @@
 
 AsyncAPI Initiative. (2026, January 31). *AsyncAPI specification* (Version 3.1.0). https://www.asyncapi.com/docs/reference/specification/v3.1.0
 
+Berners-Lee, T., Fielding, R., & Masinter, L. (2005). *Uniform resource identifier (URI): Generic syntax* (RFC 3986). RFC Editor. https://www.rfc-editor.org/rfc/rfc3986
+
 Bray, T. (2017). *The JavaScript Object Notation (JSON) data interchange format* (RFC 8259). RFC Editor. https://www.rfc-editor.org/rfc/rfc8259
 
 Cloud Native Computing Foundation. (2022). *CloudEvents specification* (Version 1.0.2). https://github.com/cloudevents/spec/tree/v1.0.2
