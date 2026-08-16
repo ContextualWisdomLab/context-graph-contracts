@@ -7,6 +7,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
+from types import MappingProxyType
 from typing import Any
 from uuid import UUID
 
@@ -86,6 +87,26 @@ def _validate_json_value(
     raise TypeError(f"value at {path} is not JSON-compatible")
 
 
+def _freeze_json_value(value: Any) -> Any:
+    """Detach validated JSON state into recursively immutable containers."""
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {key: _freeze_json_value(item) for key, item in value.items()}
+        )
+    if isinstance(value, list):
+        return tuple(_freeze_json_value(item) for item in value)
+    return value
+
+
+def _thaw_json_value(value: Any) -> Any:
+    """Return a fresh JSON-native graph from immutable event state."""
+    if isinstance(value, Mapping):
+        return {key: _thaw_json_value(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_thaw_json_value(item) for item in value]
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class CloudEventEnvelope:
     """Validated CloudEvents 1.0.2 JSON event used between CWL services."""
@@ -122,6 +143,8 @@ class CloudEventEnvelope:
         tenant_extension = self.extensions.get("tenantid")
         if tenant_extension is not None and tenant_extension != self.source.tenant_id:
             raise ValueError("tenantid extension must match the source tenant")
+        object.__setattr__(self, "data", _freeze_json_value(self.data))
+        object.__setattr__(self, "extensions", MappingProxyType(dict(self.extensions)))
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> CloudEventEnvelope:
@@ -193,7 +216,7 @@ class CloudEventEnvelope:
             "subject": str(self.subject),
             "time": self.event_time.isoformat().replace("+00:00", "Z"),
             "datacontenttype": "application/json",
-            "data": dict(self.data),
+            "data": _thaw_json_value(self.data),
         }
         if self.data_schema is not None:
             result["dataschema"] = self.data_schema
