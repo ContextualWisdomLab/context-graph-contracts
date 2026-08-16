@@ -83,6 +83,8 @@ jobs:
               "cwl_context_contracts/py.typed",
               "cwl_context_contracts/contracts/context-fabric.asyncapi.json",
               "cwl_context_contracts/conformance/cwl-timestamp-profile.v1.json",
+              "cwl_context_contracts/conformance/context-assertion-semantics.v1.json",
+              "cwl_context_contracts/conformance/cwl-json-interoperability.v1.json",
               "cwl_context_contracts/schemas/canonical-authority-uri.schema.json",
               "cwl_context_contracts/schemas/canonical-asset-uri.schema.json",
               "cwl_context_contracts/schemas/truth-status.schema.json",
@@ -146,6 +148,8 @@ jobs:
 
           assert available_conformance_profile_names() == (
               "cwl-timestamp-profile.v1.json",
+              "context-assertion-semantics.v1.json",
+              "cwl-json-interoperability.v1.json",
           )
           timestamp_profile = load_conformance_profile(
               "cwl-timestamp-profile.v1.json"
@@ -160,6 +164,19 @@ jobs:
               else:
                   raise AssertionError(
                       f"negative timestamp vector unexpectedly parsed: {timestamp_value}"
+                  )
+
+          assertion_profile = load_conformance_profile(
+              "context-assertion-semantics.v1.json"
+          )
+          for vector in assertion_profile["invalid_vectors"]:
+              try:
+                  ContextAssertion.from_mapping(vector["value"])
+              except ValueError as exc:
+                  assert vector["error_pattern"] in str(exc)
+              else:
+                  raise AssertionError(
+                      f"negative assertion vector unexpectedly parsed: {vector['case_id']}"
                   )
 
           assert available_fixture_names() == (
@@ -177,6 +194,34 @@ jobs:
               assert "UUIDv7" in str(exc) or "RFC 9562" in str(exc)
           else:
               raise AssertionError("negative conformance fixture unexpectedly parsed")
+
+          json_profile = load_conformance_profile(
+              "cwl-json-interoperability.v1.json"
+          )
+          for integer_value in json_profile["valid_integer_values"]:
+              event_mapping = {
+                  **valid_event,
+                  "data": {"nested": [{"count": integer_value}]},
+              }
+              assert (
+                  CloudEventEnvelope.from_mapping(event_mapping)
+                  .to_mapping()["data"]["nested"][0]["count"]
+                  == integer_value
+              )
+          for integer_value in json_profile["invalid_integer_values"]:
+              event_mapping = {
+                  **valid_event,
+                  "data": {"nested": [{"count": integer_value}]},
+              }
+              try:
+                  CloudEventEnvelope.from_mapping(event_mapping)
+              except ValueError as exc:
+                  assert "exact interoperable range" in str(exc)
+              else:
+                  raise AssertionError(
+                      f"out-of-range integer unexpectedly parsed: {integer_value}"
+                  )
+
           valid_assertion = load_fixture("valid-assertion.json")
           invalid_assertion = load_fixture("invalid-assertion.json")
           assert ContextAssertion.from_mapping(valid_assertion).to_mapping() == (
