@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling==1.27.0"]
+requires = ["hatchling==1.31.0"]
 build-backend = "hatchling.build"
 
 [project]
@@ -24,11 +24,14 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = [
-  "coverage==7.13.3",
+  "coverage==7.15.2",
   "jsonschema==4.26.0",
-  "pytest==9.0.2",
-  "ruff==0.13.2",
+  "pytest==9.1.1",
+  "ruff==0.16.0",
 ]
+
+[tool.uv]
+required-version = "==0.11.32"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cwl_context_contracts"]
