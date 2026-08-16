@@ -13,7 +13,7 @@ def test_contributing_python_matrix_matches_project_metadata() -> None:
         if value.startswith("Programming Language :: Python :: 3.")
     ]
     expected = (
-        "The reference package is tested on "
+        "The reference package is tested on Python "
         + ", ".join(versions[:-1])
         + f", and {versions[-1]}"
     )
