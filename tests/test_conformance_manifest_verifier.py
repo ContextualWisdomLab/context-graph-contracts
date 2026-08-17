@@ -271,3 +271,38 @@ def test_verifier_cli_rejects_non_object_json(tmp_path, capsys) -> None:
     assert exit_code == 2
     assert payload["verified"] is False
     assert payload["error"] == "approved_manifest_invalid_shape"
+
+
+def test_verifier_cli_rejects_duplicate_json_keys(tmp_path, capsys) -> None:
+    """Ambiguous duplicate keys cannot become independently approved evidence."""
+    manifest_text = json.dumps(_approved_manifest(), separators=(",", ":"))
+    expected = '"manifest_format":"cwl-context-conformance-manifest/v1"'
+    ambiguous = manifest_text.replace(
+        expected,
+        '"manifest_format":"untrusted",' + expected,
+        1,
+    )
+    approved_path = tmp_path / "duplicate.json"
+    approved_path.write_text(ambiguous, encoding="utf-8")
+
+    exit_code = verifier_module.main([str(approved_path)])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 2
+    assert payload["verified"] is False
+    assert payload["error"] == "approved_manifest_invalid_json"
+
+
+def test_verifier_cli_rejects_nonstandard_json_constants(tmp_path, capsys) -> None:
+    """NaN and Infinity extensions cannot pass as RFC 8259 JSON evidence."""
+    manifest_text = json.dumps(_approved_manifest(), separators=(",", ":"))
+    nonstandard = manifest_text[:-1] + ',"untrusted":NaN}'
+    approved_path = tmp_path / "nan.json"
+    approved_path.write_text(nonstandard, encoding="utf-8")
+
+    exit_code = verifier_module.main([str(approved_path)])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 2
+    assert payload["verified"] is False
+    assert payload["error"] == "approved_manifest_invalid_json"
