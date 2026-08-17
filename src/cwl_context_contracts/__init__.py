@@ -6,13 +6,19 @@ from .conformance import (
     conformance_profile_sha256,
     load_conformance_profile,
 )
+from .conformance_admission import (
+    ConformanceAdmissionReport,
+    evaluate_packaged_conformance_admission,
+)
 from .conformance_manifest import (
     ConformanceEvidenceManifest,
     ConformanceProfileEvidence,
     build_packaged_conformance_manifest,
 )
 from .conformance_manifest_verifier import (
+    ApprovedManifestInputError,
     ConformanceManifestVerification,
+    load_approved_conformance_manifest,
     verify_packaged_conformance_manifest,
 )
 from .conformance_runner import (
@@ -44,10 +50,12 @@ from .truth import (
 )
 
 __all__ = [
+    "ApprovedManifestInputError",
     "BitemporalInterval",
     "CanonicalAssetUri",
     "CanonicalAuthorityUri",
     "CloudEventEnvelope",
+    "ConformanceAdmissionReport",
     "ConformanceError",
     "ConformanceEvidenceManifest",
     "ConformanceFailure",
@@ -65,8 +73,10 @@ __all__ = [
     "available_schema_names",
     "build_packaged_conformance_manifest",
     "conformance_profile_sha256",
+    "evaluate_packaged_conformance_admission",
     "format_cwl_timestamp",
     "format_rfc3339_timestamp",
+    "load_approved_conformance_manifest",
     "load_conformance_profile",
     "load_contract",
     "load_fixture",
