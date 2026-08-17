@@ -76,6 +76,24 @@ The Python reference package exposes `load_schema()`, `load_contract()`,
 `ContextAssertion`, and packaged conformance profiles and fixtures. These
 artifacts do not grant a consumer authority to mutate another product's store.
 
+## Verify an installed package
+
+Run the exact semantic vectors shipped inside the installed package before
+accepting it as a compatible Context Fabric contract implementation:
+
+```console
+$ cwl-context-conformance
+{"case_count": 31, "failures": [], "profile_count": 4, "status": "pass"}
+```
+
+The command exits non-zero and identifies the exact profile/case when a vector
+is accepted, rejected, or canonicalized differently from the published
+contract. Python callers can use `run_packaged_conformance()` for evidence or
+`assert_packaged_conformance()` for a fail-closed gate. This verifies the
+installed reference SDK and its packaged semantic resources; it does not grant
+runtime authority or prove another implementation conformant unless that
+implementation executes equivalent vectors itself.
+
 ## Who consumes these contracts
 
 `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`,
