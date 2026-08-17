@@ -4,11 +4,15 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from importlib.metadata import version
 
 from .conformance import (
     available_conformance_profile_names,
     conformance_profile_sha256,
 )
+
+_MANIFEST_FORMAT = "cwl-context-conformance-manifest/v1"
+_DISTRIBUTION_NAME = "cwl-context-contracts"
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,8 +32,10 @@ class ConformanceProfileEvidence:
 
 @dataclass(frozen=True, slots=True)
 class ConformanceEvidenceManifest:
-    """Artifact-local integrity evidence for every packaged semantic profile."""
+    """Version-bound artifact integrity evidence for packaged semantic profiles."""
 
+    distribution_name: str
+    distribution_version: str
     profiles: tuple[ConformanceProfileEvidence, ...]
 
     @property
@@ -40,6 +46,9 @@ class ConformanceEvidenceManifest:
     def to_mapping(self) -> dict[str, object]:
         """Return a stable machine-readable manifest for evidence capture."""
         return {
+            "manifest_format": _MANIFEST_FORMAT,
+            "distribution_name": self.distribution_name,
+            "distribution_version": self.distribution_version,
             "algorithm": "sha256",
             "profile_count": self.profile_count,
             "profiles": [profile.to_mapping() for profile in self.profiles],
@@ -47,15 +56,17 @@ class ConformanceEvidenceManifest:
 
 
 def build_packaged_conformance_manifest() -> ConformanceEvidenceManifest:
-    """Build integrity evidence from the exact profile bytes in this installation."""
+    """Build version-bound integrity evidence from this installed distribution."""
     return ConformanceEvidenceManifest(
+        distribution_name=_DISTRIBUTION_NAME,
+        distribution_version=version(_DISTRIBUTION_NAME),
         profiles=tuple(
             ConformanceProfileEvidence(
                 profile_name=profile_name,
                 sha256=conformance_profile_sha256(profile_name),
             )
             for profile_name in available_conformance_profile_names()
-        )
+        ),
     )
 
 
