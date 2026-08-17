@@ -102,6 +102,24 @@ def test_receipt_cli_emits_machine_readable_evidence(tmp_path, capsys) -> None:
     assert captured.err == ""
 
 
+def test_receipt_cli_returns_exit_one_for_manifest_drift(tmp_path, capsys) -> None:
+    """Automation receives exit one and a new receipt when approved evidence drifts."""
+    approved = _approved_manifest()
+    approved["distribution_version"] = "999.0.0"
+    approved_path = tmp_path / "approved.json"
+    approved_path.write_text(json.dumps(approved), encoding="utf-8")
+
+    exit_code = receipt_module.main([str(approved_path)])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert payload["admitted"] is False
+    assert len(payload["approved_manifest_canonical_sha256"]) == 64
+    assert payload["next_action"] == (
+        "install the approved contract package or approve this exact manifest"
+    )
+
+
 def test_receipt_cli_reuses_fail_closed_manifest_input_boundary(
     tmp_path, capsys
 ) -> None:
