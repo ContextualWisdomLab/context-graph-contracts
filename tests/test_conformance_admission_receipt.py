@@ -34,6 +34,8 @@ def test_receipt_binds_admission_and_approved_manifest_semantics() -> None:
     assert payload["receipt_format"] == (
         "cwl-context-conformance-admission-receipt/v1"
     )
+    assert payload["canonicalization"] == "RFC8785"
+    assert payload["digest_algorithm"] == "sha256"
     assert payload["admitted"] is True
     assert payload["installed_distribution_name"] == "cwl-context-contracts"
     assert payload["approved_manifest_canonical_sha256"] == (
