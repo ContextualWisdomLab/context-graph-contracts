@@ -7,11 +7,11 @@ import json
 from importlib.metadata import version
 from importlib.resources import files
 
+from cwl_context_contracts.conformance import available_conformance_profile_names
 from cwl_context_contracts.contract_bundle_manifest import (
     build_packaged_contract_bundle_manifest,
     main,
 )
-from cwl_context_contracts.conformance import available_conformance_profile_names
 from cwl_context_contracts.contracts import available_contract_names
 from cwl_context_contracts.fixtures import available_fixture_names
 from cwl_context_contracts.schemas import available_schema_names
