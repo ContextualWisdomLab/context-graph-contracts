@@ -10,6 +10,9 @@ All notable changes to this project are documented in this file.
   `CONTRIBUTING.md`.
 - ADRs 0001–0005 now include Context, Decision, Consequences, and APA 7th
   references for the standards this product already claims.
+- Approved conformance-manifest verification now reads at most 1 MiB plus one
+  sentinel byte before UTF-8/JSON parsing and fails closed with
+  `approved_manifest_too_large` for oversized untrusted input.
 
 ### Added
 
