@@ -150,17 +150,23 @@ admission payload into its own private format:
 
 ```console
 $ cwl-context-conformance-receipt approved-conformance-manifest.json
-{"admission_evidence_sha256":"...","admitted":true,"approved_manifest_canonical_sha256":"...","canonicalization":"RFC8785","digest_algorithm":"sha256","installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","next_action":"verify artifact provenance and runtime authorization before enabling the integration","receipt_format":"cwl-context-conformance-admission-receipt/v1"}
+{"admission_evidence_sha256":"...","admitted":true,"approved_manifest_canonical_sha256":"...","canonicalization":"RFC8785","digest_algorithm":"sha256","installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","manifest_normalization":"profile_name_ascending","next_action":"verify artifact provenance and runtime authorization before enabling the integration","receipt_format":"cwl-context-conformance-admission-receipt/v1"}
 ```
 
-The receipt binds two deterministic identities: RFC 8785 canonical JSON for the
-approved manifest and for the complete admission evidence mapping, each digested
-with SHA-256. JSON member order does not change those digests. The receipt input
-is deliberately narrower than arbitrary JSON: unknown manifest/profile members,
-non-string identity fields, non-list profiles, non-object profile entries,
-non-exact-range profile counts, and unpaired Unicode surrogates fail closed
-instead of acquiring undocumented digest semantics. A published canonical
-digest vector lets another SDK reproduce the same evidence identity.
+The receipt binds two deterministic identities. For the approved-manifest
+identity it first normalizes the verifier's semantically unordered `profiles`
+array by ascending `profile_name`, then applies RFC 8785 canonical JSON and
+SHA-256. The complete admission evidence mapping is independently canonicalized
+and digested with SHA-256. JSON object-member order and profile-array order
+therefore cannot make verifier-equivalent approved evidence acquire different
+receipt identities.
+
+The receipt input is deliberately narrower than arbitrary JSON: unknown
+manifest/profile members, non-string identity fields, non-list profiles,
+non-object profile entries, non-exact-range profile counts, and unpaired Unicode
+surrogates fail closed instead of acquiring undocumented digest semantics. A
+published canonical digest vector lets another SDK reproduce the same evidence
+identity.
 
 Any change to approved version/profile evidence or to the admission result
 changes the relevant SHA-256 value. This is an audit/evidence identifier only:
