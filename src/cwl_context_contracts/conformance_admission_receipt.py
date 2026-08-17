@@ -136,7 +136,9 @@ class ConformanceAdmissionReceipt:
             "manifest_normalization": _MANIFEST_NORMALIZATION,
             "digest_algorithm": _DIGEST_ALGORITHM,
             "admitted": self.admitted,
-            "installed_distribution_name": verification.installed_distribution_name,
+            "installed_distribution_name": (
+                verification.installed_distribution_name
+            ),
             "installed_distribution_version": verification.installed_distribution_version,
             "approved_manifest_canonical_sha256": (
                 self.approved_manifest_canonical_sha256
