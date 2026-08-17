@@ -52,6 +52,7 @@ jobs:
               "cwl-context-conformance-admission-receipt/v1"
           )
           assert receipt["canonicalization"] == "RFC8785"
+          assert receipt["manifest_normalization"] == "profile_name_ascending"
           assert receipt["digest_algorithm"] == "sha256"
           assert receipt["admitted"] is True
           assert receipt["installed_distribution_name"] == "cwl-context-contracts"
