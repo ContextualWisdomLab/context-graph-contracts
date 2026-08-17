@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
-from hashlib import sha256
 from importlib.metadata import version
 from importlib.resources import files
 
@@ -51,7 +51,7 @@ def test_bundle_manifest_binds_every_packaged_contract_resource() -> None:
     assert manifest.resource_count == len(expected) == 17
     assert [item.resource_path for item in manifest.resources] == sorted(expected)
     for item in manifest.resources:
-        assert item.sha256 == sha256(expected[item.resource_path]).hexdigest()
+        assert item.sha256 == hashlib.sha256(expected[item.resource_path]).hexdigest()
 
 
 def test_bundle_manifest_mapping_is_deterministic_and_actionable() -> None:
