@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import tomllib
 from importlib.resources import files
+from pathlib import Path
 
 import pytest
 
@@ -62,6 +64,15 @@ def test_manifest_lists_every_packaged_profile_with_sha256() -> None:
             for name in names
         ],
     }
+
+
+def test_manifest_cli_is_installed_by_project_metadata() -> None:
+    """The buyer command resolves to the tested manifest entry point."""
+    project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+
+    assert project["project"]["scripts"]["cwl-context-conformance-manifest"] == (
+        "cwl_context_contracts.conformance_manifest:main"
+    )
 
 
 def test_manifest_cli_prints_deterministic_machine_readable_evidence(capsys) -> None:
