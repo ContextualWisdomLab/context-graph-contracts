@@ -119,6 +119,17 @@ def test_profile_count_must_match_approved_profile_list() -> None:
     assert report.mismatches == ("profile_count",)
 
 
+def test_profile_count_must_be_a_json_integer() -> None:
+    """Numerically equal floating counts cannot pass exact manifest validation."""
+    approved = _approved_manifest()
+    approved["profile_count"] = float(approved["profile_count"])
+
+    report = verify_packaged_conformance_manifest(approved)
+
+    assert report.verified is False
+    assert report.mismatches == ("profile_count",)
+
+
 def test_non_mapping_manifest_fails_closed() -> None:
     """The public verifier rejects a non-object approved manifest."""
     report = verify_packaged_conformance_manifest([])
