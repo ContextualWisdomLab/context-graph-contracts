@@ -20,6 +20,7 @@ from .conformance_manifest_verifier import (
 
 _RECEIPT_FORMAT = "cwl-context-conformance-admission-receipt/v1"
 _CANONICALIZATION = "RFC8785"
+_MANIFEST_NORMALIZATION = "profile_name_ascending"
 _DIGEST_ALGORITHM = "sha256"
 _INPUT_ACTION = "provide a readable approved conformance manifest JSON object"
 _MAX_EXACT_JSON_INTEGER = (2**53) - 1
@@ -93,6 +94,26 @@ def _validate_manifest_identity_shape(approved_manifest: Mapping[str, object]) -
             raise ApprovedManifestInputError("approved_manifest_invalid_shape")
 
 
+def _normalize_manifest_identity(
+    approved_manifest: Mapping[str, object],
+) -> dict[str, object]:
+    """Return verifier-equivalent manifest semantics with stable profile ordering."""
+    profiles = approved_manifest["profiles"]
+    assert isinstance(profiles, list)
+    normalized_profiles = sorted(
+        (dict(profile) for profile in profiles),
+        key=lambda profile: str(profile["profile_name"]),
+    )
+    return {
+        "manifest_format": approved_manifest["manifest_format"],
+        "distribution_name": approved_manifest["distribution_name"],
+        "distribution_version": approved_manifest["distribution_version"],
+        "algorithm": approved_manifest["algorithm"],
+        "profile_count": approved_manifest["profile_count"],
+        "profiles": normalized_profiles,
+    }
+
+
 @dataclass(frozen=True, slots=True)
 class ConformanceAdmissionReceipt:
     """Compact deterministic identity for one conformance admission decision."""
@@ -112,6 +133,7 @@ class ConformanceAdmissionReceipt:
         return {
             "receipt_format": _RECEIPT_FORMAT,
             "canonicalization": _CANONICALIZATION,
+            "manifest_normalization": _MANIFEST_NORMALIZATION,
             "digest_algorithm": _DIGEST_ALGORITHM,
             "admitted": self.admitted,
             "installed_distribution_name": verification.installed_distribution_name,
@@ -129,10 +151,11 @@ def build_packaged_conformance_admission_receipt(
 ) -> ConformanceAdmissionReceipt:
     """Bind an approved manifest and installed admission result into one receipt."""
     _validate_manifest_identity_shape(approved_manifest)
+    normalized_manifest = _normalize_manifest_identity(approved_manifest)
     admission_report = evaluate_packaged_conformance_admission(approved_manifest)
     return ConformanceAdmissionReceipt(
         admission_report=admission_report,
-        approved_manifest_canonical_sha256=_canonical_json_sha256(approved_manifest),
+        approved_manifest_canonical_sha256=_canonical_json_sha256(normalized_manifest),
         admission_evidence_sha256=_canonical_json_sha256(admission_report.to_mapping()),
     )
 
