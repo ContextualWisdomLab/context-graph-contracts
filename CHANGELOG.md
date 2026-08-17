@@ -50,6 +50,11 @@ All notable changes to this project are documented in this file.
   approved manifest with the installed package, identify exact version/profile
   drift, and return an operator next action without inventing manifest-approval
   authority.
+- Composite `cwl-context-conformance-admit` command and
+  `evaluate_packaged_conformance_admission()` API that require both installed
+  semantic conformance and an exact approved-manifest match while explicitly
+  leaving artifact provenance, review policy, and runtime authorization to
+  their owning gates.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
