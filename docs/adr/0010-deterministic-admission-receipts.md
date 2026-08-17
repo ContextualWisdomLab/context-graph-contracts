@@ -31,11 +31,12 @@ Publish `build_packaged_conformance_admission_receipt()` and the installed
 
 1. evaluates the existing composite admission decision rather than creating a
    second verifier;
-2. identifies canonicalization as `RFC8785` and the digest algorithm as
-   `sha256`;
-3. hashes the independently supplied approved manifest after constraining it to
-   the exact `cwl-context-conformance-manifest/v1` member set and JCS-safe value
-   kinds;
+2. identifies canonicalization as `RFC8785`, manifest normalization as
+   `profile_name_ascending`, and the digest algorithm as `sha256`;
+3. hashes the independently supplied approved-manifest semantics after
+   constraining them to the exact `cwl-context-conformance-manifest/v1` member
+   set, normalizing the semantically unordered profile evidence by ascending
+   `profile_name`, and then applying JCS;
 4. rejects unknown top-level or profile members, non-string contract fields,
    booleans or integers outside the exact interoperable JSON integer range for
    `profile_count`, malformed profile collections, and strings containing
@@ -48,17 +49,23 @@ Publish `build_packaged_conformance_admission_receipt()` and the installed
 8. remains deterministic and offline, without network lookup, secret material,
    signatures, or mutable approval state.
 
-The accepted manifest and admission mappings contain fixed ASCII object member
-names, strings, booleans, lists, and exact-range integers. Within that constrained
-value set, compact UTF-8 serialization with recursively sorted fixed member names
-is the RFC 8785 representation. A published exact digest vector prevents another
-SDK from silently implementing a different serialization convention.
+The verifier already treats profile evidence as a name-to-digest set rather than
+an order-sensitive sequence. Therefore the receipt normalizes that list before
+hashing, so two verifier-equivalent manifests cannot acquire different receipt
+identities merely because their JSON arrays were serialized in a different
+order. After this normalization, the accepted manifest and admission mappings
+contain fixed ASCII object member names, JCS-safe strings, booleans, lists, and
+exact-range integers. Within that constrained value set, compact UTF-8
+serialization with recursively sorted fixed member names is the RFC 8785
+representation. A published exact digest vector prevents another SDK from
+silently implementing a different serialization convention.
 
 ## Consequences
 
 - A deployment or evidence store can persist two compact SHA-256 identities and
   later compare them across independent implementations.
-- JSON member order does not affect the manifest identity.
+- JSON object-member order and profile-array order do not affect the approved
+  manifest identity when the verifier semantics are unchanged.
 - Unknown extension members fail closed instead of receiving an undocumented
   hash meaning.
 - A receipt proves deterministic evidence identity only. It does not prove who
@@ -70,13 +77,14 @@ SDK from silently implementing a different serialization convention.
 ## Verification
 
 `tests/test_conformance_admission_receipt.py` covers admitted and rejected
-receipts, member-order independence, an exact published canonical digest vector,
-digest drift, ambiguous-member rejection, machine-readable CLI behavior, and
-exit codes. `tests/test_conformance_admission_receipt_jcs.py` rejects integers
-outside the exact JSON interoperability range and unpaired Unicode surrogates.
-The `receipt-package-smoke` workflow builds a wheel, installs it in an isolated
+receipts, object-member and profile-array order independence, an exact published
+canonical digest vector, digest drift, ambiguous-member rejection,
+machine-readable CLI behavior, and exit codes.
+`tests/test_conformance_admission_receipt_jcs.py` rejects integers outside the
+exact JSON interoperability range and unpaired Unicode surrogates. The
+`receipt-package-smoke` workflow builds a wheel, installs it in an isolated
 environment, executes the installed manifest and receipt commands, and verifies
-the declared RFC 8785/SHA-256 receipt profile.
+the declared RFC 8785 / `profile_name_ascending` / SHA-256 receipt profile.
 
 ## References
 
