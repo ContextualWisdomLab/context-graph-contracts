@@ -39,8 +39,9 @@ All notable changes to this project are documented in this file.
   unregistered packaged profiles.
 - Artifact-bound semantic evidence through
   `cwl-context-conformance-manifest`, `build_packaged_conformance_manifest()`,
-  and `conformance_profile_sha256()`, binding release evidence to the exact
-  packaged bytes of every published conformance profile.
+  and `conformance_profile_sha256()`, binding release evidence to the installed
+  `cwl-context-contracts` distribution version and the exact packaged bytes of
+  every published conformance profile.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
