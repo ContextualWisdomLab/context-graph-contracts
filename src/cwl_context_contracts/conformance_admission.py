@@ -18,7 +18,8 @@ from .conformance_runner import ConformanceReport, run_packaged_conformance
 
 _ADMISSION_FORMAT = "cwl-context-conformance-admission/v1"
 _READY_ACTION = (
-    "verify artifact provenance and runtime authorization before enabling the integration"
+    "verify artifact provenance and runtime authorization before enabling "
+    "the integration"
 )
 _CONFORMANCE_REPAIR_ACTION = (
     "repair installed semantic conformance before enabling the integration"
