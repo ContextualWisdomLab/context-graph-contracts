@@ -135,6 +135,21 @@ def _input_failure(error: str) -> int:
     return 2
 
 
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """Build one JSON object while rejecting ambiguous duplicate member names."""
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON object member: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_nonstandard_json_constant(value: str) -> Any:
+    """Reject Python JSON extensions such as NaN and Infinity."""
+    raise ValueError(f"non-standard JSON constant: {value}")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Verify an installed package against an approved manifest JSON file."""
     parser = argparse.ArgumentParser(
@@ -153,8 +168,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     except OSError:
         return _input_failure("approved_manifest_unreadable")
     try:
-        approved_payload: Any = json.loads(approved_text)
-    except json.JSONDecodeError:
+        approved_payload: Any = json.loads(
+            approved_text,
+            object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_nonstandard_json_constant,
+        )
+    except ValueError:
         return _input_failure("approved_manifest_invalid_json")
     if not isinstance(approved_payload, dict):
         return _input_failure("approved_manifest_invalid_shape")
