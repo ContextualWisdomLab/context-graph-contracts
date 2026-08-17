@@ -24,6 +24,12 @@
   `cwl-context-conformance-verify`, and require the composite
   `cwl-context-conformance-admit` gate to rerun semantics plus exact manifest
   verification before reporting admission.
+- Complete-resource evidence tests require `cwl-context-bundle-manifest` and
+  `build_packaged_contract_bundle_manifest()` to bind the installed
+  distribution version to SHA-256 of every explicitly published AsyncAPI,
+  JSON Schema, fixture, and semantic-profile byte sequence in stable
+  category-prefixed resource-path order. The regression independently reads
+  those packaged bytes rather than trusting the manifest under test.
 - Verifier regressions fail closed on package-version drift, missing,
   unexpected, duplicate, malformed, or digest-different profile evidence,
   type-confused profile counts, unreadable or invalid UTF-8/JSON input, and
@@ -37,9 +43,9 @@
 - Statement and branch coverage must both remain 100%.
 - Package smoke tests install the built wheel outside the source tree, verify
   schemas, fixtures, contracts, and semantic conformance profiles are present,
-  then execute the installed conformance runner, manifest generator,
-  approved-manifest verifier, and composite admission gate from that isolated
-  installation.
+  then execute the installed conformance runner, semantic manifest generator,
+  approved-manifest verifier, composite admission gate, admission receipt, and
+  complete contract-bundle manifest from isolated wheel installations.
 
 Future language SDKs must consume the same fixture and conformance-profile
 corpus and produce byte-wise compatible structured events after canonical
