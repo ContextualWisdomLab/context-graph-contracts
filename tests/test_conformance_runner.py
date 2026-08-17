@@ -117,6 +117,35 @@ def test_runner_reports_unexpected_error_text_for_negative_vector(monkeypatch) -
     assert "unexpected error" in failure.detail
 
 
+def test_runner_reports_valid_cloudevent_that_cannot_round_trip(monkeypatch) -> None:
+    """Canonicalization drift is not allowed to masquerade as vector success."""
+    original_load = runner.load_conformance_profile
+
+    def load_profile(name: str):
+        profile = original_load(name)
+        if name == "cloudevent-semantics.v1.json":
+            vector = dict(profile["valid_vectors"][0])
+            value = dict(vector["value"])
+            value["time"] = "2026-08-16t00:00:00z"
+            vector["name"] = "noncanonical_timestamp_spelling"
+            vector["value"] = value
+            profile["valid_vectors"] = [vector]
+            profile["invalid_vectors"] = []
+        return profile
+
+    monkeypatch.setattr(runner, "load_conformance_profile", load_profile)
+
+    report = run_packaged_conformance()
+
+    failure = next(
+        item
+        for item in report.failures
+        if item.profile_name == "cloudevent-semantics.v1.json"
+    )
+    assert failure.case_id == "noncanonical_timestamp_spelling"
+    assert "round-trip exactly" in failure.detail
+
+
 def test_runner_fails_closed_when_a_packaged_profile_cannot_load(monkeypatch) -> None:
     """A damaged installation becomes an explicit profile-load failure."""
     original_load = runner.load_conformance_profile
@@ -162,6 +191,24 @@ def test_runner_fails_closed_for_an_unknown_packaged_profile(monkeypatch) -> Non
             detail="no executable runner is registered for this packaged profile",
         ),
     )
+
+
+def test_runner_fails_closed_when_profile_shape_is_not_executable(monkeypatch) -> None:
+    """Malformed packaged data becomes a typed profile-execution failure."""
+    original_load = runner.load_conformance_profile
+
+    def load_profile(name: str):
+        if name == "cwl-timestamp-profile.v1.json":
+            return {"profile_id": "urn:cwl:broken"}
+        return original_load(name)
+
+    monkeypatch.setattr(runner, "load_conformance_profile", load_profile)
+
+    report = run_packaged_conformance()
+
+    assert report.failures[0].profile_name == "cwl-timestamp-profile.v1.json"
+    assert report.failures[0].case_id == "profile_execution"
+    assert report.failures[0].detail.startswith("KeyError:")
 
 
 def test_assert_packaged_conformance_raises_with_actionable_failure(monkeypatch) -> None:
