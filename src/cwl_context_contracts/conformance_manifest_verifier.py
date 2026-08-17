@@ -97,7 +97,8 @@ def verify_packaged_conformance_manifest(
         else:
             approved_profile_count = approved_manifest.get("profile_count")
             if (
-                type(approved_profile_count) is not int
+                not isinstance(approved_profile_count, int)
+                or isinstance(approved_profile_count, bool)
                 or approved_profile_count != len(approved_profiles)
             ):
                 mismatches.append("profile_count")

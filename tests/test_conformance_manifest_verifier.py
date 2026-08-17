@@ -130,6 +130,17 @@ def test_profile_count_must_be_a_json_integer() -> None:
     assert report.mismatches == ("profile_count",)
 
 
+def test_profile_count_rejects_json_boolean() -> None:
+    """JSON booleans cannot exploit Python's bool/int relationship as counts."""
+    approved = _approved_manifest()
+    approved["profile_count"] = True
+
+    report = verify_packaged_conformance_manifest(approved)
+
+    assert report.verified is False
+    assert report.mismatches == ("profile_count",)
+
+
 def test_non_mapping_manifest_fails_closed() -> None:
     """The public verifier rejects a non-object approved manifest."""
     report = verify_packaged_conformance_manifest([])
