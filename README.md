@@ -144,6 +144,23 @@ signature, provenance decision, review approval, or authorization grant; verify
 those owning gates before enabling the integration. Python callers can use
 `evaluate_packaged_conformance_admission()` for the same composition.
 
+Persist a compact deterministic receipt when an operator or consuming product
+needs to compare admission evidence across deployments without copying the full
+admission payload into its own private format:
+
+```console
+$ cwl-context-conformance-receipt approved-conformance-manifest.json
+{"admission_evidence_sha256":"...","admitted":true,"approved_manifest_canonical_sha256":"...","installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","next_action":"verify artifact provenance and runtime authorization before enabling the integration","receipt_format":"cwl-context-conformance-admission-receipt/v1"}
+```
+
+The receipt binds two deterministic identities: the approved manifest's
+canonical JSON content and the complete admission evidence mapping. JSON member
+order does not change those digests. Any change to approved version/profile
+evidence or to the admission result changes the relevant SHA-256 value. This is
+an audit/evidence identifier only: it is not a signature, provenance attestation,
+approval registry, trust decision, or authorization grant. Python callers can
+use `build_packaged_conformance_admission_receipt()`.
+
 ## Who consumes these contracts
 
 `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`,
