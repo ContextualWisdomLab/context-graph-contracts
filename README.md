@@ -135,7 +135,7 @@ cannot accidentally be omitted when checking approved profile bytes:
 
 ```console
 $ cwl-context-conformance-admit approved-conformance-manifest.json
-{"admission_format":"cwl-context-conformance-admission/v1","admitted":true,"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","manifest_verification":{"mismatches":[],"verified":true},"next_action":"verify artifact provenance and runtime authorization before enabling the integration","semantic_conformance":{"failures":[],"status":"pass"}}
+{"admission_format":"cwl-context-conformance-admission/v1","admitted":true,"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","manifest_verification":{"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","mismatches":[],"next_action":"accept the installed conformance evidence","verification_format":"cwl-context-conformance-verification/v1","verified":true},"next_action":"verify artifact provenance and runtime authorization before enabling the integration","semantic_conformance":{"case_count":31,"failures":[],"profile_count":4,"status":"pass"}}
 ```
 
 Admission requires both the installed semantic suite and the exact
