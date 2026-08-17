@@ -22,6 +22,7 @@ _RECEIPT_FORMAT = "cwl-context-conformance-admission-receipt/v1"
 _CANONICALIZATION = "RFC8785"
 _DIGEST_ALGORITHM = "sha256"
 _INPUT_ACTION = "provide a readable approved conformance manifest JSON object"
+_MAX_EXACT_JSON_INTEGER = (2**53) - 1
 _MANIFEST_FIELDS = frozenset(
     {
         "manifest_format",
@@ -53,18 +54,29 @@ def _canonical_json_sha256(value: object) -> str:
     return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
 
 
+def _is_jcs_string(value: object) -> bool:
+    """Return whether a value is a Unicode string without unpaired surrogates."""
+    return isinstance(value, str) and all(
+        not 0xD800 <= ord(character) <= 0xDFFF for character in value
+    )
+
+
 def _validate_manifest_identity_shape(approved_manifest: Mapping[str, object]) -> None:
     """Reject fields or value kinds with no portable receipt-digest semantics."""
     if frozenset(approved_manifest) != _MANIFEST_FIELDS:
         raise ApprovedManifestInputError("approved_manifest_invalid_shape")
     if any(
-        not isinstance(approved_manifest.get(field_name), str)
+        not _is_jcs_string(approved_manifest.get(field_name))
         for field_name in _STRING_MANIFEST_FIELDS
     ):
         raise ApprovedManifestInputError("approved_manifest_invalid_shape")
 
     profile_count = approved_manifest.get("profile_count")
-    if not isinstance(profile_count, int) or isinstance(profile_count, bool):
+    if (
+        not isinstance(profile_count, int)
+        or isinstance(profile_count, bool)
+        or not 0 <= profile_count <= _MAX_EXACT_JSON_INTEGER
+    ):
         raise ApprovedManifestInputError("approved_manifest_invalid_shape")
 
     profiles = approved_manifest.get("profiles")
@@ -75,8 +87,8 @@ def _validate_manifest_identity_shape(approved_manifest: Mapping[str, object]) -
             raise ApprovedManifestInputError("approved_manifest_invalid_shape")
         if frozenset(profile) != _PROFILE_FIELDS:
             raise ApprovedManifestInputError("approved_manifest_invalid_shape")
-        if not isinstance(profile.get("profile_name"), str) or not isinstance(
-            profile.get("sha256"), str
+        if not _is_jcs_string(profile.get("profile_name")) or not _is_jcs_string(
+            profile.get("sha256")
         ):
             raise ApprovedManifestInputError("approved_manifest_invalid_shape")
 
