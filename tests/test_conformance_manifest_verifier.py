@@ -223,6 +223,19 @@ def test_verifier_cli_rejects_unreadable_or_invalid_json(tmp_path, capsys) -> No
     assert invalid_payload["error"] == "approved_manifest_invalid_json"
 
 
+def test_verifier_cli_rejects_non_utf8_input_without_traceback(tmp_path, capsys) -> None:
+    """Hostile manifest bytes fail closed instead of escaping as Unicode errors."""
+    approved_path = tmp_path / "approved.json"
+    approved_path.write_bytes(b"\xff\xfe\x00")
+
+    exit_code = verifier_module.main([str(approved_path)])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 2
+    assert payload["verified"] is False
+    assert payload["error"] == "approved_manifest_invalid_utf8"
+
+
 def test_verifier_cli_rejects_non_object_json(tmp_path, capsys) -> None:
     """A syntactically valid non-object manifest is still invalid evidence."""
     approved_path = tmp_path / "approved.json"
