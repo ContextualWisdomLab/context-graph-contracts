@@ -130,6 +130,20 @@ approve a manifest and does not replace signature, provenance, SBOM, or runtime
 authorization gates. Python callers can use
 `verify_packaged_conformance_manifest()` for the same deterministic decision.
 
+For deployment admission, prefer the composite command so semantic execution
+cannot accidentally be omitted when checking approved profile bytes:
+
+```console
+$ cwl-context-conformance-admit approved-conformance-manifest.json
+{"admission_format":"cwl-context-conformance-admission/v1","admitted":true,"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","manifest_verification":{"mismatches":[],"verified":true},"next_action":"verify artifact provenance and runtime authorization before enabling the integration","semantic_conformance":{"failures":[],"status":"pass"}}
+```
+
+Admission requires both the installed semantic suite and the exact
+approved-manifest comparison to pass. A positive result is intentionally not a
+signature, provenance decision, review approval, or authorization grant; verify
+those owning gates before enabling the integration. Python callers can use
+`evaluate_packaged_conformance_admission()` for the same composition.
+
 ## Who consumes these contracts
 
 `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`,
