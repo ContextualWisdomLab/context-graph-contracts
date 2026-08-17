@@ -27,6 +27,7 @@ cwl-context-conformance = "cwl_context_contracts.conformance_runner:main"
 cwl-context-conformance-manifest = "cwl_context_contracts.conformance_manifest:main"
 cwl-context-conformance-verify = "cwl_context_contracts.conformance_manifest_verifier:main"
 cwl-context-conformance-admit = "cwl_context_contracts.conformance_admission:main"
+cwl-context-conformance-receipt = "cwl_context_contracts.conformance_admission_receipt:main"
 
 [project.optional-dependencies]
 dev = [
