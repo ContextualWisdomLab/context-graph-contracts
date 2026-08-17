@@ -24,6 +24,15 @@ _TOP_LEVEL_FIELDS = (
 )
 
 
+class ApprovedManifestInputError(ValueError):
+    """Raised when an approved-manifest file cannot be safely parsed."""
+
+    def __init__(self, error_code: str) -> None:
+        """Store the stable machine-readable manifest input error code."""
+        super().__init__(error_code)
+        self.error_code = error_code
+
+
 @dataclass(frozen=True, slots=True)
 class ConformanceManifestVerification:
     """Deterministic comparison of approved and installed conformance evidence."""
@@ -120,6 +129,47 @@ def verify_packaged_conformance_manifest(
     )
 
 
+def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    """Build one JSON object while rejecting ambiguous duplicate member names."""
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON object member: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_nonstandard_json_constant(value: str) -> Any:
+    """Reject Python JSON extensions such as NaN and Infinity."""
+    raise ValueError(f"non-standard JSON constant: {value}")
+
+
+def load_approved_conformance_manifest(path: Path) -> dict[str, Any]:
+    """Read one approved manifest through the shared fail-closed input boundary."""
+    try:
+        with path.open("rb") as approved_file:
+            approved_bytes = approved_file.read(_MAX_APPROVED_MANIFEST_BYTES + 1)
+    except OSError as exc:
+        raise ApprovedManifestInputError("approved_manifest_unreadable") from exc
+    if len(approved_bytes) > _MAX_APPROVED_MANIFEST_BYTES:
+        raise ApprovedManifestInputError("approved_manifest_too_large")
+    try:
+        approved_text = approved_bytes.decode("utf-8")
+    except UnicodeError as exc:
+        raise ApprovedManifestInputError("approved_manifest_invalid_utf8") from exc
+    try:
+        approved_payload: Any = json.loads(
+            approved_text,
+            object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_nonstandard_json_constant,
+        )
+    except (ValueError, RecursionError) as exc:
+        raise ApprovedManifestInputError("approved_manifest_invalid_json") from exc
+    if not isinstance(approved_payload, dict):
+        raise ApprovedManifestInputError("approved_manifest_invalid_shape")
+    return approved_payload
+
+
 def _input_failure(error: str) -> int:
     """Print one machine-readable configuration failure and return exit two."""
     print(
@@ -136,21 +186,6 @@ def _input_failure(error: str) -> int:
     return 2
 
 
-def _unique_json_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    """Build one JSON object while rejecting ambiguous duplicate member names."""
-    result: dict[str, Any] = {}
-    for key, value in pairs:
-        if key in result:
-            raise ValueError(f"duplicate JSON object member: {key}")
-        result[key] = value
-    return result
-
-
-def _reject_nonstandard_json_constant(value: str) -> Any:
-    """Reject Python JSON extensions such as NaN and Infinity."""
-    raise ValueError(f"non-standard JSON constant: {value}")
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     """Verify an installed package against an approved manifest JSON file."""
     parser = argparse.ArgumentParser(
@@ -163,26 +198,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        with args.approved_manifest.open("rb") as approved_file:
-            approved_bytes = approved_file.read(_MAX_APPROVED_MANIFEST_BYTES + 1)
-    except OSError:
-        return _input_failure("approved_manifest_unreadable")
-    if len(approved_bytes) > _MAX_APPROVED_MANIFEST_BYTES:
-        return _input_failure("approved_manifest_too_large")
-    try:
-        approved_text = approved_bytes.decode("utf-8")
-    except UnicodeError:
-        return _input_failure("approved_manifest_invalid_utf8")
-    try:
-        approved_payload: Any = json.loads(
-            approved_text,
-            object_pairs_hook=_unique_json_object,
-            parse_constant=_reject_nonstandard_json_constant,
-        )
-    except (ValueError, RecursionError):
-        return _input_failure("approved_manifest_invalid_json")
-    if not isinstance(approved_payload, dict):
-        return _input_failure("approved_manifest_invalid_shape")
+        approved_payload = load_approved_conformance_manifest(args.approved_manifest)
+    except ApprovedManifestInputError as exc:
+        return _input_failure(exc.error_code)
 
     report = verify_packaged_conformance_manifest(approved_payload)
     print(json.dumps(report.to_mapping(), sort_keys=True))
