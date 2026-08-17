@@ -74,7 +74,7 @@ def test_manifest_lists_every_packaged_profile_with_sha256() -> None:
 
 
 def test_manifest_version_is_bound_to_installed_distribution_metadata() -> None:
-    """Captured evidence identifies the exact installed contract distribution version."""
+    """Captured evidence identifies the installed contract distribution version."""
     manifest = build_packaged_conformance_manifest()
 
     assert manifest.distribution_name == "cwl-context-contracts"
