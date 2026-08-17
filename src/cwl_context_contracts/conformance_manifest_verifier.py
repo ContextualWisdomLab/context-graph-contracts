@@ -95,7 +95,11 @@ def verify_packaged_conformance_manifest(
         if approved_profiles is None:
             mismatches.append("profiles")
         else:
-            if approved_manifest.get("profile_count") != len(approved_profiles):
+            approved_profile_count = approved_manifest.get("profile_count")
+            if (
+                type(approved_profile_count) is not int
+                or approved_profile_count != len(approved_profiles)
+            ):
                 mismatches.append("profile_count")
             for profile_name, installed_digest in installed_profiles.items():
                 approved_digest = approved_profiles.get(profile_name)
