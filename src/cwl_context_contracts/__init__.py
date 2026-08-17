@@ -10,6 +10,10 @@ from .conformance_admission import (
     ConformanceAdmissionReport,
     evaluate_packaged_conformance_admission,
 )
+from .conformance_admission_receipt import (
+    ConformanceAdmissionReceipt,
+    build_packaged_conformance_admission_receipt,
+)
 from .conformance_manifest import (
     ConformanceEvidenceManifest,
     ConformanceProfileEvidence,
@@ -55,6 +59,7 @@ __all__ = [
     "CanonicalAssetUri",
     "CanonicalAuthorityUri",
     "CloudEventEnvelope",
+    "ConformanceAdmissionReceipt",
     "ConformanceAdmissionReport",
     "ConformanceError",
     "ConformanceEvidenceManifest",
@@ -71,6 +76,7 @@ __all__ = [
     "available_contract_names",
     "available_fixture_names",
     "available_schema_names",
+    "build_packaged_conformance_admission_receipt",
     "build_packaged_conformance_manifest",
     "conformance_profile_sha256",
     "evaluate_packaged_conformance_admission",
