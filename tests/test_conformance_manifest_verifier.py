@@ -108,6 +108,17 @@ def test_unexpected_profile_fails_closed() -> None:
     )
 
 
+def test_profile_count_must_match_approved_profile_list() -> None:
+    """The approved manifest cannot lie about the evidence it enumerates."""
+    approved = _approved_manifest()
+    approved["profile_count"] = 999
+
+    report = verify_packaged_conformance_manifest(approved)
+
+    assert report.verified is False
+    assert report.mismatches == ("profile_count",)
+
+
 def test_non_mapping_manifest_fails_closed() -> None:
     """The public verifier rejects a non-object approved manifest."""
     report = verify_packaged_conformance_manifest([])

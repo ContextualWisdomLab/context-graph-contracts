@@ -20,7 +20,6 @@ _TOP_LEVEL_FIELDS = (
     "distribution_name",
     "distribution_version",
     "algorithm",
-    "profile_count",
 )
 
 
@@ -80,6 +79,9 @@ def verify_packaged_conformance_manifest(
     """Compare an approved manifest with the exact installed semantic resources."""
     installed = build_packaged_conformance_manifest()
     installed_mapping = installed.to_mapping()
+    installed_profiles = {
+        profile.profile_name: profile.sha256 for profile in installed.profiles
+    }
     mismatches: list[str] = []
 
     if not isinstance(approved_manifest, Mapping):
@@ -90,11 +92,11 @@ def verify_packaged_conformance_manifest(
                 mismatches.append(field_name)
 
         approved_profiles = _profile_index(approved_manifest.get("profiles"))
-        installed_profiles = _profile_index(installed_mapping["profiles"])
-        assert installed_profiles is not None
         if approved_profiles is None:
             mismatches.append("profiles")
         else:
+            if approved_manifest.get("profile_count") != len(approved_profiles):
+                mismatches.append("profile_count")
             for profile_name, installed_digest in installed_profiles.items():
                 approved_digest = approved_profiles.get(profile_name)
                 if approved_digest is None:
