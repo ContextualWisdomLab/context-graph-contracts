@@ -37,6 +37,10 @@ All notable changes to this project are documented in this file.
   `run_packaged_conformance()` / `assert_packaged_conformance()` APIs that emit
   exact profile/case evidence and fail closed for missing, malformed, or
   unregistered packaged profiles.
+- Artifact-bound semantic evidence through
+  `cwl-context-conformance-manifest`, `build_packaged_conformance_manifest()`,
+  and `conformance_profile_sha256()`, binding release evidence to the exact
+  packaged bytes of every published conformance profile.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
