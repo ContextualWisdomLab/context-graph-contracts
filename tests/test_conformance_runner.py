@@ -11,6 +11,7 @@ from cwl_context_contracts import (
     ConformanceFailure,
     ConformanceReport,
     assert_packaged_conformance,
+    load_fixture,
     run_packaged_conformance,
 )
 
@@ -59,8 +60,64 @@ def test_runner_reports_a_valid_vector_that_reference_sdk_rejects(monkeypatch) -
     assert "unexpectedly rejected" in report.failures[0].detail
 
 
+def test_runner_reports_invalid_timestamp_that_reference_sdk_accepts(monkeypatch) -> None:
+    """A negative timestamp vector that becomes valid is surfaced as drift."""
+    original_load = runner.load_conformance_profile
+
+    def load_profile(name: str):
+        profile = original_load(name)
+        if name == "cwl-timestamp-profile.v1.json":
+            profile["valid_values"] = []
+            profile["invalid_values"] = ["2026-08-16T00:00:00Z"]
+        return profile
+
+    monkeypatch.setattr(runner, "load_conformance_profile", load_profile)
+
+    report = run_packaged_conformance()
+
+    failure = next(
+        item
+        for item in report.failures
+        if item.profile_name == "cwl-timestamp-profile.v1.json"
+    )
+    assert failure.case_id == "invalid_values[0]"
+    assert "unexpectedly accepted" in failure.detail
+
+
+def test_runner_reports_invalid_assertion_that_reference_sdk_accepts(
+    monkeypatch,
+) -> None:
+    """A negative assertion vector cannot silently become an accepted contract."""
+    original_load = runner.load_conformance_profile
+    valid_assertion = load_fixture("valid-assertion.json")
+
+    def load_profile(name: str):
+        profile = original_load(name)
+        if name == "context-assertion-semantics.v1.json":
+            profile["invalid_vectors"] = [
+                {
+                    "case_id": "actually_valid_assertion",
+                    "error_pattern": "must reject",
+                    "value": valid_assertion,
+                }
+            ]
+        return profile
+
+    monkeypatch.setattr(runner, "load_conformance_profile", load_profile)
+
+    report = run_packaged_conformance()
+
+    failure = next(
+        item
+        for item in report.failures
+        if item.profile_name == "context-assertion-semantics.v1.json"
+    )
+    assert failure.case_id == "actually_valid_assertion"
+    assert "unexpectedly accepted" in failure.detail
+
+
 def test_runner_reports_invalid_vector_that_reference_sdk_accepts(monkeypatch) -> None:
-    """A negative vector that becomes accepted is a deterministic failure."""
+    """A negative JSON vector that becomes accepted is a deterministic failure."""
     original_load = runner.load_conformance_profile
 
     def load_profile(name: str):
@@ -83,6 +140,32 @@ def test_runner_reports_invalid_vector_that_reference_sdk_accepts(monkeypatch) -
     )
     assert failure.case_id == "invalid_integer_values[0]"
     assert "unexpectedly accepted" in failure.detail
+
+
+def test_runner_reports_valid_json_integer_that_reference_sdk_rejects(
+    monkeypatch,
+) -> None:
+    """A published positive integer vector rejected by the SDK is drift."""
+    original_load = runner.load_conformance_profile
+
+    def load_profile(name: str):
+        profile = original_load(name)
+        if name == "cwl-json-interoperability.v1.json":
+            profile["valid_integer_values"] = [2**53]
+            profile["invalid_integer_values"] = []
+        return profile
+
+    monkeypatch.setattr(runner, "load_conformance_profile", load_profile)
+
+    report = run_packaged_conformance()
+
+    failure = next(
+        item
+        for item in report.failures
+        if item.profile_name == "cwl-json-interoperability.v1.json"
+    )
+    assert failure.case_id == "valid_integer_values[0]"
+    assert "unexpectedly rejected" in failure.detail
 
 
 def test_runner_reports_unexpected_error_text_for_negative_vector(monkeypatch) -> None:
