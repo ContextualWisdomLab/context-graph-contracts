@@ -1,0 +1,62 @@
+name: receipt-package-smoke
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  installed-wheel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.32"
+          enable-cache: false
+      - run: uv lock --check
+      - run: uv sync --frozen --extra dev --python 3.14
+      - run: uv build --wheel --out-dir dist
+      - run: uv venv .receipt-smoke --python 3.14
+      - run: >-
+          uv pip install --python .receipt-smoke/bin/python
+          --no-index --find-links dist cwl-context-contracts
+      - name: Exercise receipt from installed wheel
+        run: |
+          set -euo pipefail
+          .receipt-smoke/bin/cwl-context-conformance-manifest \
+            > /tmp/approved-manifest.json
+          .receipt-smoke/bin/cwl-context-conformance-receipt \
+            /tmp/approved-manifest.json > /tmp/admission-receipt.json
+          .receipt-smoke/bin/python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(
+              Path("/tmp/admission-receipt.json").read_text(encoding="utf-8")
+          )
+          assert receipt["receipt_format"] == (
+              "cwl-context-conformance-admission-receipt/v1"
+          )
+          assert receipt["admitted"] is True
+          assert receipt["installed_distribution_name"] == "cwl-context-contracts"
+          assert len(receipt["approved_manifest_canonical_sha256"]) == 64
+          assert len(receipt["admission_evidence_sha256"]) == 64
+          assert receipt["next_action"] == (
+              "verify artifact provenance and runtime authorization before enabling "
+              "the integration"
+          )
+          PY
