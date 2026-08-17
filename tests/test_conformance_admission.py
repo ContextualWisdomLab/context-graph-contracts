@@ -6,25 +6,22 @@ import json
 import tomllib
 from pathlib import Path
 
-import cwl_context_contracts.conformance_admission as admission_module
-from cwl_context_contracts import (
-    ConformanceFailure,
-    ConformanceReport,
-    build_packaged_conformance_manifest,
-    evaluate_packaged_conformance_admission,
-)
+import cwl_context_contracts
+from cwl_context_contracts import conformance_admission as admission_module
 
 
 def _approved_manifest() -> dict[str, object]:
     """Return an independently mutable approved-manifest snapshot."""
     return json.loads(
-        json.dumps(build_packaged_conformance_manifest().to_mapping())
+        json.dumps(cwl_context_contracts.build_packaged_conformance_manifest().to_mapping())
     )
 
 
 def test_exact_manifest_and_semantic_suite_are_both_required_for_admission() -> None:
     """A buyer receives one decision only when both deterministic gates pass."""
-    report = evaluate_packaged_conformance_admission(_approved_manifest())
+    report = cwl_context_contracts.evaluate_packaged_conformance_admission(
+        _approved_manifest()
+    )
 
     assert report.admitted is True
     assert report.conformance_report.passed is True
@@ -45,7 +42,7 @@ def test_manifest_drift_blocks_admission_after_semantic_success() -> None:
     approved = _approved_manifest()
     approved["distribution_version"] = "999.0.0"
 
-    report = evaluate_packaged_conformance_admission(approved)
+    report = cwl_context_contracts.evaluate_packaged_conformance_admission(approved)
 
     assert report.admitted is False
     assert report.conformance_report.passed is True
@@ -55,13 +52,15 @@ def test_manifest_drift_blocks_admission_after_semantic_success() -> None:
     )
 
 
-def test_semantic_failure_blocks_admission_even_when_manifest_matches(monkeypatch) -> None:
+def test_semantic_failure_blocks_admission_even_when_manifest_matches(
+    monkeypatch,
+) -> None:
     """Matching profile bytes cannot hide a broken installed reference SDK."""
-    failed_report = ConformanceReport(
+    failed_report = cwl_context_contracts.ConformanceReport(
         profile_count=1,
         case_count=1,
         failures=(
-            ConformanceFailure(
+            cwl_context_contracts.ConformanceFailure(
                 profile_name="cwl-timestamp-profile.v1.json",
                 case_id="valid_values[0]",
                 detail="valid vector was unexpectedly rejected",
@@ -74,7 +73,9 @@ def test_semantic_failure_blocks_admission_even_when_manifest_matches(monkeypatc
         lambda: failed_report,
     )
 
-    report = evaluate_packaged_conformance_admission(_approved_manifest())
+    report = cwl_context_contracts.evaluate_packaged_conformance_admission(
+        _approved_manifest()
+    )
 
     assert report.admitted is False
     assert report.conformance_report is failed_report
