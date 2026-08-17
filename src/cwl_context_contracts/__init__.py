@@ -3,7 +3,13 @@
 from .assertion import ContextAssertion, ContextMembership
 from .conformance import (
     available_conformance_profile_names,
+    conformance_profile_sha256,
     load_conformance_profile,
+)
+from .conformance_manifest import (
+    ConformanceEvidenceManifest,
+    ConformanceProfileEvidence,
+    build_packaged_conformance_manifest,
 )
 from .conformance_runner import (
     ConformanceError,
@@ -39,7 +45,9 @@ __all__ = [
     "CanonicalAuthorityUri",
     "CloudEventEnvelope",
     "ConformanceError",
+    "ConformanceEvidenceManifest",
     "ConformanceFailure",
+    "ConformanceProfileEvidence",
     "ConformanceReport",
     "ContextAssertion",
     "ContextMembership",
@@ -50,6 +58,8 @@ __all__ = [
     "available_contract_names",
     "available_fixture_names",
     "available_schema_names",
+    "build_packaged_conformance_manifest",
+    "conformance_profile_sha256",
     "format_cwl_timestamp",
     "format_rfc3339_timestamp",
     "load_conformance_profile",
