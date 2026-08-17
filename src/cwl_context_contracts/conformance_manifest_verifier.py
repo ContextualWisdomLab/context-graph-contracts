@@ -15,6 +15,7 @@ _VERIFICATION_FORMAT = "cwl-context-conformance-verification/v1"
 _ACCEPT_ACTION = "accept the installed conformance evidence"
 _REPAIR_ACTION = "install the approved contract package or approve this exact manifest"
 _INPUT_ACTION = "provide a readable approved conformance manifest JSON object"
+_MAX_APPROVED_MANIFEST_BYTES = 1_048_576
 _TOP_LEVEL_FIELDS = (
     "manifest_format",
     "distribution_name",
@@ -162,11 +163,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        approved_text = args.approved_manifest.read_text(encoding="utf-8")
-    except UnicodeError:
-        return _input_failure("approved_manifest_invalid_utf8")
+        with args.approved_manifest.open("rb") as approved_file:
+            approved_bytes = approved_file.read(_MAX_APPROVED_MANIFEST_BYTES + 1)
     except OSError:
         return _input_failure("approved_manifest_unreadable")
+    if len(approved_bytes) > _MAX_APPROVED_MANIFEST_BYTES:
+        return _input_failure("approved_manifest_too_large")
+    try:
+        approved_text = approved_bytes.decode("utf-8")
+    except UnicodeError:
+        return _input_failure("approved_manifest_invalid_utf8")
     try:
         approved_payload: Any = json.loads(
             approved_text,
