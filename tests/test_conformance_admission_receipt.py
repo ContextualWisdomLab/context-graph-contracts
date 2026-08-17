@@ -102,7 +102,9 @@ def test_receipt_cli_emits_machine_readable_evidence(tmp_path, capsys) -> None:
     assert captured.err == ""
 
 
-def test_receipt_cli_reuses_fail_closed_manifest_input_boundary(tmp_path, capsys) -> None:
+def test_receipt_cli_reuses_fail_closed_manifest_input_boundary(
+    tmp_path, capsys
+) -> None:
     """Receipt generation must not introduce a second permissive manifest parser."""
     missing_path = tmp_path / "missing.json"
 
