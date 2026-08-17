@@ -34,19 +34,24 @@ jobs:
       - run: >-
           uv pip install --python .receipt-smoke/bin/python
           --no-index --find-links dist cwl-context-contracts
-      - name: Exercise receipt from installed wheel
+      - name: Exercise release evidence from installed wheel
         run: |
           set -euo pipefail
           .receipt-smoke/bin/cwl-context-conformance-manifest \
             > /tmp/approved-manifest.json
           .receipt-smoke/bin/cwl-context-conformance-receipt \
             /tmp/approved-manifest.json > /tmp/admission-receipt.json
+          .receipt-smoke/bin/cwl-context-bundle-manifest \
+            > /tmp/contract-bundle-manifest.json
           .receipt-smoke/bin/python - <<'PY'
           import json
           from pathlib import Path
 
           receipt = json.loads(
               Path("/tmp/admission-receipt.json").read_text(encoding="utf-8")
+          )
+          bundle_manifest = json.loads(
+              Path("/tmp/contract-bundle-manifest.json").read_text(encoding="utf-8")
           )
           assert receipt["receipt_format"] == (
               "cwl-context-conformance-admission-receipt/v1"
@@ -61,5 +66,22 @@ jobs:
           assert receipt["next_action"] == (
               "verify artifact provenance and runtime authorization before enabling "
               "the integration"
+          )
+          assert bundle_manifest["manifest_format"] == (
+              "cwl-context-bundle-manifest/v1"
+          )
+          assert bundle_manifest["distribution_name"] == "cwl-context-contracts"
+          assert bundle_manifest["algorithm"] == "sha256"
+          assert bundle_manifest["resource_count"] == 17
+          assert len(bundle_manifest["resources"]) == 17
+          assert bundle_manifest["resources"] == sorted(
+              bundle_manifest["resources"],
+              key=lambda item: item["resource_path"],
+          )
+          assert all(len(item["sha256"]) == 64 for item in bundle_manifest["resources"])
+          assert bundle_manifest["next_action"] == (
+              "store this manifest with approved release evidence and verify semantic "
+              "conformance, package provenance, and runtime authorization before "
+              "enabling the integration"
           )
           PY
