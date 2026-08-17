@@ -143,6 +143,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         approved_text = args.approved_manifest.read_text(encoding="utf-8")
+    except UnicodeError:
+        return _input_failure("approved_manifest_invalid_utf8")
     except OSError:
         return _input_failure("approved_manifest_unreadable")
     try:
