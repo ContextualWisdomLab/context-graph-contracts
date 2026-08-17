@@ -19,20 +19,27 @@
   exclusive-end temporal reconstruction.
 - Conformance evidence tests execute every packaged semantic profile through
   `cwl-context-conformance`, bind the exact installed distribution version and
-  profile bytes with `cwl-context-conformance-manifest`, and compare that
-  evidence with an independently supplied approved manifest through
-  `cwl-context-conformance-verify`.
+  profile bytes with `cwl-context-conformance-manifest`, compare that evidence
+  with an independently supplied approved manifest through
+  `cwl-context-conformance-verify`, and require the composite
+  `cwl-context-conformance-admit` gate to rerun semantics plus exact manifest
+  verification before reporting admission.
 - Verifier regressions fail closed on package-version drift, missing,
   unexpected, duplicate, malformed, or digest-different profile evidence,
   type-confused profile counts, unreadable or invalid UTF-8/JSON input, and
   non-object manifests. Exact matches, drift, and invalid input have distinct
   machine-readable exit semantics.
+- Composite-admission regressions prove semantic failure blocks admission even
+  when the approved manifest matches, manifest drift blocks admission after a
+  semantic pass, and hostile manifest input reuses the same bounded strict JSON
+  parser rather than a second permissive path.
 - The CI matrix covers Python 3.11-3.14 and verifies the committed lockfile.
 - Statement and branch coverage must both remain 100%.
 - Package smoke tests install the built wheel outside the source tree, verify
   schemas, fixtures, contracts, and semantic conformance profiles are present,
-  then execute the installed conformance runner, manifest generator, and
-  approved-manifest verifier from that isolated installation.
+  then execute the installed conformance runner, manifest generator,
+  approved-manifest verifier, and composite admission gate from that isolated
+  installation.
 
 Future language SDKs must consume the same fixture and conformance-profile
 corpus and produce byte-wise compatible structured events after canonical
