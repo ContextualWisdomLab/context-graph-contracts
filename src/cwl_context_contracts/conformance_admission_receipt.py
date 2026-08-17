@@ -20,10 +20,27 @@ from .conformance_manifest_verifier import (
 
 _RECEIPT_FORMAT = "cwl-context-conformance-admission-receipt/v1"
 _INPUT_ACTION = "provide a readable approved conformance manifest JSON object"
+_MANIFEST_FIELDS = frozenset(
+    {
+        "manifest_format",
+        "distribution_name",
+        "distribution_version",
+        "algorithm",
+        "profile_count",
+        "profiles",
+    }
+)
+_STRING_MANIFEST_FIELDS = (
+    "manifest_format",
+    "distribution_name",
+    "distribution_version",
+    "algorithm",
+)
+_PROFILE_FIELDS = frozenset({"profile_name", "sha256"})
 
 
 def _canonical_json_sha256(value: object) -> str:
-    """Return SHA-256 over stable UTF-8 JSON for one JSON-native value."""
+    """Return SHA-256 over stable UTF-8 JSON for one constrained JSON value."""
     canonical_json = json.dumps(
         value,
         allow_nan=False,
@@ -32,6 +49,34 @@ def _canonical_json_sha256(value: object) -> str:
         sort_keys=True,
     )
     return hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
+
+
+def _validate_manifest_identity_shape(approved_manifest: Mapping[str, object]) -> None:
+    """Reject fields or value kinds with no portable receipt-digest semantics."""
+    if frozenset(approved_manifest) != _MANIFEST_FIELDS:
+        raise ApprovedManifestInputError("approved_manifest_invalid_shape")
+    if any(
+        not isinstance(approved_manifest.get(field_name), str)
+        for field_name in _STRING_MANIFEST_FIELDS
+    ):
+        raise ApprovedManifestInputError("approved_manifest_invalid_shape")
+
+    profile_count = approved_manifest.get("profile_count")
+    if not isinstance(profile_count, int) or isinstance(profile_count, bool):
+        raise ApprovedManifestInputError("approved_manifest_invalid_shape")
+
+    profiles = approved_manifest.get("profiles")
+    if not isinstance(profiles, list):
+        raise ApprovedManifestInputError("approved_manifest_invalid_shape")
+    for profile in profiles:
+        if not isinstance(profile, Mapping):
+            raise ApprovedManifestInputError("approved_manifest_invalid_shape")
+        if frozenset(profile) != _PROFILE_FIELDS:
+            raise ApprovedManifestInputError("approved_manifest_invalid_shape")
+        if not isinstance(profile.get("profile_name"), str) or not isinstance(
+            profile.get("sha256"), str
+        ):
+            raise ApprovedManifestInputError("approved_manifest_invalid_shape")
 
 
 @dataclass(frozen=True, slots=True)
@@ -67,6 +112,7 @@ def build_packaged_conformance_admission_receipt(
     approved_manifest: Mapping[str, object],
 ) -> ConformanceAdmissionReceipt:
     """Bind an approved manifest and installed admission result into one receipt."""
+    _validate_manifest_identity_shape(approved_manifest)
     admission_report = evaluate_packaged_conformance_admission(approved_manifest)
     return ConformanceAdmissionReceipt(
         admission_report=admission_report,
@@ -104,9 +150,9 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         approved_manifest = load_approved_conformance_manifest(args.approved_manifest)
+        receipt = build_packaged_conformance_admission_receipt(approved_manifest)
     except ApprovedManifestInputError as exc:
         return _input_failure(exc.error_code)
 
-    receipt = build_packaged_conformance_admission_receipt(approved_manifest)
     print(json.dumps(receipt.to_mapping(), sort_keys=True))
     return 0 if receipt.admitted else 1
