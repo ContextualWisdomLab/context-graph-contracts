@@ -32,6 +32,8 @@ National Institute of Standards and Technology. (2015). *Secure Hash Standard (S
 
 Peabody, B., Davis, K. R., & Campbell, B. (2024). *Universally unique identifiers (UUIDs)* (RFC 9562). RFC Editor. https://www.rfc-editor.org/rfc/rfc9562
 
+Rundgren, A., Jordan, B., & Erdtman, S. (2020). *JSON Canonicalization Scheme (JCS)* (RFC 8785). RFC Editor. https://www.rfc-editor.org/rfc/rfc8785
+
 SLSA Community. (2025). *SLSA specification* (Version 1.2). https://slsa.dev/spec/v1.2/
 
 Snodgrass, R. T. (Ed.). (1995). *The TSQL2 temporal query language*. Kluwer Academic Publishers.
