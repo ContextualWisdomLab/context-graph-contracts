@@ -19,6 +19,8 @@ from .conformance_manifest_verifier import (
 )
 
 _RECEIPT_FORMAT = "cwl-context-conformance-admission-receipt/v1"
+_CANONICALIZATION = "RFC8785"
+_DIGEST_ALGORITHM = "sha256"
 _INPUT_ACTION = "provide a readable approved conformance manifest JSON object"
 _MANIFEST_FIELDS = frozenset(
     {
@@ -40,7 +42,7 @@ _PROFILE_FIELDS = frozenset({"profile_name", "sha256"})
 
 
 def _canonical_json_sha256(value: object) -> str:
-    """Return SHA-256 over stable UTF-8 JSON for one constrained JSON value."""
+    """Return SHA-256 over RFC 8785 JSON for the constrained receipt value set."""
     canonical_json = json.dumps(
         value,
         allow_nan=False,
@@ -97,6 +99,8 @@ class ConformanceAdmissionReceipt:
         verification = self.admission_report.manifest_verification
         return {
             "receipt_format": _RECEIPT_FORMAT,
+            "canonicalization": _CANONICALIZATION,
+            "digest_algorithm": _DIGEST_ALGORITHM,
             "admitted": self.admitted,
             "installed_distribution_name": verification.installed_distribution_name,
             "installed_distribution_version": verification.installed_distribution_version,
