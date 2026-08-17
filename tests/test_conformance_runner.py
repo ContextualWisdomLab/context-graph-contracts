@@ -60,7 +60,9 @@ def test_runner_reports_a_valid_vector_that_reference_sdk_rejects(monkeypatch) -
     assert "unexpectedly rejected" in report.failures[0].detail
 
 
-def test_runner_reports_invalid_timestamp_that_reference_sdk_accepts(monkeypatch) -> None:
+def test_runner_reports_invalid_timestamp_that_reference_sdk_accepts(
+    monkeypatch,
+) -> None:
     """A negative timestamp vector that becomes valid is surfaced as drift."""
     original_load = runner.load_conformance_profile
 
