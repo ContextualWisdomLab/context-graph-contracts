@@ -51,6 +51,8 @@ jobs:
           assert receipt["receipt_format"] == (
               "cwl-context-conformance-admission-receipt/v1"
           )
+          assert receipt["canonicalization"] == "RFC8785"
+          assert receipt["digest_algorithm"] == "sha256"
           assert receipt["admitted"] is True
           assert receipt["installed_distribution_name"] == "cwl-context-contracts"
           assert len(receipt["approved_manifest_canonical_sha256"]) == 64
