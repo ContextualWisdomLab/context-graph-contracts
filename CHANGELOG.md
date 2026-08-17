@@ -55,6 +55,11 @@ All notable changes to this project are documented in this file.
   semantic conformance and an exact approved-manifest match while explicitly
   leaving artifact provenance, review policy, and runtime authorization to
   their owning gates.
+- Deterministic `cwl-context-conformance-receipt` command and
+  `build_packaged_conformance_admission_receipt()` API that bind canonical
+  approved-manifest content and the complete admission evidence mapping to
+  separate SHA-256 identities for downstream audit/evidence persistence without
+  creating signature, trust, approval, provenance, or runtime authority.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
