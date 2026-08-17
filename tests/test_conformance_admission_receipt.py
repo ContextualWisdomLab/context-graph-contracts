@@ -6,6 +6,8 @@ import json
 import tomllib
 from pathlib import Path
 
+import pytest
+
 import cwl_context_contracts
 from cwl_context_contracts import conformance_admission_receipt as receipt_module
 
@@ -60,6 +62,41 @@ def test_manifest_digest_is_stable_across_json_member_order() -> None:
         alternate.approved_manifest_canonical_sha256
     )
     assert original.admission_evidence_sha256 == alternate.admission_evidence_sha256
+
+
+def test_manifest_digest_has_published_canonical_vector() -> None:
+    """Other SDKs can reproduce one exact canonical-manifest receipt digest."""
+    approved = {
+        "manifest_format": "cwl-context-conformance-manifest/v1",
+        "distribution_name": "cwl-context-contracts",
+        "distribution_version": "999.0.0",
+        "algorithm": "sha256",
+        "profile_count": 1,
+        "profiles": [
+            {
+                "profile_name": "x.json",
+                "sha256": "0" * 64,
+            }
+        ],
+    }
+
+    receipt = cwl_context_contracts.build_packaged_conformance_admission_receipt(
+        approved
+    )
+
+    assert receipt.admitted is False
+    assert receipt.approved_manifest_canonical_sha256 == (
+        "d2f075ded4291aa6a015359cb016632afe9cb0efe7097e23c02835a7685f95fa"
+    )
+
+
+def test_receipt_rejects_unknown_manifest_members_as_ambiguous_identity() -> None:
+    """Unspecified JSON members cannot acquire an undocumented digest meaning."""
+    approved = _approved_manifest()
+    approved["untrusted_extension"] = 1.5
+
+    with pytest.raises(ValueError, match="approved_manifest_invalid_shape"):
+        cwl_context_contracts.build_packaged_conformance_admission_receipt(approved)
 
 
 def test_manifest_digest_changes_when_approved_evidence_changes() -> None:
@@ -136,6 +173,21 @@ def test_receipt_cli_reuses_fail_closed_manifest_input_boundary(
         "error": "approved_manifest_unreadable",
         "next_action": "provide a readable approved conformance manifest JSON object",
     }
+
+
+def test_receipt_cli_rejects_ambiguous_manifest_shape(tmp_path, capsys) -> None:
+    """The CLI fails closed before hashing unspecified approved-manifest members."""
+    approved = _approved_manifest()
+    approved["untrusted_extension"] = 1.5
+    approved_path = tmp_path / "approved.json"
+    approved_path.write_text(json.dumps(approved), encoding="utf-8")
+
+    exit_code = receipt_module.main([str(approved_path)])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 2
+    assert payload["admitted"] is False
+    assert payload["error"] == "approved_manifest_invalid_shape"
 
 
 def test_receipt_cli_is_installed_by_project_metadata() -> None:
