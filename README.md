@@ -174,6 +174,26 @@ it is not a signature, provenance attestation, approval registry, trust decision
 or authorization grant. Python callers can use
 `build_packaged_conformance_admission_receipt()`.
 
+Capture one exact identity manifest for the complete published JSON contract
+bundle when a consuming product needs to bind release evidence to more than the
+semantic profiles alone:
+
+```console
+$ cwl-context-bundle-manifest
+{"algorithm":"sha256","distribution_name":"cwl-context-contracts","distribution_version":"0.1.0","manifest_format":"cwl-context-bundle-manifest/v1","next_action":"store this manifest with approved release evidence and verify semantic conformance, package provenance, and runtime authorization before enabling the integration","resource_count":17,"resources":[...]}
+```
+
+The bundle manifest hashes the exact packaged bytes of every explicitly
+published AsyncAPI document, JSON Schema, positive/negative fixture, and
+semantic conformance profile, then emits those identities in stable
+`resource_path` order. Store it beside release evidence when a buyer or operator
+must prove which complete contract-resource set was admitted. A changed digest
+means the corresponding resource bytes changed and must be reviewed and
+revalidated. The manifest is deliberately not a signature, trust decision,
+semantic-conformance result, provenance attestation, approval registry, or
+runtime authorization grant. Python callers can use
+`build_packaged_contract_bundle_manifest()` for the same deterministic evidence.
+
 ## Who consumes these contracts
 
 `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`,
