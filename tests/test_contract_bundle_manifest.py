@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 from importlib.metadata import version
 from importlib.resources import files
@@ -14,7 +15,6 @@ from cwl_context_contracts import (
     available_schema_names,
     build_packaged_contract_bundle_manifest,
 )
-from cwl_context_contracts.contract_bundle_manifest import main
 
 _DISTRIBUTION_NAME = "cwl-context-contracts"
 _RESOURCE_GROUPS = (
@@ -75,8 +75,9 @@ def test_bundle_manifest_mapping_is_deterministic_and_actionable() -> None:
 def test_bundle_manifest_cli_emits_exact_deterministic_json(capsys) -> None:
     """The installed command emits the same mapping consumed by automation."""
     expected = build_packaged_contract_bundle_manifest().to_mapping()
+    module = importlib.import_module("cwl_context_contracts.contract_bundle_manifest")
 
-    assert main() == 0
+    assert module.main() == 0
     captured = capsys.readouterr()
 
     assert json.loads(captured.out) == expected
