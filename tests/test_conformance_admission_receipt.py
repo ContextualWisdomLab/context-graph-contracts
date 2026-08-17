@@ -35,6 +35,7 @@ def test_receipt_binds_admission_and_approved_manifest_semantics() -> None:
         "cwl-context-conformance-admission-receipt/v1"
     )
     assert payload["canonicalization"] == "RFC8785"
+    assert payload["manifest_normalization"] == "profile_name_ascending"
     assert payload["digest_algorithm"] == "sha256"
     assert payload["admitted"] is True
     assert payload["installed_distribution_name"] == "cwl-context-contracts"
@@ -60,6 +61,29 @@ def test_manifest_digest_is_stable_across_json_member_order() -> None:
         reordered
     )
 
+    assert original.approved_manifest_canonical_sha256 == (
+        alternate.approved_manifest_canonical_sha256
+    )
+    assert original.admission_evidence_sha256 == alternate.admission_evidence_sha256
+
+
+def test_manifest_digest_is_stable_across_profile_array_order() -> None:
+    """Profile array order cannot change a verifier-equivalent manifest receipt."""
+    approved = _approved_manifest()
+    reordered = _approved_manifest()
+    profiles = reordered["profiles"]
+    assert isinstance(profiles, list)
+    profiles.reverse()
+
+    original = cwl_context_contracts.build_packaged_conformance_admission_receipt(
+        approved
+    )
+    alternate = cwl_context_contracts.build_packaged_conformance_admission_receipt(
+        reordered
+    )
+
+    assert original.admitted is True
+    assert alternate.admitted is True
     assert original.approved_manifest_canonical_sha256 == (
         alternate.approved_manifest_canonical_sha256
     )
