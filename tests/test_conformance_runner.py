@@ -211,7 +211,9 @@ def test_runner_fails_closed_when_profile_shape_is_not_executable(monkeypatch) -
     assert report.failures[0].detail.startswith("KeyError:")
 
 
-def test_assert_packaged_conformance_raises_with_actionable_failure(monkeypatch) -> None:
+def test_assert_packaged_conformance_raises_with_actionable_failure(
+    monkeypatch,
+) -> None:
     """Gate callers fail closed with a concise first-failure identity."""
     report = ConformanceReport(
         profile_count=1,
