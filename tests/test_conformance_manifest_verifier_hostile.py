@@ -12,7 +12,7 @@ def test_verifier_cli_rejects_excessive_json_nesting_without_traceback(
 ) -> None:
     """Excessive nesting fails closed instead of escaping as RecursionError."""
     approved_path = tmp_path / "deeply-nested.json"
-    nesting_depth = 2_000
+    nesting_depth = 10_000
     approved_path.write_text(
         "[" * nesting_depth + "0" + "]" * nesting_depth,
         encoding="utf-8",
