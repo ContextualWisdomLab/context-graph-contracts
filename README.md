@@ -98,16 +98,20 @@ Capture the exact semantic-resource identity alongside the conformance result:
 
 ```console
 $ cwl-context-conformance-manifest
-{"algorithm":"sha256","profile_count":4,"profiles":[...]}
+{"algorithm":"sha256","distribution_name":"cwl-context-contracts","distribution_version":"0.1.0","manifest_format":"cwl-context-conformance-manifest/v1","profile_count":4,"profiles":[...]}
 ```
 
-The manifest hashes the exact bytes of every packaged semantic profile in
-stable profile-name order. Store that JSON with CI/release evidence so an
-operator can distinguish “the conformance command passed” from “these exact
-published vectors passed.” Python callers can use
-`build_packaged_conformance_manifest()` or `conformance_profile_sha256()` for
-the same evidence. SHA-256 here proves byte identity only; package provenance,
-authorization, and trust remain separate gates.
+The manifest identifies the installed distribution name/version and hashes the
+exact bytes of every packaged semantic profile in stable profile-name order.
+Store that JSON with CI/release evidence so an operator can distinguish “the
+conformance command passed” from “this exact package version and these exact
+published vectors passed.” If either `distribution_version` or a profile digest
+differs from the version/digest approved by the consuming product, stop the
+integration and reconcile the contract release before accepting Context Fabric
+data. Python callers can use `build_packaged_conformance_manifest()` or
+`conformance_profile_sha256()` for the same evidence. SHA-256 here proves byte
+identity only; package provenance, authorization, and trust remain separate
+gates.
 
 ## Who consumes these contracts
 
