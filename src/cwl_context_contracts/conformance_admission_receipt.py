@@ -139,7 +139,9 @@ class ConformanceAdmissionReceipt:
             "installed_distribution_name": (
                 verification.installed_distribution_name
             ),
-            "installed_distribution_version": verification.installed_distribution_version,
+            "installed_distribution_version": (
+                verification.installed_distribution_version
+            ),
             "approved_manifest_canonical_sha256": (
                 self.approved_manifest_canonical_sha256
             ),
