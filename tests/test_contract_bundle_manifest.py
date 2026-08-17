@@ -7,14 +7,14 @@ import json
 from importlib.metadata import version
 from importlib.resources import files
 
-from cwl_context_contracts.conformance import available_conformance_profile_names
-from cwl_context_contracts.contract_bundle_manifest import (
+from cwl_context_contracts import (
+    available_conformance_profile_names,
+    available_contract_names,
+    available_fixture_names,
+    available_schema_names,
     build_packaged_contract_bundle_manifest,
-    main,
 )
-from cwl_context_contracts.contracts import available_contract_names
-from cwl_context_contracts.fixtures import available_fixture_names
-from cwl_context_contracts.schemas import available_schema_names
+from cwl_context_contracts.contract_bundle_manifest import main
 
 _DISTRIBUTION_NAME = "cwl-context-contracts"
 _RESOURCE_GROUPS = (
