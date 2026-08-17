@@ -30,8 +30,13 @@ All notable changes to this project are documented in this file.
 - JSON Schema Draft 2020-12 resources and positive/negative conformance
   fixtures.
 - Provider-neutral semantic conformance profiles for the CWL Timestamp Profile,
-  Context Assertion cross-field invariants, and exact JSON integer exchange;
-  installed-package smoke tests execute the same vectors consumers receive.
+  Context Assertion cross-field invariants, CloudEvent cross-field semantics,
+  and exact JSON integer exchange; installed-package smoke tests execute the
+  same vectors consumers receive.
+- Buyer-executable `cwl-context-conformance` command plus
+  `run_packaged_conformance()` / `assert_packaged_conformance()` APIs that emit
+  exact profile/case evidence and fail closed for missing, malformed, or
+  unregistered packaged profiles.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
