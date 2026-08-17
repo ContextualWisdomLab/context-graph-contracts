@@ -173,7 +173,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             object_pairs_hook=_unique_json_object,
             parse_constant=_reject_nonstandard_json_constant,
         )
-    except ValueError:
+    except (ValueError, RecursionError):
         return _input_failure("approved_manifest_invalid_json")
     if not isinstance(approved_payload, dict):
         return _input_failure("approved_manifest_invalid_shape")
