@@ -94,6 +94,21 @@ installed reference SDK and its packaged semantic resources; it does not grant
 runtime authority or prove another implementation conformant unless that
 implementation executes equivalent vectors itself.
 
+Capture the exact semantic-resource identity alongside the conformance result:
+
+```console
+$ cwl-context-conformance-manifest
+{"algorithm":"sha256","profile_count":4,"profiles":[...]}
+```
+
+The manifest hashes the exact bytes of every packaged semantic profile in
+stable profile-name order. Store that JSON with CI/release evidence so an
+operator can distinguish “the conformance command passed” from “these exact
+published vectors passed.” Python callers can use
+`build_packaged_conformance_manifest()` or `conformance_profile_sha256()` for
+the same evidence. SHA-256 here proves byte identity only; package provenance,
+authorization, and trust remain separate gates.
+
 ## Who consumes these contracts
 
 `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`,
