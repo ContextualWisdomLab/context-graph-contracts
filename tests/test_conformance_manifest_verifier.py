@@ -6,6 +6,8 @@ import json
 import tomllib
 from pathlib import Path
 
+import pytest
+
 import cwl_context_contracts.conformance_manifest_verifier as verifier_module
 from cwl_context_contracts import (
     build_packaged_conformance_manifest,
@@ -106,6 +108,14 @@ def test_unexpected_profile_fails_closed() -> None:
     )
 
 
+def test_non_mapping_manifest_fails_closed() -> None:
+    """The public verifier rejects a non-object approved manifest."""
+    report = verify_packaged_conformance_manifest([])
+
+    assert report.verified is False
+    assert report.mismatches == ("manifest",)
+
+
 def test_malformed_profiles_shape_fails_closed_without_traceback() -> None:
     """Malformed evidence becomes an actionable verification failure."""
     approved = _approved_manifest()
@@ -115,6 +125,30 @@ def test_malformed_profiles_shape_fails_closed_without_traceback() -> None:
 
     assert report.verified is False
     assert report.mismatches == ("profiles",)
+
+
+@pytest.mark.parametrize(
+    "profiles",
+    [
+        [None],
+        [{"profile_name": 7, "sha256": "0" * 64}],
+        [{"profile_name": "x", "sha256": 7}],
+        [
+            {"profile_name": "x", "sha256": "0" * 64},
+            {"profile_name": "x", "sha256": "1" * 64},
+        ],
+    ],
+)
+def test_malformed_profile_entries_fail_closed(profiles: list[object]) -> None:
+    """Malformed or duplicate profile evidence never becomes authorization."""
+    approved = _approved_manifest()
+    approved["profiles"] = profiles
+    approved["profile_count"] = len(profiles)
+
+    report = verify_packaged_conformance_manifest(approved)
+
+    assert report.verified is False
+    assert "profiles" in report.mismatches
 
 
 def test_verifier_cli_is_installed_by_project_metadata() -> None:
@@ -176,3 +210,16 @@ def test_verifier_cli_rejects_unreadable_or_invalid_json(tmp_path, capsys) -> No
     assert invalid_exit == 2
     assert invalid_payload["verified"] is False
     assert invalid_payload["error"] == "approved_manifest_invalid_json"
+
+
+def test_verifier_cli_rejects_non_object_json(tmp_path, capsys) -> None:
+    """A syntactically valid non-object manifest is still invalid evidence."""
+    approved_path = tmp_path / "approved.json"
+    approved_path.write_text("[]", encoding="utf-8")
+
+    exit_code = verifier_module.main([str(approved_path)])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 2
+    assert payload["verified"] is False
+    assert payload["error"] == "approved_manifest_invalid_shape"

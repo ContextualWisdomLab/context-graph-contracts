@@ -11,6 +11,10 @@ from .conformance_manifest import (
     ConformanceProfileEvidence,
     build_packaged_conformance_manifest,
 )
+from .conformance_manifest_verifier import (
+    ConformanceManifestVerification,
+    verify_packaged_conformance_manifest,
+)
 from .conformance_runner import (
     ConformanceError,
     ConformanceFailure,
@@ -47,6 +51,7 @@ __all__ = [
     "ConformanceError",
     "ConformanceEvidenceManifest",
     "ConformanceFailure",
+    "ConformanceManifestVerification",
     "ConformanceProfileEvidence",
     "ConformanceReport",
     "ContextAssertion",
@@ -73,6 +78,7 @@ __all__ = [
     "requires_provenance",
     "run_packaged_conformance",
     "truth_status_rank",
+    "verify_packaged_conformance_manifest",
 ]
 
 __version__ = "0.1.0"

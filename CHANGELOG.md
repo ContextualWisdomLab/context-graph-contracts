@@ -42,6 +42,11 @@ All notable changes to this project are documented in this file.
   and `conformance_profile_sha256()`, binding release evidence to the installed
   `cwl-context-contracts` distribution version and the exact packaged bytes of
   every published conformance profile.
+- Fail-closed `cwl-context-conformance-verify` command and
+  `verify_packaged_conformance_manifest()` API that compare an independently
+  approved manifest with the installed package, identify exact version/profile
+  drift, and return an operator next action without inventing manifest-approval
+  authority.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and

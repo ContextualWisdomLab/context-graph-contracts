@@ -113,6 +113,23 @@ data. Python callers can use `build_packaged_conformance_manifest()` or
 identity only; package provenance, authorization, and trust remain separate
 gates.
 
+Given a manifest captured and approved through the consuming product's release
+process, compare it with the installed package before enabling the integration:
+
+```console
+$ cwl-context-conformance-verify approved-conformance-manifest.json
+{"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","mismatches":[],"next_action":"accept the installed conformance evidence","verification_format":"cwl-context-conformance-verification/v1","verified":true}
+```
+
+Exit `0` means the approved package version and every approved semantic-profile
+digest match the installed evidence. Exit `1` means version/profile evidence
+drifted; use the emitted mismatch identities to install the approved package or
+approve a newly reviewed exact manifest. Exit `2` means the approved manifest
+cannot be read or parsed as a JSON object. The verifier does not decide who may
+approve a manifest and does not replace signature, provenance, SBOM, or runtime
+authorization gates. Python callers can use
+`verify_packaged_conformance_manifest()` for the same deterministic decision.
+
 ## Who consumes these contracts
 
 `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`,
