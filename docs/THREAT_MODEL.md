@@ -37,7 +37,7 @@ The contract layer intentionally avoids credentials, passwords, tokens, DSNs, ra
 | Duplicate or contradictory assertion membership | Semantic assertion conformance enforces membership uniqueness and tenant/subject invariants that structural JSON Schema cannot express portably. | Run the semantic conformance profile, not only structural schema validation. |
 | CloudEvent metadata injection | Core attributes are type-checked; `source`, `subject`, `tenantid`, `dataschema`, time, and event data are semantically constrained. | Apply application authorization and signature/trust policy after conformance. |
 | Credential or PII exfiltration in envelopes | Contract documentation forbids credentials, DSNs, tokens, passwords and unnecessary raw personal data in context bundles. | Keep secret and PII values in the owning product, expose only purpose-authorized references, and audit exports. |
-| Resource exhaustion | Event payload traversal rejects excessive nesting, non-string map keys, non-finite numbers, cycles and Python-only values. | Impose transport/body size, rate, concurrency and memory limits appropriate to the hosting service. |
+| Resource exhaustion | Event payload traversal rejects excessive nesting, non-string map keys, non-finite numbers, cycles and Python-only values. Approved conformance-manifest verification reads at most 1 MiB plus one sentinel byte before UTF-8/JSON parsing and fails closed on larger input. | Impose transport/body size, rate, concurrency and memory limits appropriate to the hosting service. |
 | Replay or replay storm | Event identity and time/provenance fields remain explicit and stable; the contract does not treat duplicate receipt as a new authoritative fact. | Consumers must implement idempotency, replay windows, deduplication and bounded retry at their durable event boundary. |
 | Graph/Cypher injection | No graph query runtime or Cypher execution exists in this package. | A graph-owning product must use typed parameters and traversal bounds; never expose raw model-authored queries merely because identifiers are conformant. |
 | Prompt-injection policy mutation | No LLM or policy mutation runtime exists here; model output can be represented only with its explicit truth origin. | Owning products must keep deterministic authorization/security gates independent of model judgment and require explicit promotion for proposals. |
@@ -51,6 +51,7 @@ The contract layer intentionally avoids credentials, passwords, tokens, DSNs, ra
 - event data contains a non-finite number, cyclic container, excessive nesting, non-string key, or exact integer outside the portable interoperability range;
 - `dataschema` is not an absolute URI;
 - an assertion requiring same-tenant provenance points to another tenant;
+- an approved conformance-manifest file exceeds the verifier's 1 MiB input ceiling;
 - a consumer attempts to treat schema success as identity, role, purpose or policy authorization;
 - replay of the same event is interpreted as permission to create a second authoritative fact;
 - a context bundle attempts to carry credentials, passwords, access tokens or DSNs.
