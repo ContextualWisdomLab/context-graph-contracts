@@ -12,6 +12,7 @@ from .conformance import (
     available_conformance_profile_names,
     load_conformance_profile,
 )
+from .data_management import validate_data_management_assessment_semantics
 from .events import CloudEventEnvelope, _validate_and_freeze_json_value
 from .temporal import parse_cwl_timestamp
 
@@ -225,6 +226,41 @@ def _run_json_profile(
     return case_count, tuple(failures)
 
 
+def _run_data_management_assessment_profile(
+    profile_name: str,
+    profile: dict[str, Any],
+) -> tuple[int, tuple[ConformanceFailure, ...]]:
+    """Execute provider-neutral data-management assessment semantic vectors."""
+    failures: list[ConformanceFailure] = []
+    case_count = 0
+    for index, vector in enumerate(profile["valid_vectors"]):
+        case_count += 1
+        case_id = str(vector.get("case_id", f"valid_vectors[{index}]"))
+        failure = _expected_acceptance(
+            profile_name=profile_name,
+            case_id=case_id,
+            action=lambda vector=vector: validate_data_management_assessment_semantics(
+                vector["value"]
+            ),
+        )
+        if failure is not None:
+            failures.append(failure)
+    for index, vector in enumerate(profile["invalid_vectors"]):
+        case_count += 1
+        case_id = str(vector.get("case_id", f"invalid_vectors[{index}]"))
+        failure = _expected_rejection(
+            profile_name=profile_name,
+            case_id=case_id,
+            error_pattern=str(vector["error_pattern"]),
+            action=lambda vector=vector: validate_data_management_assessment_semantics(
+                vector["value"]
+            ),
+        )
+        if failure is not None:
+            failures.append(failure)
+    return case_count, tuple(failures)
+
+
 _PROFILE_RUNNERS: dict[
     str,
     Callable[[str, dict[str, Any]], tuple[int, tuple[ConformanceFailure, ...]]],
@@ -233,6 +269,9 @@ _PROFILE_RUNNERS: dict[
     "context-assertion-semantics.v1.json": _run_assertion_profile,
     "cloudevent-semantics.v1.json": _run_cloudevent_profile,
     "cwl-json-interoperability.v1.json": _run_json_profile,
+    "data-management-assessment-semantics.v1.json": (
+        _run_data_management_assessment_profile
+    ),
 }
 
 
