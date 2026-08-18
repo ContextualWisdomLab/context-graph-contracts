@@ -35,4 +35,4 @@ Conformance tests must reject public fixtures that embed restricted framework pr
 
 DAMA International. (2024). *The DAMA guide to the data management body of knowledge (DAMA-DMBOK2R)* (2nd ed., rev.). Technics Publications.
 
-EDM Council. (2025, June 30). *Announcing DCAM v3: Meet the new standard for your data*.
+EDM Council. (2025, June 30). *Announcing DCAM v3: Meet the new standard for your data*. https://edmcouncil.org/announcement/announcing-dcam-v3-meet-the-new-standard-for-your-data/
