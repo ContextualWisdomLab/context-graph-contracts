@@ -28,6 +28,10 @@ All notable changes to this project are documented in this file.
   readiness/missing-evidence consistency, canonical tenant/subject identity,
   knowledge-cutoff and recorded-time evidence, truth status, provenance, and
   append-only supersession references without embedding publisher scoring rules.
+- Portable `data-management-assessment-semantics.v1.json` conformance vectors
+  for assessment authority ownership, tenant isolation, dimension identity,
+  temporal ordering, and same-authority supersession; the installed reference
+  runner and wheel smoke execute the same vectors delivered to consumers.
 - Canonical tenant-scoped producer authority URI contract.
 - Canonical UUIDv7-backed CWL asset URI contract.
 - Truth-status vocabulary separating authoritative, observed, inferred, and
@@ -46,8 +50,9 @@ All notable changes to this project are documented in this file.
   fixtures.
 - Provider-neutral semantic conformance profiles for the CWL Timestamp Profile,
   Context Assertion cross-field invariants, CloudEvent cross-field semantics,
-  and exact JSON integer exchange; installed-package smoke tests execute the
-  same vectors consumers receive.
+  exact JSON integer exchange, and data-management assessment cross-field
+  invariants; installed-package smoke tests execute the same vectors consumers
+  receive.
 - Buyer-executable `cwl-context-conformance` command plus
   `run_packaged_conformance()` / `assert_packaged_conformance()` APIs that emit
   exact profile/case evidence and fail closed for missing, malformed, or
