@@ -53,6 +53,21 @@ def test_assessment_semantics_reject_cross_tenant_primary_references(
         validate_data_management_assessment_semantics(candidate)
 
 
+def test_assessment_semantics_bind_result_identity_to_declared_authority() -> None:
+    """Result identity cannot masquerade as a different same-tenant authority."""
+    wrong_authority = _valid_result()
+    wrong_authority["tenant_authority_uri"] = "urn:cwl:tenant_001:ea_core"
+    with pytest.raises(ValueError, match="assessment result authority"):
+        validate_data_management_assessment_semantics(wrong_authority)
+
+    wrong_object_type = _valid_result()
+    wrong_object_type["assessment_result_id"] = (
+        f"urn:cwl:tenant_001:data_context:business_capability:{UUID7_TEXT}"
+    )
+    with pytest.raises(ValueError, match="data_management_assessment"):
+        validate_data_management_assessment_semantics(wrong_object_type)
+
+
 def test_assessment_semantics_reject_cross_tenant_provenance() -> None:
     """Evidence provenance must belong to the same tenant as the result."""
     candidate = _valid_result()
@@ -97,6 +112,13 @@ def test_assessment_semantics_validate_supersession_identity() -> None:
     )
     with pytest.raises(ValueError, match="superseded result"):
         validate_data_management_assessment_semantics(foreign_result)
+
+    wrong_kind = _valid_result()
+    wrong_kind["supersedes_result_ref"] = (
+        f"urn:cwl:tenant_001:data_context:business_capability:{_OTHER_UUID7_TEXT}"
+    )
+    with pytest.raises(ValueError, match="data_management_assessment"):
+        validate_data_management_assessment_semantics(wrong_kind)
 
     valid_supersession = _valid_result()
     valid_supersession["supersedes_result_ref"] = (
