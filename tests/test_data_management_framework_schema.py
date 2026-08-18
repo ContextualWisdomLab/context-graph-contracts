@@ -115,7 +115,7 @@ def test_framework_contract_reuses_shared_truth_and_authority_grammar(
     assert list(_validator().iter_errors(candidate))
 
 
-def test_framework_contract_requires_official_reference_and_rejects_copied_body() -> None:
+def test_framework_contract_rejects_missing_reference_and_copied_body() -> None:
     """Public contracts keep external content as opaque references only."""
     missing_reference = deepcopy(_valid_contract())
     del missing_reference["framework_reference"]["official_reference_uri"]
