@@ -89,6 +89,7 @@ jobs:
               "schemas/data-management-assessment.schema.json",
               "fixtures/data-management-contract.valid.json",
               "fixtures/data-management-assessment.valid.json",
+              "conformance/data-management-assessment-semantics.v1.json",
           } <= resource_paths
           assert bundle_manifest["resources"] == sorted(
               bundle_manifest["resources"],
