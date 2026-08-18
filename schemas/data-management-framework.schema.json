@@ -16,7 +16,7 @@
     "framework_reference": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["framework_code", "framework_version", "publisher_name", "license_classification"],
+      "required": ["framework_code", "framework_version", "publisher_name", "official_reference_uri", "license_classification"],
       "properties": {
         "framework_code": {"type": "string", "minLength": 2},
         "framework_version": {"type": "string", "minLength": 1},
