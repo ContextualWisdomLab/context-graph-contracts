@@ -267,6 +267,9 @@ class ContextAssertion:
         missing = required - snapshot.keys()
         if missing:
             raise ValueError(f"missing required assertion fields: {sorted(missing)!r}")
+        raw_assertion_id = snapshot["assertion_id"]
+        if not isinstance(raw_assertion_id, str):
+            raise TypeError("assertion_id must be a string")
         raw_memberships = snapshot["memberships"]
         if isinstance(raw_memberships, (str, bytes)) or not isinstance(
             raw_memberships,
@@ -275,7 +278,7 @@ class ContextAssertion:
             raise TypeError("memberships must be a sequence")
         raw_provenance = snapshot.get("provenance")
         return cls(
-            assertion_id=snapshot["assertion_id"],
+            assertion_id=raw_assertion_id,
             subject=CanonicalAssetUri.parse(snapshot["subject"]),
             predicate=snapshot["predicate"],
             object=CanonicalAssetUri.parse(snapshot["object"]),
