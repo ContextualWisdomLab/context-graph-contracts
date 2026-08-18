@@ -5,7 +5,9 @@ from __future__ import annotations
 import cwl_context_contracts.conformance_runner as runner
 
 
-def test_runner_reports_valid_data_management_vector_rejected_by_sdk(monkeypatch) -> None:
+def test_runner_reports_valid_data_management_vector_rejected_by_sdk(
+    monkeypatch,
+) -> None:
     """A published positive assessment vector rejected by the SDK is drift."""
 
     original_load = runner.load_conformance_profile
@@ -43,7 +45,9 @@ def test_runner_reports_valid_data_management_vector_rejected_by_sdk(monkeypatch
     assert "unexpectedly rejected" in failure.detail
 
 
-def test_runner_reports_invalid_data_management_vector_accepted_by_sdk(monkeypatch) -> None:
+def test_runner_reports_invalid_data_management_vector_accepted_by_sdk(
+    monkeypatch,
+) -> None:
     """A published negative assessment vector accepted by the SDK is drift."""
 
     original_load = runner.load_conformance_profile
