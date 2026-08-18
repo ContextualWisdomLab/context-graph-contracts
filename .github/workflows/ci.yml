@@ -86,6 +86,7 @@ jobs:
               "cwl_context_contracts/conformance/context-assertion-semantics.v1.json",
               "cwl_context_contracts/conformance/cloudevent-semantics.v1.json",
               "cwl_context_contracts/conformance/cwl-json-interoperability.v1.json",
+              "cwl_context_contracts/conformance/data-management-assessment-semantics.v1.json",
               "cwl_context_contracts/schemas/canonical-authority-uri.schema.json",
               "cwl_context_contracts/schemas/canonical-asset-uri.schema.json",
               "cwl_context_contracts/schemas/truth-status.schema.json",
@@ -136,6 +137,7 @@ jobs:
               load_fixture,
               load_schema,
               parse_cwl_timestamp,
+              validate_data_management_assessment_semantics,
           )
 
           assert TruthStatus.OBSERVED.value == "observed"
@@ -156,6 +158,7 @@ jobs:
               "context-assertion-semantics.v1.json",
               "cloudevent-semantics.v1.json",
               "cwl-json-interoperability.v1.json",
+              "data-management-assessment-semantics.v1.json",
           )
           timestamp_profile = load_conformance_profile(
               "cwl-timestamp-profile.v1.json"
@@ -199,6 +202,22 @@ jobs:
               assert CloudEventEnvelope.from_mapping(vector["value"]).to_mapping() == (
                   vector["value"]
               )
+
+          assessment_profile = load_conformance_profile(
+              "data-management-assessment-semantics.v1.json"
+          )
+          for vector in assessment_profile["valid_vectors"]:
+              validate_data_management_assessment_semantics(vector["value"])
+          for vector in assessment_profile["invalid_vectors"]:
+              try:
+                  validate_data_management_assessment_semantics(vector["value"])
+              except ValueError as exc:
+                  assert vector["error_pattern"] in str(exc)
+              else:
+                  raise AssertionError(
+                      "negative assessment vector unexpectedly validated: "
+                      f"{vector['case_id']}"
+                  )
 
           assert available_fixture_names() == (
               "valid-event.json",
