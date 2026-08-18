@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- README is now a customer and operator page; local test commands live in
+  `CONTRIBUTING.md`.
+- ADRs 0001–0005 now include Context, Decision, Consequences, and APA 7th
+  references for the standards this product already claims.
+
 ### Added
 
 - Canonical tenant-scoped producer authority URI contract.
@@ -39,3 +46,8 @@ All notable changes to this project are documented in this file.
   attestations using immutably pinned GitHub/Anchore actions.
 - APA 7th doctoring for RFC 3339, RFC 8259, TSQL2/bitemporal semantics, PROV-DM,
   RDF 1.1, and multilevel-membership research.
+- Executable documentation consistency tests bind advertised Python support and
+  buyer-facing conformance claims to package and project metadata.
+- A contract-only threat model with executable documentation checks that keeps
+  runtime authorization, graph execution, durable replay, and connector policy
+  in their owning products instead of inventing authority in the contract layer.
