@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://contextualwisdomlab.org/schemas/data-management-framework.schema.json",
+  "title": "CWL Data Management Framework Contract",
+  "description": "Framework-neutral contract for mapping CWL capabilities and evidence to externally governed data-management frameworks without redistributing licensed framework content.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "framework_reference", "capability_definition", "assessment_profile"],
+  "properties": {
+    "contract_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "framework_reference": {"$ref": "#/$defs/framework_reference"},
+    "capability_definition": {"$ref": "#/$defs/capability_definition"},
+    "assessment_profile": {"$ref": "#/$defs/assessment_profile"}
+  },
+  "$defs": {
+    "framework_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["framework_code", "framework_version", "publisher_name", "license_classification"],
+      "properties": {
+        "framework_code": {"type": "string", "minLength": 2},
+        "framework_version": {"type": "string", "minLength": 1},
+        "publisher_name": {"type": "string", "minLength": 2},
+        "official_reference_uri": {"type": "string", "format": "uri"},
+        "license_classification": {"enum": ["public_reference", "licensed_internal", "restricted_profile"]}
+      }
+    },
+    "capability_definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability_code", "capability_name", "definition_text", "truth_status"],
+      "properties": {
+        "capability_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]+$"},
+        "capability_name": {"type": "string", "minLength": 2},
+        "definition_text": {"type": "string", "minLength": 10},
+        "truth_status": {"enum": ["authoritative", "observed", "inferred", "proposed"]},
+        "external_framework_ref": {"type": "string", "description": "Opaque external reference only; licensed framework prose must not be copied into public contracts."}
+      }
+    },
+    "assessment_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_code", "evidence_requirements", "scoring_dimensions"],
+      "properties": {
+        "profile_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]+$"},
+        "evidence_requirements": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/evidence_requirement"},
+          "uniqueItems": true
+        },
+        "scoring_dimensions": {
+          "type": "array",
+          "items": {"enum": ["engagement", "process", "evidence", "outcome"]},
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "evidence_requirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evidence_code", "evidence_type", "authority_code"],
+      "properties": {
+        "evidence_code": {"type": "string", "pattern": "^[a-z][a-z0-9_]+$"},
+        "evidence_type": {"enum": ["policy", "process", "record", "measurement", "control", "decision", "artifact"]},
+        "authority_code": {"type": "string", "minLength": 2},
+        "provenance_reference": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
