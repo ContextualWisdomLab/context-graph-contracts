@@ -60,15 +60,21 @@ def validate_data_management_assessment_semantics(
         snapshot["assessment_result_id"],
         "assessment_result_id",
     )
-    tenant_authority = CanonicalAuthorityUri.parse(snapshot["tenant_authority_uri"])
+    tenant_authority = CanonicalAuthorityUri.parse(
+        snapshot["tenant_authority_uri"]
+    )
     subject = CanonicalAssetUri.parse(snapshot["subject_ref"])
     provenance = ProvenanceReference.from_mapping(snapshot["provenance"])
     tenant_id = assessment_result.tenant_id
 
     if tenant_authority.tenant_id != tenant_id:
-        raise ValueError("tenant authority must belong to the assessment result tenant")
+        raise ValueError(
+            "tenant authority must belong to the assessment result tenant"
+        )
     if tenant_authority != assessment_result.authority_uri:
-        raise ValueError("tenant authority must match the assessment result authority")
+        raise ValueError(
+            "tenant authority must match the assessment result authority"
+        )
     if subject.tenant_id != tenant_id:
         raise ValueError("subject must belong to the assessment result tenant")
     if provenance.evidence_ref.tenant_id != tenant_id:
@@ -89,7 +95,10 @@ def validate_data_management_assessment_semantics(
     for item in raw_dimensions:
         if not isinstance(item, Mapping):
             raise TypeError("dimension_scores must contain mappings")
-        dimension_code = _validate_segment(item.get("dimension_code"), "dimension_code")
+        dimension_code = _validate_segment(
+            item.get("dimension_code"),
+            "dimension_code",
+        )
         if dimension_code in seen_dimensions:
             raise ValueError("dimension_code values must be unique")
         seen_dimensions.add(dimension_code)
@@ -102,6 +111,10 @@ def validate_data_management_assessment_semantics(
         "supersedes_result_ref",
     )
     if superseded == assessment_result:
-        raise ValueError("supersedes_result_ref must identify a different assessment result")
+        raise ValueError(
+            "supersedes_result_ref must identify a different assessment result"
+        )
     if superseded.tenant_id != tenant_id:
-        raise ValueError("superseded result must belong to the assessment result tenant")
+        raise ValueError(
+            "superseded result must belong to the assessment result tenant"
+        )
