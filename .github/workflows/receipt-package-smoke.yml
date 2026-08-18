@@ -43,6 +43,9 @@ jobs:
             /tmp/approved-manifest.json > /tmp/admission-receipt.json
           .receipt-smoke/bin/cwl-context-bundle-manifest \
             > /tmp/contract-bundle-manifest.json
+          .receipt-smoke/bin/cwl-context-bundle-verify \
+            /tmp/contract-bundle-manifest.json \
+            > /tmp/contract-bundle-verification.json
           .receipt-smoke/bin/python - <<'PY'
           import json
           from pathlib import Path
@@ -52,6 +55,11 @@ jobs:
           )
           bundle_manifest = json.loads(
               Path("/tmp/contract-bundle-manifest.json").read_text(encoding="utf-8")
+          )
+          bundle_verification = json.loads(
+              Path("/tmp/contract-bundle-verification.json").read_text(
+                  encoding="utf-8"
+              )
           )
           assert receipt["receipt_format"] == (
               "cwl-context-conformance-admission-receipt/v1"
@@ -84,4 +92,14 @@ jobs:
               "conformance, package provenance, and runtime authorization before "
               "enabling the integration"
           )
+          assert bundle_verification == {
+              "verification_format": "cwl-context-bundle-verification/v1",
+              "verified": True,
+              "installed_distribution_name": "cwl-context-contracts",
+              "installed_distribution_version": bundle_manifest[
+                  "distribution_version"
+              ],
+              "mismatches": [],
+              "next_action": "accept the installed contract bundle evidence",
+          }
           PY
