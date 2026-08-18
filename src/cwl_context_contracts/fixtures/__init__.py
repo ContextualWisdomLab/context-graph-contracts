@@ -11,6 +11,7 @@ _FIXTURE_NAMES = (
     "invalid-event.json",
     "valid-assertion.json",
     "invalid-assertion.json",
+    "data-management-assessment.valid.json",
 )
 
 
