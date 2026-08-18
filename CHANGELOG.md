@@ -10,6 +10,8 @@ All notable changes to this project are documented in this file.
   `CONTRIBUTING.md`.
 - ADRs 0001–0005 now include Context, Decision, Consequences, and APA 7th
   references for the standards this product already claims.
+- UUIDv7 wire identities now fail closed on non-canonical text rather than
+  silently normalizing spellings that the published JSON Schemas reject.
 
 ### Added
 
