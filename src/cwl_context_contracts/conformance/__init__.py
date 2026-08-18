@@ -13,6 +13,7 @@ _PROFILE_NAMES = (
     "context-assertion-semantics.v1.json",
     "cloudevent-semantics.v1.json",
     "cwl-json-interoperability.v1.json",
+    "data-management-assessment-semantics.v1.json",
 )
 
 
