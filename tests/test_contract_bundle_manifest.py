@@ -32,6 +32,7 @@ _DATA_MANAGEMENT_RESOURCES = {
     "schemas/data-management-assessment.schema.json",
     "fixtures/data-management-contract.valid.json",
     "fixtures/data-management-assessment.valid.json",
+    "conformance/data-management-assessment-semantics.v1.json",
 }
 
 
