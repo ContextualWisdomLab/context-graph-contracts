@@ -32,22 +32,14 @@ def _validate_segment(value: str, field_name: str) -> str:
 
 
 def _validate_uuid7(value: str | UUID, field_name: str) -> UUID:
-    """Return a parsed RFC 9562 UUIDv7 or raise ``ValueError``."""
+    """Return an RFC 9562 UUIDv7, requiring canonical text when given a string."""
     try:
         parsed = value if isinstance(value, UUID) else UUID(value)
     except (AttributeError, TypeError, ValueError) as exc:
         raise ValueError(f"{field_name} must be a UUIDv7 string") from exc
     if parsed.version != 7 or parsed.variant != RFC_4122:
         raise ValueError(f"{field_name} must use the RFC 9562 UUIDv7 layout")
-    return parsed
-
-
-def _parse_canonical_uuid7_text(value: object, field_name: str) -> UUID:
-    """Parse one exact lowercase-hyphenated UUIDv7 value from a wire string."""
-    if not isinstance(value, str):
-        raise TypeError(f"{field_name} must be a string")
-    parsed = _validate_uuid7(value, field_name)
-    if value != str(parsed):
+    if isinstance(value, str) and value != str(parsed):
         raise ValueError(
             f"{field_name} must use canonical lowercase-hyphenated UUIDv7 text"
         )
