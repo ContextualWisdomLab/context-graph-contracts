@@ -21,6 +21,11 @@ All notable changes to this project are documented in this file.
   data-management framework references while reusing canonical authority,
   truth-status, and provenance grammar and keeping licensed framework content
   outside the public package.
+- Framework-neutral `data-management-assessment.schema.json` plus packaged
+  positive contract/result fixtures for exact 0..10000 basis-point scores,
+  readiness/missing-evidence consistency, canonical tenant/subject identity,
+  knowledge-cutoff and recorded-time evidence, truth status, provenance, and
+  append-only supersession references without embedding publisher scoring rules.
 - Canonical tenant-scoped producer authority URI contract.
 - Canonical UUIDv7-backed CWL asset URI contract.
 - Truth-status vocabulary separating authoritative, observed, inferred, and
