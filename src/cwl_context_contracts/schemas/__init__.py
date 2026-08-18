@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import json
 # Python >=3.11 is the supported runtime contract.
-# nosemgrep: python.lang.compatibility.python37.python37-compatibility-importlib2
-from importlib.resources import files
+import json
+from importlib.resources import files  # nosemgrep
 from typing import Any
 
 _SCHEMA_NAMES = (
