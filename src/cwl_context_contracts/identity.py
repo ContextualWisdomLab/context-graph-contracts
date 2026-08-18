@@ -42,6 +42,18 @@ def _validate_uuid7(value: str | UUID, field_name: str) -> UUID:
     return parsed
 
 
+def _parse_canonical_uuid7_text(value: object, field_name: str) -> UUID:
+    """Parse one exact lowercase-hyphenated UUIDv7 value from a wire string."""
+    if not isinstance(value, str):
+        raise TypeError(f"{field_name} must be a string")
+    parsed = _validate_uuid7(value, field_name)
+    if value != str(parsed):
+        raise ValueError(
+            f"{field_name} must use canonical lowercase-hyphenated UUIDv7 text"
+        )
+    return parsed
+
+
 @dataclass(frozen=True, slots=True)
 class CanonicalAuthorityUri:
     """Stable URI identifying one tenant-scoped producer authority."""
