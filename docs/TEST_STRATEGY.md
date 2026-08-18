@@ -7,6 +7,13 @@
 - JSON Schema tests validate all schemas against Draft 2020-12.
 - Positive and negative fixtures are packaged as executable conformance
   evidence.
+- Data-management assessment tests separate structural schema acceptance from
+  cross-field semantics. `validate_data_management_assessment_semantics()`
+  requires the result ID to use the assessment object kind and declared owning
+  authority, keeps result/subject/provenance/supersession references inside one
+  tenant, rejects duplicate dimension codes, and requires the evidence knowledge
+  cutoff not to follow system recording time. Supersession must reference a
+  different same-tenant assessment result; prior evidence is never rewritten.
 - Timestamp tests deliberately run Draft 2020-12 without a format checker to
   prove that default `format` annotation cannot establish semantic validity,
   then execute the packaged provider-neutral CWL Timestamp Profile v1 vectors
