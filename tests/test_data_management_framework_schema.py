@@ -9,10 +9,16 @@ import pytest
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
-from cwl_context_contracts import available_schema_names, load_schema
+from cwl_context_contracts import (
+    available_fixture_names,
+    available_schema_names,
+    load_fixture,
+    load_schema,
+)
 from tests.conftest import UUID7_TEXT
 
 _SCHEMA_NAME = "data-management-framework.schema.json"
+_FIXTURE_NAME = "data-management-contract.valid.json"
 _ZERO_SHA256 = "0" * 64
 
 
@@ -86,8 +92,10 @@ def _valid_contract() -> dict[str, Any]:
 def test_framework_contract_is_packaged_and_accepts_public_reference_metadata() -> None:
     """A buyer can validate an original CWL mapping from the installed package."""
     assert _SCHEMA_NAME in available_schema_names()
+    assert _FIXTURE_NAME in available_fixture_names()
     Draft202012Validator.check_schema(load_schema(_SCHEMA_NAME))
     assert list(_validator().iter_errors(_valid_contract())) == []
+    assert list(_validator().iter_errors(load_fixture(_FIXTURE_NAME))) == []
 
 
 @pytest.mark.parametrize(
