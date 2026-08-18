@@ -3,7 +3,7 @@ name: ci
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [develop, main]
 
 permissions:
   contents: read
@@ -94,10 +94,14 @@ jobs:
               "cwl_context_contracts/schemas/cloudevent-envelope.schema.json",
               "cwl_context_contracts/schemas/context-membership.schema.json",
               "cwl_context_contracts/schemas/context-assertion.schema.json",
+              "cwl_context_contracts/schemas/data-management-framework.schema.json",
+              "cwl_context_contracts/schemas/data-management-assessment.schema.json",
               "cwl_context_contracts/fixtures/valid-event.json",
               "cwl_context_contracts/fixtures/invalid-event.json",
               "cwl_context_contracts/fixtures/valid-assertion.json",
               "cwl_context_contracts/fixtures/invalid-assertion.json",
+              "cwl_context_contracts/fixtures/data-management-contract.valid.json",
+              "cwl_context_contracts/fixtures/data-management-assessment.valid.json",
           }
 
           with zipfile.ZipFile(wheel_path) as wheel_file:
@@ -201,6 +205,8 @@ jobs:
               "invalid-event.json",
               "valid-assertion.json",
               "invalid-assertion.json",
+              "data-management-contract.valid.json",
+              "data-management-assessment.valid.json",
           )
           valid_event = load_fixture("valid-event.json")
           invalid_event = load_fixture("invalid-event.json")
