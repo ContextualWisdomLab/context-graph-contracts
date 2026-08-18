@@ -222,5 +222,7 @@ def test_bundle_verifier_cli_rejects_invalid_input(tmp_path, capsys) -> None:
         "verification_format": "cwl-context-bundle-verification/v1",
         "verified": False,
         "error": "approved_manifest_invalid_json",
-        "next_action": "provide a readable approved contract bundle manifest JSON object",
+        "next_action": (
+            "provide a readable approved contract bundle manifest JSON object"
+        ),
     }
