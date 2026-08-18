@@ -42,6 +42,7 @@ from .contract_bundle_manifest_verifier import (
     verify_packaged_contract_bundle_manifest,
 )
 from .contracts import available_contract_names, load_contract
+from .data_management import validate_data_management_assessment_semantics
 from .events import CloudEventEnvelope
 from .fixtures import available_fixture_names, load_fixture
 from .identity import CanonicalAssetUri, CanonicalAuthorityUri
@@ -107,6 +108,7 @@ __all__ = [
     "requires_provenance",
     "run_packaged_conformance",
     "truth_status_rank",
+    "validate_data_management_assessment_semantics",
     "verify_packaged_conformance_manifest",
     "verify_packaged_contract_bundle_manifest",
 ]
