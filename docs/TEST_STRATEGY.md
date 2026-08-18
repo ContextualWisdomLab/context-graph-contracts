@@ -13,7 +13,9 @@
   authority, keeps result/subject/provenance/supersession references inside one
   tenant, rejects duplicate dimension codes, and requires the evidence knowledge
   cutoff not to follow system recording time. Supersession must reference a
-  different same-tenant assessment result; prior evidence is never rewritten.
+  different assessment result under the same tenant and owning authority; prior
+  evidence is never rewritten and one authority cannot supersede another
+  authority's assessment history.
 - Timestamp tests deliberately run Draft 2020-12 without a format checker to
   prove that default `format` annotation cannot establish semantic validity,
   then execute the packaged provider-neutral CWL Timestamp Profile v1 vectors
