@@ -12,7 +12,17 @@ Cloud Native Computing Foundation. (2022). *CloudEvents specification* (Version 
 
 Cyganiak, R., Wood, D., & Lanthaler, M. (Eds.). (2014). *RDF 1.1 concepts and abstract syntax*. World Wide Web Consortium. https://www.w3.org/TR/rdf11-concepts/
 
+DAMA International. (2024). *The DAMA guide to the data management body of knowledge (DAMA-DMBOK2R)* (2nd ed., rev.). Technics Publications.
+
+DAMA International. (n.d.-a). *DAMA DMBOK revision*. Retrieved August 18, 2026, from https://dama.org/dama-dmbok-revision/
+
+DAMA International. (n.d.-b). *DAMA-DMBOK®*. Retrieved August 18, 2026, from https://dama.org/dmbok2r-infographics/
+
 Diez-Roux, A. V. (1998). Bringing context back into epidemiology: Variables and fallacies in multilevel analysis. *American Journal of Public Health, 88*(2), 216–222. https://doi.org/10.2105/AJPH.88.2.216
+
+EDM Association. (2025, June 30). *Announcing DCAM v3: Meet the new standard for your data*. https://edmcouncil.org/announcement/announcing-dcam-v3-meet-the-new-standard-for-your-data/
+
+EDM Association. (n.d.). *Data management - DCAM*. Retrieved August 18, 2026, from https://edmcouncil.org/frameworks/dcam/
 
 GitHub. (n.d.). *Using artifact attestations to establish provenance for builds*. GitHub Docs. Retrieved August 17, 2026, from https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations
 

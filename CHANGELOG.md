@@ -16,6 +16,11 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- Framework-neutral `data-management-framework.schema.json` for relating
+  CWL-authored capability, evidence, and assessment identifiers to external
+  data-management framework references while reusing canonical authority,
+  truth-status, and provenance grammar and keeping licensed framework content
+  outside the public package.
 - Canonical tenant-scoped producer authority URI contract.
 - Canonical UUIDv7-backed CWL asset URI contract.
 - Truth-status vocabulary separating authoritative, observed, inferred, and

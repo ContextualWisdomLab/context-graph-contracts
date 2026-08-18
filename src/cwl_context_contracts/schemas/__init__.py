@@ -15,6 +15,7 @@ _SCHEMA_NAMES = (
     "cloudevent-envelope.schema.json",
     "context-membership.schema.json",
     "context-assertion.schema.json",
+    "data-management-framework.schema.json",
 )
 
 
