@@ -9,6 +9,7 @@ from .identity import CanonicalAssetUri, CanonicalAuthorityUri, _validate_segmen
 from .provenance import ProvenanceReference
 from .temporal import parse_cwl_timestamp
 
+_ASSESSMENT_OBJECT_TYPE = "data_management_assessment"
 _ASSESSMENT_SEMANTIC_FIELDS = frozenset(
     {
         "assessment_result_id",
@@ -22,16 +23,29 @@ _ASSESSMENT_SEMANTIC_FIELDS = frozenset(
 )
 
 
+def _require_assessment_result_ref(
+    value: object,
+    field_name: str,
+) -> CanonicalAssetUri:
+    """Parse one result URI and require the assessment-result object kind."""
+    parsed = CanonicalAssetUri.parse(value)
+    if parsed.object_type != _ASSESSMENT_OBJECT_TYPE:
+        raise ValueError(
+            f"{field_name} must identify a data_management_assessment object"
+        )
+    return parsed
+
+
 def validate_data_management_assessment_semantics(
     value: Mapping[str, Any],
 ) -> None:
     """Fail closed when one assessment result violates cross-field semantics.
 
     JSON Schema remains the structural contract. This helper enforces invariants
-    that Draft 2020-12 cannot express portably: every primary/evidence reference
-    belongs to the result tenant, the knowledge cutoff cannot follow recording,
-    dimension identifiers are unique, and an optional supersession reference
-    identifies a different result in that same tenant.
+    that Draft 2020-12 cannot express portably: the result identity belongs to
+    its declared authority, every primary/evidence reference stays in the same
+    tenant, the knowledge cutoff cannot follow recording, dimension identifiers
+    are unique, and supersession identifies a different same-tenant result.
     """
     if not isinstance(value, Mapping):
         raise TypeError("value must be a mapping")
@@ -42,7 +56,10 @@ def validate_data_management_assessment_semantics(
             f"missing assessment semantic fields: {sorted(missing)!r}"
         )
 
-    assessment_result = CanonicalAssetUri.parse(snapshot["assessment_result_id"])
+    assessment_result = _require_assessment_result_ref(
+        snapshot["assessment_result_id"],
+        "assessment_result_id",
+    )
     tenant_authority = CanonicalAuthorityUri.parse(snapshot["tenant_authority_uri"])
     subject = CanonicalAssetUri.parse(snapshot["subject_ref"])
     provenance = ProvenanceReference.from_mapping(snapshot["provenance"])
@@ -50,6 +67,8 @@ def validate_data_management_assessment_semantics(
 
     if tenant_authority.tenant_id != tenant_id:
         raise ValueError("tenant authority must belong to the assessment result tenant")
+    if tenant_authority != assessment_result.authority_uri:
+        raise ValueError("tenant authority must match the assessment result authority")
     if subject.tenant_id != tenant_id:
         raise ValueError("subject must belong to the assessment result tenant")
     if provenance.evidence_ref.tenant_id != tenant_id:
@@ -78,7 +97,10 @@ def validate_data_management_assessment_semantics(
     raw_supersedes = snapshot.get("supersedes_result_ref")
     if raw_supersedes is None:
         return
-    superseded = CanonicalAssetUri.parse(raw_supersedes)
+    superseded = _require_assessment_result_ref(
+        raw_supersedes,
+        "supersedes_result_ref",
+    )
     if superseded == assessment_result:
         raise ValueError("supersedes_result_ref must identify a different assessment result")
     if superseded.tenant_id != tenant_id:
