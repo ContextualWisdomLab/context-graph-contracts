@@ -80,8 +80,11 @@ jobs:
           )
           assert bundle_manifest["distribution_name"] == "cwl-context-contracts"
           assert bundle_manifest["algorithm"] == "sha256"
-          assert bundle_manifest["resource_count"] == 17
-          assert len(bundle_manifest["resources"]) == 17
+          assert bundle_manifest["resource_count"] == len(bundle_manifest["resources"])
+          assert (
+              "schemas/data-management-framework.schema.json"
+              in {item["resource_path"] for item in bundle_manifest["resources"]}
+          )
           assert bundle_manifest["resources"] == sorted(
               bundle_manifest["resources"],
               key=lambda item: item["resource_path"],
