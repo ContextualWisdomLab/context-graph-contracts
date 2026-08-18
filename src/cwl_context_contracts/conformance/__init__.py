@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+# Python >=3.11 is the supported runtime contract.
 import json
 from hashlib import sha256
-from importlib.resources import files
+from importlib.resources import files  # nosemgrep
 from typing import Any
 
 _PROFILE_NAMES = (
