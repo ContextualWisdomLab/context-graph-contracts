@@ -45,7 +45,8 @@ def validate_data_management_assessment_semantics(
     that Draft 2020-12 cannot express portably: the result identity belongs to
     its declared authority, every primary/evidence reference stays in the same
     tenant, the knowledge cutoff cannot follow recording, dimension identifiers
-    are unique, and supersession identifies a different same-tenant result.
+    are unique, and supersession identifies a different result under the same
+    tenant and owning authority.
     """
     if not isinstance(value, Mapping):
         raise TypeError("value must be a mapping")
@@ -117,4 +118,8 @@ def validate_data_management_assessment_semantics(
     if superseded.tenant_id != tenant_id:
         raise ValueError(
             "superseded result must belong to the assessment result tenant"
+        )
+    if superseded.authority_uri != assessment_result.authority_uri:
+        raise ValueError(
+            "superseded result must remain under the same owning authority"
         )
