@@ -15,7 +15,10 @@
   cutoff not to follow system recording time. Supersession must reference a
   different assessment result under the same tenant and owning authority; prior
   evidence is never rewritten and one authority cannot supersede another
-  authority's assessment history.
+  authority's assessment history. These invariants are also published in
+  `data-management-assessment-semantics.v1.json`, so non-Python consumers can
+  execute the same valid and invalid vectors instead of treating the reference
+  SDK implementation as the contract.
 - Timestamp tests deliberately run Draft 2020-12 without a format checker to
   prove that default `format` annotation cannot establish semantic validity,
   then execute the packaged provider-neutral CWL Timestamp Profile v1 vectors
