@@ -2,7 +2,7 @@
 
 | Product decision | External basis | Contract evidence |
 |---|---|---|
-| UUIDv7 event, asset, and assertion identity | Peabody et al. (2024, RFC 9562 §5.7) | URI parser, event validator, assertion schema |
+| UUIDv7 event, asset, and assertion identity with canonical lowercase-hyphenated wire spelling | Peabody et al. (2024, RFC 9562 §5.7) | URI parser, event validator, assertion schema, and `test_uuid7_wire_canonicalization.py` schema/SDK agreement regressions |
 | Producer `source` plus unique `id` | Cloud Native Computing Foundation (2022) | authority URI and envelope tests |
 | Structured service event | Cloud Native Computing Foundation (2022) | envelope class and event schema |
 | RFC 3986 `dataschema` URI plus same-tenant event identity semantics | Cloud Native Computing Foundation (2022); Berners-Lee et al. (2005, RFC 3986); JSON Schema (2022b, §7.2) | envelope round-trip/negative tests and packaged `cloudevent-semantics.v1.json` vectors covering scheme presence, ASCII/percent/delimiter/authority URI grammar, source/subject tenant agreement, and `tenantid` agreement under default format-annotation semantics |
