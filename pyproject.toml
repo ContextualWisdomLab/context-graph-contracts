@@ -30,6 +30,7 @@ cwl-context-conformance-admit = "cwl_context_contracts.conformance_admission:mai
 cwl-context-conformance-receipt = "cwl_context_contracts.conformance_admission_receipt:main"
 cwl-context-bundle-manifest = "cwl_context_contracts.contract_bundle_manifest:main"
 cwl-context-bundle-verify = "cwl_context_contracts.contract_bundle_manifest_verifier:main"
+cwl-context-release-admit = "cwl_context_contracts.contract_release_admission:main"
 
 [project.optional-dependencies]
 dev = [
