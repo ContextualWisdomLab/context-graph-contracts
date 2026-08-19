@@ -96,6 +96,12 @@ All notable changes to this project are documented in this file.
   distribution/resource evidence, reporting exact missing, unexpected, and
   digest-different resource paths while reusing the bounded strict approved-JSON
   input boundary; installed-wheel smoke executes the verifier end to end.
+- Composite `cwl-context-release-admit` command and
+  `evaluate_packaged_contract_release_admission()` API that require executable
+  semantic conformance, exact approved semantic-profile identity, and exact
+  approved complete-resource identity together while leaving protected-release
+  policy, artifact provenance, independent approval, and runtime authorization
+  as separate owning gates.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
