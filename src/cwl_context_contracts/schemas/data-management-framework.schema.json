@@ -33,6 +33,11 @@
       "minLength": 2,
       "maxLength": 128
     },
+    "semantic_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "maxLength": 64
+    },
     "framework_reference": {
       "type": "object",
       "additionalProperties": false,
@@ -121,12 +126,16 @@
       "additionalProperties": false,
       "required": [
         "profile_code",
+        "profile_version",
         "evidence_requirements",
         "scoring_dimension_codes"
       ],
       "properties": {
         "profile_code": {
           "$ref": "#/$defs/code_string"
+        },
+        "profile_version": {
+          "$ref": "#/$defs/semantic_version"
         },
         "evidence_requirements": {
           "type": "array",
