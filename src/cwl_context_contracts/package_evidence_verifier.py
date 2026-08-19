@@ -14,6 +14,8 @@ _VERIFICATION_FORMAT = "cwl-context-package-evidence-verification/v1"
 _DISTRIBUTION_PREFIX = "cwl_context_contracts-"
 _SBOM_NAME = "cwl-context-contracts.spdx.json"
 _CHECKSUM_NAME = "SHA256SUMS"
+_MAX_CHECKSUM_MANIFEST_BYTES = 65_536
+_MAX_SBOM_BYTES = 16 * 1024 * 1024
 _CHECKSUM_PATTERN = re.compile(
     r"^([0-9a-f]{64}) [ *]([A-Za-z0-9][A-Za-z0-9._+-]*)$"
 )
@@ -78,13 +80,20 @@ class PackageEvidenceVerification:
 
 
 def _load_checksum_manifest(evidence_directory: Path) -> dict[str, str]:
-    """Read strict GNU-style SHA256SUMS without accepting external paths."""
+    """Read strict bounded GNU-style SHA256SUMS without following a symlink."""
     checksum_path = evidence_directory / _CHECKSUM_NAME
     if checksum_path.is_symlink():
         raise PackageEvidenceInputError("checksum_manifest_unsafe")
     try:
-        checksum_text = checksum_path.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as exc:
+        with checksum_path.open("rb") as checksum_file:
+            checksum_bytes = checksum_file.read(_MAX_CHECKSUM_MANIFEST_BYTES + 1)
+    except OSError as exc:
+        raise PackageEvidenceInputError("checksum_manifest_unreadable") from exc
+    if len(checksum_bytes) > _MAX_CHECKSUM_MANIFEST_BYTES:
+        raise PackageEvidenceInputError("checksum_manifest_too_large")
+    try:
+        checksum_text = checksum_bytes.decode("utf-8")
+    except UnicodeError as exc:
         raise PackageEvidenceInputError("checksum_manifest_unreadable") from exc
 
     checksums: dict[str, str] = {}
@@ -158,11 +167,38 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Build one JSON object while rejecting ambiguous duplicate member names."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON object member: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_nonstandard_json_constant(value: str) -> object:
+    """Reject Python-only JSON extensions such as NaN and Infinity."""
+    raise ValueError(f"non-standard JSON constant: {value}")
+
+
 def _spdx_is_3_0_1_package_document(path: Path, expected_version: str) -> bool:
-    """Return whether the SPDX package identity matches this exact release version."""
+    """Return whether bounded strict SPDX JSON matches this exact release version."""
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, json.JSONDecodeError):
+        with path.open("rb") as sbom_file:
+            sbom_bytes = sbom_file.read(_MAX_SBOM_BYTES + 1)
+    except OSError:
+        return False
+    if len(sbom_bytes) > _MAX_SBOM_BYTES:
+        return False
+    try:
+        sbom_text = sbom_bytes.decode("utf-8")
+        payload = json.loads(
+            sbom_text,
+            object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_nonstandard_json_constant,
+        )
+    except (UnicodeError, ValueError, RecursionError):
         return False
     if not isinstance(payload, dict):
         return False
