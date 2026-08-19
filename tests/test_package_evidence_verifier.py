@@ -34,7 +34,7 @@ def _valid_spdx() -> bytes:
                 {
                     "type": "software_Package",
                     "name": "cwl-context-contracts",
-                    "packageVersion": "0.1.0",
+                    "software_packageVersion": "0.1.0",
                 },
             ],
         },
