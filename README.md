@@ -194,6 +194,37 @@ semantic-conformance result, provenance attestation, approval registry, or
 runtime authorization grant. Python callers can use
 `build_packaged_contract_bundle_manifest()` for the same deterministic evidence.
 
+Verify that complete approved bundle against the installed package before
+admitting the release:
+
+```console
+$ cwl-context-bundle-verify approved-contract-bundle-manifest.json
+{"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","mismatches":[],"next_action":"accept the installed contract bundle evidence","verification_format":"cwl-context-bundle-verification/v1","verified":true}
+```
+
+This comparison covers every explicitly published contract resource, not only
+semantic profiles. It still does not execute semantic vectors, establish
+artifact provenance, or grant runtime authority. Python callers can use
+`verify_packaged_contract_bundle_manifest()`.
+
+For the final installed-package compatibility decision, require both approved
+semantic evidence and the approved complete-resource bundle in one fail-closed
+command:
+
+```console
+$ cwl-context-release-admit approved-conformance-manifest.json approved-contract-bundle-manifest.json
+{"admission_format":"cwl-context-contract-release-admission/v1","admitted":true,"bundle_verification":{"verified":true},"conformance_admission":{"admitted":true},"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","next_action":"verify artifact provenance, protected-release evidence, and runtime authorization before enabling the integration"}
+```
+
+`cwl-context-release-admit` succeeds only when the installed semantic suite,
+approved semantic-profile identity, and approved complete published-resource
+identity all agree. It deliberately stops before trust: a positive result does
+not prove source/artifact provenance, protected-branch release eligibility,
+independent approval, signature/attestation validity, or runtime authorization.
+Those remain separate owning gates. Python callers can use
+`evaluate_packaged_contract_release_admission()` for the same deterministic
+composition.
+
 ## Who consumes these contracts
 
 `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`,
