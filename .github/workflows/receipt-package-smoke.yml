@@ -127,7 +127,8 @@ jobs:
           assert release_admission["conformance_admission"]["admitted"] is True
           assert release_admission["bundle_verification"]["verified"] is True
           assert release_admission["next_action"] == (
-              "verify artifact provenance, protected-release evidence, and runtime "
-              "authorization before enabling the integration"
+              "obtain qualifying independent approval and verify artifact provenance, "
+              "protected-release evidence, and runtime authorization before enabling "
+              "the integration"
           )
           PY
