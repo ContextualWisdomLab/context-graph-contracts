@@ -19,6 +19,10 @@ All notable changes to this project are documented in this file.
   `https://` official locator even when JSON Schema `format` is annotation-only,
   and assessment profiles/results carry an exact semantic `profile_version` so
   historical score meaning cannot drift behind a stable profile code.
+- Data-management assessment semantic validation now rejects same-tenant
+  provenance evidence whose authority differs from the assessment-result
+  authority, preventing another product authority from being relabeled as
+  authoritative Data/AI assessment evidence.
 
 ### Added
 
@@ -33,9 +37,10 @@ All notable changes to this project are documented in this file.
   knowledge-cutoff and recorded-time evidence, truth status, provenance, and
   append-only supersession references without embedding publisher scoring rules.
 - Portable `data-management-assessment-semantics.v1.json` conformance vectors
-  for assessment authority ownership, tenant isolation, dimension identity,
-  temporal ordering, and same-authority supersession; the installed reference
-  runner and wheel smoke execute the same vectors delivered to consumers.
+  for assessment authority ownership, tenant isolation, provenance-authority
+  isolation, dimension identity, temporal ordering, and same-authority
+  supersession; the installed reference runner and wheel smoke execute the same
+  vectors delivered to consumers.
 - Canonical tenant-scoped producer authority URI contract.
 - Canonical UUIDv7-backed CWL asset URI contract.
 - Truth-status vocabulary separating authoritative, observed, inferred, and
