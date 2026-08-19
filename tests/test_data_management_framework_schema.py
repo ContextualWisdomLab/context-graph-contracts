@@ -83,6 +83,7 @@ def _valid_contract() -> dict[str, Any]:
         },
         "assessment_profile": {
             "profile_code": "baseline_data_management",
+            "profile_version": "1.0.0",
             "scoring_dimension_codes": ["engagement", "process", "evidence"],
             "evidence_requirements": [
                 {
@@ -142,6 +143,17 @@ def test_framework_contract_rejects_missing_reference_and_copied_body() -> None:
         "Licensed framework prose must not be embedded here."
     )
     assert list(_validator().iter_errors(copied_body))
+
+
+def test_assessment_profile_requires_explicit_version_identity() -> None:
+    """A profile code cannot silently change scoring meaning across revisions."""
+    missing_version = deepcopy(_valid_contract())
+    del missing_version["assessment_profile"]["profile_version"]
+    assert list(_validator().iter_errors(missing_version))
+
+    malformed_version = deepcopy(_valid_contract())
+    malformed_version["assessment_profile"]["profile_version"] = "latest"
+    assert list(_validator().iter_errors(malformed_version))
 
 
 @pytest.mark.parametrize(
