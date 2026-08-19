@@ -15,6 +15,7 @@ _PUSH_BRANCHES_PATTERN = re.compile(
 )
 _CI_PATH = Path(".github/workflows/ci.yml")
 _SUPPLY_CHAIN_PATH = Path(".github/workflows/supply-chain.yml")
+_RECEIPT_PACKAGE_SMOKE_PATH = Path(".github/workflows/receipt-package-smoke.yml")
 
 
 def _push_branches(workflow_path: Path) -> set[str]:
@@ -50,3 +51,11 @@ def test_package_evidence_name_matches_the_default_checkout_commit() -> None:
 
     assert "name: package-evidence-${{ github.sha }}" in workflow_text
     assert "github.event.pull_request.head.sha || github.sha" not in workflow_text
+
+
+def test_receipt_smoke_uses_syft_spdx_package_version_field() -> None:
+    """Keep the synthetic receipt SBOM compatible with the verified Syft wire shape."""
+    workflow_text = _RECEIPT_PACKAGE_SMOKE_PATH.read_text(encoding="utf-8")
+
+    assert '"software_packageVersion": "${package_version}"' in workflow_text
+    assert '"packageVersion": "${package_version}"' not in workflow_text
