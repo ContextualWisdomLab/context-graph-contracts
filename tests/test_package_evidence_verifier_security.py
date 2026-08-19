@@ -83,6 +83,41 @@ def test_spdx_package_identity_must_match_context_contract_distribution(
     assert report.mismatches == ("sbom_spdx_3_0_1",)
 
 
+def test_spdx_package_version_must_match_release_artifacts(tmp_path: Path) -> None:
+    """Checksummed SPDX evidence for another release cannot verify these artifacts."""
+    artifacts = {
+        "cwl_context_contracts-0.1.0-py3-none-any.whl": b"wheel",
+        "cwl_context_contracts-0.1.0.tar.gz": b"sdist",
+        "cwl-context-contracts.spdx.json": json.dumps(
+            {
+                "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+                "@graph": [
+                    {"type": "CreationInfo", "specVersion": "3.0.1"},
+                    {
+                        "type": "software_Package",
+                        "name": "cwl-context-contracts",
+                        "packageVersion": "9.9.9",
+                    },
+                ],
+            },
+            sort_keys=True,
+        ).encode(),
+    }
+    for name, payload in artifacts.items():
+        (tmp_path / name).write_bytes(payload)
+    (tmp_path / "SHA256SUMS").write_text(
+        "".join(
+            f"{_digest(payload)}  {name}\n" for name, payload in artifacts.items()
+        ),
+        encoding="utf-8",
+    )
+
+    report = cwl_context_contracts.verify_package_evidence_directory(tmp_path)
+
+    assert report.verified is False
+    assert report.mismatches == ("sbom_spdx_3_0_1",)
+
+
 def test_package_artifact_names_must_match_context_contract_distribution(
     tmp_path: Path,
 ) -> None:
