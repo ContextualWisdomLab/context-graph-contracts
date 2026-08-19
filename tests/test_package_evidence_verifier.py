@@ -31,7 +31,11 @@ def _valid_spdx() -> bytes:
             "@context": _SPDX_CONTEXT,
             "@graph": [
                 {"type": "CreationInfo", "specVersion": "3.0.1"},
-                {"type": "software_Package", "name": "cwl-context-contracts"},
+                {
+                    "type": "software_Package",
+                    "name": "cwl-context-contracts",
+                    "packageVersion": "0.1.0",
+                },
             ],
         },
         sort_keys=True,
