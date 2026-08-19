@@ -15,7 +15,7 @@ Before tagging or publishing:
 7. Update `CHANGELOG.md` for the exact version and verify package metadata/version agree with the intended tag.
 8. Publish/tag only after all preceding evidence still refers to the unchanged integrated commit. Record source and artifact SHA-256 digests, the exact conformance manifest, the composite admission result, and independent provenance/authorization evidence with the release.
 
-Until repository metadata identifies `main` as the protected default branch and the intended organization governance applies to it, the release invariant is not satisfied.
+This Git Flow repository may keep `develop` as its protected default integration branch. The release invariant is not satisfied until `main` is separately protected as the stable release branch by the intended organization governance and promotion from `develop` cannot become release evidence through an unreviewed or policy-bypassing mutation. Changing the default branch merely to make the release path look protected is not a remedy.
 
 ## Consumer admission
 
