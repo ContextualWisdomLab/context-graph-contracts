@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 import cwl_context_contracts
+from cwl_context_contracts import package_evidence_verifier as verifier_module
 from cwl_context_contracts.package_evidence_verifier import PackageEvidenceInputError
 
 
@@ -78,7 +79,7 @@ def test_nonstandard_spdx_numeric_constants_fail_closed(tmp_path: Path) -> None:
 
 def test_checksum_manifest_read_is_bounded(tmp_path: Path) -> None:
     """An attacker-controlled checksum manifest cannot trigger an unbounded read."""
-    oversized_manifest = b"0" * (65_536 + 1)
+    oversized_manifest = b"0" * (verifier_module._MAX_CHECKSUM_MANIFEST_BYTES + 1)
     (tmp_path / "SHA256SUMS").write_bytes(oversized_manifest)
 
     with pytest.raises(PackageEvidenceInputError) as exc_info:
@@ -87,10 +88,30 @@ def test_checksum_manifest_read_is_bounded(tmp_path: Path) -> None:
     assert exc_info.value.error_code == "checksum_manifest_too_large"
 
 
+def test_checksum_manifest_invalid_utf8_fails_closed(tmp_path: Path) -> None:
+    """Checksum evidence must be a portable UTF-8 manifest."""
+    (tmp_path / "SHA256SUMS").write_bytes(b"\xff")
+
+    with pytest.raises(PackageEvidenceInputError) as exc_info:
+        cwl_context_contracts.verify_package_evidence_directory(tmp_path)
+
+    assert exc_info.value.error_code == "checksum_manifest_unreadable"
+
+
 def test_spdx_metadata_read_is_bounded(tmp_path: Path) -> None:
     """Oversized SBOM metadata fails closed without loading arbitrary bytes."""
-    oversized_sbom = b" " * (64 * 1024 * 1024 + 1)
+    oversized_sbom = b" " * (verifier_module._MAX_SBOM_BYTES + 1)
     _write_bundle(tmp_path, oversized_sbom)
+
+    report = cwl_context_contracts.verify_package_evidence_directory(tmp_path)
+
+    assert report.verified is False
+    assert report.mismatches == ("sbom_spdx_3_0_1",)
+
+
+def test_spdx_invalid_utf8_fails_closed(tmp_path: Path) -> None:
+    """SPDX package identity is not inferred from malformed text encoding."""
+    _write_bundle(tmp_path, b"\xff")
 
     report = cwl_context_contracts.verify_package_evidence_directory(tmp_path)
 
