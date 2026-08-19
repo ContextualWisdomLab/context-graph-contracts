@@ -1,4 +1,4 @@
-"""Verify repository-owned workflows cover both Git Flow integration branches."""
+"""Verify repository-owned workflows preserve truthful integration evidence."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ _WORKFLOW_PATHS = (
 _PUSH_BRANCHES_PATTERN = re.compile(
     r"(?m)^  push:\n    branches: \[([^\]]+)\]$"
 )
+_SUPPLY_CHAIN_PATH = Path(".github/workflows/supply-chain.yml")
 
 
 def _push_branches(workflow_path: Path) -> set[str]:
@@ -31,3 +32,11 @@ def test_repository_workflows_run_on_git_flow_integration_branches() -> None:
     expected_branches = {"develop", "main"}
     for workflow_path in _WORKFLOW_PATHS:
         assert _push_branches(workflow_path) == expected_branches
+
+
+def test_package_evidence_name_matches_the_default_checkout_commit() -> None:
+    """Do not label merge-candidate package bytes with the PR source-head SHA."""
+    workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
+
+    assert "name: package-evidence-${{ github.sha }}" in workflow_text
+    assert "github.event.pull_request.head.sha || github.sha" not in workflow_text
