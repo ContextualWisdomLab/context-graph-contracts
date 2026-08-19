@@ -122,7 +122,7 @@ def _sha256_file(path: Path) -> str:
 
 
 def _spdx_is_3_0_1_package_document(path: Path) -> bool:
-    """Return whether the checked SBOM preserves the SPDX 3.0.1 package shape."""
+    """Return whether the checked SBOM preserves this SPDX 3.0.1 package shape."""
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError):
@@ -142,7 +142,9 @@ def _spdx_is_3_0_1_package_document(path: Path) -> bool:
         for item in mapping_items
     )
     has_package = any(
-        item.get("type") == "software_Package" for item in mapping_items
+        item.get("type") == "software_Package"
+        and item.get("name") == "cwl-context-contracts"
+        for item in mapping_items
     )
     return has_creation_info and has_package
 
