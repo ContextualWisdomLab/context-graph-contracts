@@ -80,6 +80,18 @@ def test_assessment_semantics_reject_cross_tenant_provenance() -> None:
         validate_data_management_assessment_semantics(candidate)
 
 
+def test_assessment_semantics_reject_foreign_provenance_authority() -> None:
+    """Assessment evidence cannot be relabeled from another same-tenant authority."""
+    candidate = _valid_result()
+    provenance = candidate["provenance"]
+    assert isinstance(provenance, dict)
+    provenance["evidence_ref"] = (
+        f"urn:cwl:tenant_001:ea_core:assessment_evidence:{UUID7_TEXT}"
+    )
+    with pytest.raises(ValueError, match="provenance.*authority"):
+        validate_data_management_assessment_semantics(candidate)
+
+
 def test_assessment_semantics_reject_duplicate_dimension_codes() -> None:
     """One dimension code cannot carry two contradictory scores."""
     candidate = _valid_result()
