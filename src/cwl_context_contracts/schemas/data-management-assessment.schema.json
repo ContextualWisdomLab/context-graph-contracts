@@ -12,6 +12,7 @@
     "framework_code",
     "framework_version",
     "profile_code",
+    "profile_version",
     "tenant_authority_uri",
     "subject_ref",
     "knowledge_cutoff_at",
@@ -41,6 +42,9 @@
     },
     "profile_code": {
       "$ref": "#/$defs/code_string"
+    },
+    "profile_version": {
+      "$ref": "#/$defs/semantic_version"
     },
     "tenant_authority_uri": {
       "$ref": "https://schemas.contextualwisdomlab.org/context/canonical-authority-uri.v1.schema.json"
@@ -123,11 +127,16 @@
       "minLength": 2,
       "maxLength": 128
     },
+    "semantic_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "maxLength": 64
+    },
     "score_basis_points": {
       "type": "integer",
       "minimum": 0,
       "maximum": 10000,
-      "description": "Exact provider-neutral score on an integer 0..10000 basis-point scale. Interpretation belongs to the referenced CWL assessment profile, not this interoperability schema."
+      "description": "Exact provider-neutral score on an integer 0..10000 basis-point scale. Interpretation belongs to the exact referenced CWL assessment profile code and version, not this interoperability schema."
     },
     "dimension_score": {
       "type": "object",
