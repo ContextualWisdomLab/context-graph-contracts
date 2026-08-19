@@ -101,23 +101,49 @@ def _load_checksum_manifest(evidence_directory: Path) -> dict[str, str]:
     return checksums
 
 
+def _wheel_version(name: str) -> str | None:
+    """Return the normalized wheel filename version or ``None`` for a wrong shape."""
+    if not name.startswith(_DISTRIBUTION_PREFIX) or not name.endswith(".whl"):
+        return None
+    filename_parts = name[:-4].split("-")
+    if len(filename_parts) not in {5, 6}:
+        return None
+    version = filename_parts[1]
+    return version or None
+
+
+def _sdist_version(name: str) -> str | None:
+    """Return the normalized source-distribution filename version when present."""
+    suffix = ".tar.gz"
+    if not name.startswith(_DISTRIBUTION_PREFIX) or not name.endswith(suffix):
+        return None
+    version = name[len(_DISTRIBUTION_PREFIX) : -len(suffix)]
+    if not version or "-" in version:
+        return None
+    return version
+
+
 def _artifact_set_is_exact(checksums: dict[str, str]) -> bool:
-    """Return whether checksums name this distribution's wheel, sdist, and SBOM."""
+    """Return whether checksums name one coherent wheel, sdist, and SPDX SBOM."""
     artifact_names = set(checksums)
-    wheel_names = {
-        name
+    wheel_versions = {
+        name: _wheel_version(name)
         for name in artifact_names
-        if name.startswith(_DISTRIBUTION_PREFIX) and name.endswith(".whl")
+        if name.endswith(".whl")
     }
-    sdist_names = {
-        name
+    sdist_versions = {
+        name: _sdist_version(name)
         for name in artifact_names
-        if name.startswith(_DISTRIBUTION_PREFIX) and name.endswith(".tar.gz")
+        if name.endswith(".tar.gz")
     }
+    if len(wheel_versions) != 1 or len(sdist_versions) != 1:
+        return False
+    wheel_name, wheel_version = next(iter(wheel_versions.items()))
+    sdist_name, sdist_version = next(iter(sdist_versions.items()))
     return (
-        len(wheel_names) == 1
-        and len(sdist_names) == 1
-        and artifact_names == wheel_names | sdist_names | {_SBOM_NAME}
+        wheel_version is not None
+        and wheel_version == sdist_version
+        and artifact_names == {wheel_name, sdist_name, _SBOM_NAME}
     )
 
 
