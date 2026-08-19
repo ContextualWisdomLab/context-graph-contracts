@@ -47,8 +47,7 @@ def test_release_admission_requires_semantics_and_complete_bundle_bytes() -> Non
     )
 
 
-def test_complete_bundle_drift_blocks_release_admission_after_semantic_success(
-) -> None:
+def test_bundle_drift_blocks_release_admission_after_semantic_success() -> None:
     """Semantic success cannot hide drift in a non-profile published resource."""
     approved_bundle = _approved_bundle_manifest()
     approved_bundle["distribution_version"] = "999.0.0"
@@ -66,8 +65,7 @@ def test_complete_bundle_drift_blocks_release_admission_after_semantic_success(
     )
 
 
-def test_conformance_manifest_drift_blocks_release_admission_with_matching_bundle(
-) -> None:
+def test_manifest_drift_blocks_release_admission_with_matching_bundle() -> None:
     """Complete bundle identity cannot replace approved semantic-profile identity."""
     approved_conformance = _approved_conformance_manifest()
     approved_conformance["distribution_version"] = "999.0.0"
@@ -132,11 +130,11 @@ def test_release_admission_cli_returns_exit_one_for_bundle_drift(
     assert payload["bundle_verification"]["verified"] is False
 
 
-def test_release_admission_cli_fails_closed_on_approved_input_error(
+def test_release_admission_cli_fails_closed_on_conformance_input_error(
     tmp_path,
     capsys,
 ) -> None:
-    """The composed boundary reuses the bounded strict approved-input parser."""
+    """The first approved input uses the bounded strict JSON parser."""
     missing_conformance = tmp_path / "missing.json"
     bundle_path = tmp_path / "approved-bundle.json"
     bundle_path.write_text(json.dumps(_approved_bundle_manifest()), encoding="utf-8")
@@ -154,6 +152,30 @@ def test_release_admission_cli_fails_closed_on_approved_input_error(
             "JSON objects"
         ),
     }
+
+
+def test_release_admission_cli_fails_closed_on_bundle_input_error(
+    tmp_path,
+    capsys,
+) -> None:
+    """The second approved input uses the same bounded strict JSON parser."""
+    conformance_path = tmp_path / "approved-conformance.json"
+    missing_bundle = tmp_path / "missing-bundle.json"
+    conformance_path.write_text(
+        json.dumps(_approved_conformance_manifest()),
+        encoding="utf-8",
+    )
+
+    exit_code = admission_module.main([str(conformance_path), str(missing_bundle)])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 2
+    assert payload["admitted"] is False
+    assert payload["error"] == "approved_manifest_unreadable"
+    assert payload["next_action"] == (
+        "provide readable approved conformance and complete-bundle manifest "
+        "JSON objects"
+    )
 
 
 def test_release_admission_cli_is_installed_by_project_metadata() -> None:
