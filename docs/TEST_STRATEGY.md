@@ -53,6 +53,13 @@
   `verify_packaged_contract_bundle_manifest()`. They require exact package
   identity, strict integer count semantics, unique resource paths, and exact
   missing/unexpected/digest-different resource mismatch identities.
+- Full release-admission tests compose both existing evidence layers through
+  `cwl-context-release-admit` and
+  `evaluate_packaged_contract_release_admission()`. They require semantic
+  execution plus exact approved semantic-profile and complete-resource identity,
+  prove either approval layer can independently block admission, verify distinct
+  exit `0`/`1`/`2` machine semantics, and preserve protected-release,
+  provenance, independent-review, and runtime-authorization boundaries.
 - Verifier regressions fail closed on package-version drift, missing,
   unexpected, duplicate, malformed, or digest-different profile/resource
   evidence, type-confused counts, unreadable or invalid UTF-8/JSON input, and
@@ -68,8 +75,8 @@
   schemas, fixtures, contracts, and semantic conformance profiles are present,
   then execute the installed conformance runner, semantic manifest generator,
   approved-manifest verifier, composite admission gate, admission receipt,
-  complete contract-bundle manifest, and approved full-bundle verifier from an
-  isolated wheel installation.
+  complete contract-bundle manifest, approved full-bundle verifier, and full
+  release-admission command from an isolated wheel installation.
 
 Future language SDKs must consume the same fixture and conformance-profile
 corpus and produce byte-wise compatible structured events after canonical
