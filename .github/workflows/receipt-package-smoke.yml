@@ -64,7 +64,7 @@ jobs:
               {
                 "type": "software_Package",
                 "name": "cwl-context-contracts",
-                "packageVersion": "${package_version}"
+                "software_packageVersion": "${package_version}"
               }
             ]
           }
