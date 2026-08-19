@@ -209,7 +209,8 @@ artifact provenance, or grant runtime authority. Python callers can use
 
 For the final installed-package compatibility decision, require both approved
 semantic evidence and the approved complete-resource bundle in one fail-closed
-command:
+command. The command emits a full nested JSON decision; this abbreviated shape
+highlights the top-level gate:
 
 ```console
 $ cwl-context-release-admit approved-conformance-manifest.json approved-contract-bundle-manifest.json
