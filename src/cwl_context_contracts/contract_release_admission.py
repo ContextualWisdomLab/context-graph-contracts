@@ -23,8 +23,9 @@ from .contract_bundle_manifest_verifier import (
 
 _ADMISSION_FORMAT = "cwl-context-contract-release-admission/v1"
 _READY_ACTION = (
-    "verify artifact provenance, protected-release evidence, and runtime "
-    "authorization before enabling the integration"
+    "obtain qualifying independent approval and verify artifact provenance, "
+    "protected-release evidence, and runtime authorization before enabling "
+    "the integration"
 )
 _INPUT_ACTION = (
     "provide readable approved conformance and complete-bundle manifest JSON objects"
