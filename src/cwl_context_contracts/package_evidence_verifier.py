@@ -149,11 +149,6 @@ def _artifact_release_version(checksums: dict[str, str]) -> str | None:
     return wheel_version
 
 
-def _artifact_set_is_exact(checksums: dict[str, str]) -> bool:
-    """Return whether checksums name one coherent wheel, sdist, and SPDX SBOM."""
-    return _artifact_release_version(checksums) is not None
-
-
 def _sha256_file(path: Path) -> str:
     """Hash one regular artifact without loading the complete file into memory."""
     digest = hashlib.sha256()
@@ -183,11 +178,15 @@ def _spdx_is_3_0_1_package_document(path: Path, expected_version: str) -> bool:
         and item.get("specVersion") == "3.0.1"
         for item in mapping_items
     )
-    has_package = any(
-        item.get("type") == "software_Package"
-        and item.get("name") == "cwl-context-contracts"
-        and item.get("packageVersion") == expected_version
+    package_items = [
+        item
         for item in mapping_items
+        if item.get("type") == "software_Package"
+        and item.get("name") == "cwl-context-contracts"
+    ]
+    has_package = (
+        len(package_items) == 1
+        and package_items[0].get("packageVersion") == expected_version
     )
     return has_creation_info and has_package
 
