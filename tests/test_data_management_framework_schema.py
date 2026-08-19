@@ -39,6 +39,14 @@ def _validator() -> Draft202012Validator:
     )
 
 
+def _portable_validator() -> Draft202012Validator:
+    """Return a validator that relies only on portable schema assertions."""
+    return Draft202012Validator(
+        load_schema(_SCHEMA_NAME),
+        registry=_registry(),
+    )
+
+
 def _provenance(authority_code: str) -> dict[str, str]:
     """Build realistic same-tenant evidence provenance."""
     return {
@@ -134,6 +142,13 @@ def test_framework_contract_rejects_missing_reference_and_copied_body() -> None:
         "Licensed framework prose must not be embedded here."
     )
     assert list(_validator().iter_errors(copied_body))
+
+
+def test_official_reference_uri_fails_closed_without_format_assertion() -> None:
+    """Portable validators must reject a reference that has no URI scheme."""
+    candidate = deepcopy(_valid_contract())
+    candidate["framework_reference"]["official_reference_uri"] = "not a uri"
+    assert list(_portable_validator().iter_errors(candidate))
 
 
 def test_framework_contract_requires_structured_provenance_for_evidence() -> None:
