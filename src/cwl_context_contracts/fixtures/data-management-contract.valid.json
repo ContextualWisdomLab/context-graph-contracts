@@ -22,6 +22,7 @@
   },
   "assessment_profile": {
     "profile_code": "baseline_data_management",
+    "profile_version": "1.0.0",
     "scoring_dimension_codes": [
       "engagement",
       "process",
