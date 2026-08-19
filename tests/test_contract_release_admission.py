@@ -42,8 +42,9 @@ def test_release_admission_requires_semantics_and_complete_bundle_bytes() -> Non
         "cwl-context-contract-release-admission/v1"
     )
     assert report.next_action == (
-        "verify artifact provenance, protected-release evidence, and runtime "
-        "authorization before enabling the integration"
+        "obtain qualifying independent approval and verify artifact provenance, "
+        "protected-release evidence, and runtime authorization before enabling "
+        "the integration"
     )
 
 
