@@ -222,7 +222,7 @@ def _spdx_is_3_0_1_package_document(path: Path, expected_version: str) -> bool:
     ]
     has_package = (
         len(package_items) == 1
-        and package_items[0].get("packageVersion") == expected_version
+        and package_items[0].get("software_packageVersion") == expected_version
     )
     return has_creation_info and has_package
 
