@@ -16,12 +16,15 @@
 - Data-management assessment tests separate structural schema acceptance from
   cross-field semantics. `validate_data_management_assessment_semantics()`
   requires the result ID to use the assessment object kind and declared owning
-  authority, keeps result/subject/provenance/supersession references inside one
-  tenant, rejects duplicate dimension codes, and requires the evidence knowledge
-  cutoff not to follow system recording time. Supersession must reference a
-  different assessment result under the same tenant and owning authority; prior
-  evidence is never rewritten and one authority cannot supersede another
-  authority's assessment history. These invariants are also published in
+  authority, keeps primary/supersession references inside one tenant, requires
+  provenance evidence to remain both tenant-local and under the assessment
+  result's owning authority, rejects duplicate dimension codes, and requires the
+  evidence knowledge cutoff not to follow system recording time. Supersession
+  must reference a different assessment result under the same tenant and owning
+  authority; prior evidence is never rewritten and one authority cannot
+  supersede another authority's assessment history. The negative corpus includes
+  same-tenant foreign-authority provenance so tenant equality cannot substitute
+  for source-authority ownership. These invariants are also published in
   `data-management-assessment-semantics.v1.json`, so non-Python consumers can
   execute the same valid and invalid vectors instead of treating the reference
   SDK implementation as the contract.
