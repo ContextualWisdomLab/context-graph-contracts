@@ -226,6 +226,24 @@ Those remain separate owning gates. Python callers can use
 `evaluate_packaged_contract_release_admission()` for the same deterministic
 composition.
 
+Before treating a downloaded workflow artifact as provenance input, repeat its
+local package-integrity checks with the installed verifier:
+
+```console
+$ cwl-context-package-evidence-verify package-evidence
+{"artifacts":[...],"mismatches":[],"next_action":"verify artifact attestations bind these exact package bytes to the intended protected main source commit before release","verification_format":"cwl-context-package-evidence-verification/v1","verified":true}
+```
+
+The command requires exactly one wheel, one source distribution, the canonical
+SPDX 3.0.1 SBOM, and `SHA256SUMS`; it rejects malformed or escaping checksum
+names, duplicate checksum identities, missing or symlinked required artifacts,
+digest drift, and malformed SPDX package evidence. Exit `0` proves only that
+the supplied local evidence directory is internally consistent. It does not
+authenticate `SHA256SUMS`, identify the producer, or prove the source commit.
+The next action is therefore to verify GitHub artifact attestations against the
+intended repository and protected `main` commit before release. Python callers
+can use `verify_package_evidence_directory()` for the same deterministic check.
+
 ## Who consumes these contracts
 
 `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`,
