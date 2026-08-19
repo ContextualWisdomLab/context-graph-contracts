@@ -49,6 +49,7 @@ def _valid_result() -> dict[str, Any]:
         "framework_code": "dama_dmbok2r",
         "framework_version": "2024",
         "profile_code": "baseline_data_management",
+        "profile_version": "1.0.0",
         "tenant_authority_uri": "urn:cwl:tenant_001:data_context",
         "subject_ref": (
             f"urn:cwl:tenant_001:ea_core:business_capability:{UUID7_TEXT}"
@@ -85,6 +86,17 @@ def test_assessment_result_is_packaged_with_a_public_positive_fixture() -> None:
 def test_assessment_result_accepts_exact_bounded_scores_and_context() -> None:
     """Assessment evidence carries exact scores, tenant, subject, and cutoff."""
     assert list(_validator().iter_errors(_valid_result())) == []
+
+
+def test_assessment_result_requires_exact_profile_revision() -> None:
+    """Immutable result evidence identifies the exact scoring-profile revision."""
+    missing_version = deepcopy(_valid_result())
+    del missing_version["profile_version"]
+    assert list(_validator().iter_errors(missing_version))
+
+    malformed_version = deepcopy(_valid_result())
+    malformed_version["profile_version"] = "latest"
+    assert list(_validator().iter_errors(malformed_version))
 
 
 def test_assessment_result_fails_closed_on_score_and_readiness_inconsistency() -> None:
