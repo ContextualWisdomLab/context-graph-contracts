@@ -2,7 +2,7 @@
 
 ## Evidence model
 
-The repository separates product-data provenance from software-build provenance. Context assertions use the provider-neutral provenance contract described by ADR 0005 and W3C PROV references. Released package provenance is separate supply-chain evidence proving which repository/workflow/commit produced a wheel or source distribution. Semantic conformance evidence is a third, narrower layer: it records whether the installed contract behavior passes the published vectors and which exact package version/profile bytes were tested. Complete contract-resource identity is another narrow evidence layer: it binds the installed distribution version to the exact packaged AsyncAPI, JSON Schema, fixture, and semantic-profile bytes and can be compared with independently approved complete-bundle evidence. The full release-admission decision composes the semantic and complete-resource gates without converting either digest identity into provenance or trust. None of these layers substitutes for another.
+The repository separates product-data provenance from software-build provenance. Context assertions use the provider-neutral provenance contract described by ADR 0005 and W3C PROV references. Released package provenance is separate supply-chain evidence proving which repository/workflow/commit produced a wheel or source distribution. Semantic conformance evidence is a third, narrower layer: it records whether the installed contract behavior passes the published vectors and which exact package version/profile bytes were tested. Complete contract-resource identity is another narrow evidence layer: it binds the installed distribution version to the exact packaged AsyncAPI, JSON Schema, fixture, and semantic-profile bytes and can be compared with independently approved complete-bundle evidence. Local package-evidence verification is another narrow layer: it recalculates the workflow-produced `SHA256SUMS`, requires the expected wheel/source/SBOM artifact set, refuses path/symlink substitution, and checks the SPDX 3.0.1 evidence shape. The full release-admission decision composes the semantic and complete-resource gates without converting either digest identity into provenance or trust. None of these layers substitutes for another.
 
 The `supply-chain` workflow is the executable baseline:
 
@@ -18,7 +18,7 @@ The workflow uses the SLSA provenance predicate family rather than treating a st
 
 A buyer or downstream build should verify bytes, producer identity, and semantic evidence independently:
 
-1. Compare the downloaded wheel/source distribution SHA-256 digest with the release's `SHA256SUMS`.
+1. Download the exact package-evidence artifact and run `cwl-context-package-evidence-verify <evidence-directory>`. Exit `0` proves that the local wheel, source distribution, SPDX 3.0.1 SBOM, and `SHA256SUMS` agree and that the required evidence shape is present. It does **not** prove who produced those bytes.
 2. Verify the **GitHub artifact attestation** for each executable/installable artifact against `ContextualWisdomLab/context-graph-contracts`, using GitHub's supported attestation verifier (for example `gh attestation verify <artifact> -R ContextualWisdomLab/context-graph-contracts`).
 3. Confirm the attested source repository, workflow identity, and commit SHA equal the intended protected-main release evidence.
 4. Inspect the associated SPDX 3.0.1 SBOM and retain it with the accepted artifact.
@@ -30,6 +30,7 @@ A buyer or downstream build should verify bytes, producer identity, and semantic
 ## Trust boundaries
 
 - A GitHub Actions artifact without a protected-main release decision is build evidence, not a release.
+- A successful local package-evidence verification proves only the consistency of the supplied evidence directory; it does not authenticate `SHA256SUMS` or bind the artifacts to a source commit.
 - A checksum without trusted provenance can detect byte changes but cannot prove who produced the bytes.
 - A conformance-profile or contract-resource SHA-256 digest proves byte identity only; it is not a signature or organizational approval.
 - A matching approved conformance manifest or complete contract-bundle verification does not replace artifact provenance, independent review, semantic execution, or runtime authorization.
@@ -40,4 +41,4 @@ A buyer or downstream build should verify bytes, producer identity, and semantic
 
 ## Retention and reproducibility
 
-For each published version retain or link the exact source commit, immutable tag, reviewed dependency lock, release artifacts, SHA-256 digests, SPDX SBOM, provenance/SBOM attestations, installed conformance report, exact conformance manifest, approved-manifest verification result, complete contract-bundle manifest, approved complete-bundle verification result, full release-admission result, CI/security/review gate evidence, and release notes. Rebuilding should start from the exact source commit and lock; if rebuilt bytes differ, record that difference rather than substituting new bytes under the original version.
+For each published version retain or link the exact source commit, immutable tag, reviewed dependency lock, release artifacts, SHA-256 digests, SPDX SBOM, local package-evidence verification result, provenance/SBOM attestations, installed conformance report, exact conformance manifest, approved-manifest verification result, complete contract-bundle manifest, approved complete-bundle verification result, full release-admission result, CI/security/review gate evidence, and release notes. Rebuilding should start from the exact source commit and lock; if rebuilt bytes differ, record that difference rather than substituting new bytes under the original version.
