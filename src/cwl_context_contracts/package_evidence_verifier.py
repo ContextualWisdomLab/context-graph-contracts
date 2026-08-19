@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 _VERIFICATION_FORMAT = "cwl-context-package-evidence-verification/v1"
+_DISTRIBUTION_PREFIX = "cwl_context_contracts-"
 _SBOM_NAME = "cwl-context-contracts.spdx.json"
 _CHECKSUM_NAME = "SHA256SUMS"
 _CHECKSUM_PATTERN = re.compile(
@@ -101,10 +102,18 @@ def _load_checksum_manifest(evidence_directory: Path) -> dict[str, str]:
 
 
 def _artifact_set_is_exact(checksums: dict[str, str]) -> bool:
-    """Return whether checksums name one wheel, one sdist, and the SPDX SBOM."""
+    """Return whether checksums name this distribution's wheel, sdist, and SBOM."""
     artifact_names = set(checksums)
-    wheel_names = {name for name in artifact_names if name.endswith(".whl")}
-    sdist_names = {name for name in artifact_names if name.endswith(".tar.gz")}
+    wheel_names = {
+        name
+        for name in artifact_names
+        if name.startswith(_DISTRIBUTION_PREFIX) and name.endswith(".whl")
+    }
+    sdist_names = {
+        name
+        for name in artifact_names
+        if name.startswith(_DISTRIBUTION_PREFIX) and name.endswith(".tar.gz")
+    }
     return (
         len(wheel_names) == 1
         and len(sdist_names) == 1
