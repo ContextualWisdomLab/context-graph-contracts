@@ -41,6 +41,10 @@ from .contract_bundle_manifest_verifier import (
     ContractBundleManifestVerification,
     verify_packaged_contract_bundle_manifest,
 )
+from .contract_release_admission import (
+    ContractReleaseAdmissionReport,
+    evaluate_packaged_contract_release_admission,
+)
 from .contracts import available_contract_names, load_contract
 from .data_management import validate_data_management_assessment_semantics
 from .events import CloudEventEnvelope
@@ -81,6 +85,7 @@ __all__ = [
     "ContextMembership",
     "ContractBundleManifest",
     "ContractBundleManifestVerification",
+    "ContractReleaseAdmissionReport",
     "ContractResourceEvidence",
     "ProvenanceReference",
     "TruthStatus",
@@ -94,6 +99,7 @@ __all__ = [
     "build_packaged_contract_bundle_manifest",
     "conformance_profile_sha256",
     "evaluate_packaged_conformance_admission",
+    "evaluate_packaged_contract_release_admission",
     "format_cwl_timestamp",
     "format_rfc3339_timestamp",
     "load_approved_conformance_manifest",
