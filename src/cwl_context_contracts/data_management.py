@@ -43,10 +43,11 @@ def validate_data_management_assessment_semantics(
 
     JSON Schema remains the structural contract. This helper enforces invariants
     that Draft 2020-12 cannot express portably: the result identity belongs to
-    its declared authority, every primary/evidence reference stays in the same
-    tenant, the knowledge cutoff cannot follow recording, dimension identifiers
-    are unique, and supersession identifies a different result under the same
-    tenant and owning authority.
+    its declared authority, every primary reference stays in the same tenant,
+    evidence provenance remains under the result's owning authority, the
+    knowledge cutoff cannot follow recording, dimension identifiers are unique,
+    and supersession identifies a different result under the same tenant and
+    owning authority.
     """
     if not isinstance(value, Mapping):
         raise TypeError("value must be a mapping")
@@ -80,6 +81,8 @@ def validate_data_management_assessment_semantics(
         raise ValueError("subject must belong to the assessment result tenant")
     if provenance.evidence_ref.tenant_id != tenant_id:
         raise ValueError("provenance must belong to the assessment result tenant")
+    if provenance.evidence_ref.authority_uri != assessment_result.authority_uri:
+        raise ValueError("provenance must remain under the assessment result authority")
 
     knowledge_cutoff = parse_cwl_timestamp(snapshot["knowledge_cutoff_at"])
     recorded_at = parse_cwl_timestamp(snapshot["recorded_at"])
