@@ -30,7 +30,7 @@ def _valid_spdx() -> bytes:
         {
           "type": "software_Package",
           "name": "cwl-context-contracts",
-          "packageVersion": "0.1.0"
+          "software_packageVersion": "0.1.0"
         }
       ]
     }"""
@@ -62,8 +62,8 @@ def test_duplicate_spdx_members_fail_closed(tmp_path: Path) -> None:
         {
           "type": "software_Package",
           "name": "cwl-context-contracts",
-          "packageVersion": "9.9.9",
-          "packageVersion": "0.1.0"
+          "software_packageVersion": "9.9.9",
+          "software_packageVersion": "0.1.0"
         }
       ]
     }"""
@@ -84,7 +84,7 @@ def test_nonstandard_spdx_numeric_constants_fail_closed(tmp_path: Path) -> None:
         {
           "type": "software_Package",
           "name": "cwl-context-contracts",
-          "packageVersion": "0.1.0"
+          "software_packageVersion": "0.1.0"
         }
       ]
     }"""
