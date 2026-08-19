@@ -46,6 +46,10 @@ jobs:
           .receipt-smoke/bin/cwl-context-bundle-verify \
             /tmp/contract-bundle-manifest.json \
             > /tmp/contract-bundle-verification.json
+          .receipt-smoke/bin/cwl-context-release-admit \
+            /tmp/approved-manifest.json \
+            /tmp/contract-bundle-manifest.json \
+            > /tmp/contract-release-admission.json
           .receipt-smoke/bin/python - <<'PY'
           import json
           from pathlib import Path
@@ -58,6 +62,11 @@ jobs:
           )
           bundle_verification = json.loads(
               Path("/tmp/contract-bundle-verification.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          release_admission = json.loads(
+              Path("/tmp/contract-release-admission.json").read_text(
                   encoding="utf-8"
               )
           )
@@ -111,4 +120,14 @@ jobs:
               "mismatches": [],
               "next_action": "accept the installed contract bundle evidence",
           }
+          assert release_admission["admission_format"] == (
+              "cwl-context-contract-release-admission/v1"
+          )
+          assert release_admission["admitted"] is True
+          assert release_admission["conformance_admission"]["admitted"] is True
+          assert release_admission["bundle_verification"]["verified"] is True
+          assert release_admission["next_action"] == (
+              "verify artifact provenance, protected-release evidence, and runtime "
+              "authorization before enabling the integration"
+          )
           PY
