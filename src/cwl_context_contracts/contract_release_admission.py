@@ -116,7 +116,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         approved_conformance = load_approved_conformance_manifest(
             args.approved_conformance_manifest
         )
-        approved_bundle = load_approved_conformance_manifest(args.approved_bundle_manifest)
+        approved_bundle = load_approved_conformance_manifest(
+            args.approved_bundle_manifest
+        )
     except ApprovedManifestInputError as exc:
         return _input_failure(exc.error_code)
 
