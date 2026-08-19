@@ -252,10 +252,22 @@ def verify_package_evidence_directory(
         artifact_path = evidence_directory / artifact.name
         if artifact_path.is_symlink() or not artifact_path.is_file():
             mismatches.append(f"artifact_unsafe:{artifact.name}")
-        elif _sha256_file(artifact_path) != artifact.sha256:
+            continue
+        try:
+            artifact_digest = _sha256_file(artifact_path)
+        except OSError:
+            mismatches.append(f"artifact_unreadable:{artifact.name}")
+            continue
+        if artifact_digest != artifact.sha256:
             mismatches.append(f"artifact_sha256:{artifact.name}")
 
-    sbom_unsafe = f"artifact_unsafe:{_SBOM_NAME}" in mismatches
+    sbom_unsafe = any(
+        mismatch in {
+            f"artifact_unsafe:{_SBOM_NAME}",
+            f"artifact_unreadable:{_SBOM_NAME}",
+        }
+        for mismatch in mismatches
+    )
     sbom_path = evidence_directory / _SBOM_NAME
     if not sbom_unsafe and not _spdx_is_3_0_1_package_document(
         sbom_path,
