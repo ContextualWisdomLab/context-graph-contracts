@@ -214,7 +214,7 @@ highlights the top-level gate:
 
 ```console
 $ cwl-context-release-admit approved-conformance-manifest.json approved-contract-bundle-manifest.json
-{"admission_format":"cwl-context-contract-release-admission/v1","admitted":true,"bundle_verification":{"verified":true},"conformance_admission":{"admitted":true},"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","next_action":"verify artifact provenance, protected-release evidence, and runtime authorization before enabling the integration"}
+{"admission_format":"cwl-context-contract-release-admission/v1","admitted":true,"bundle_verification":{"verified":true},"conformance_admission":{"admitted":true},"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","next_action":"obtain qualifying independent approval and verify artifact provenance, protected-release evidence, and runtime authorization before enabling the integration"}
 ```
 
 `cwl-context-release-admit` succeeds only when the installed semantic suite,
