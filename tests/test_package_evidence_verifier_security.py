@@ -114,3 +114,34 @@ def test_package_artifact_names_must_match_context_contract_distribution(
 
     assert report.verified is False
     assert report.mismatches == ("artifact_set",)
+
+
+def test_wheel_and_sdist_versions_must_match(tmp_path: Path) -> None:
+    """Checksummed package formats from different releases cannot form one bundle."""
+    artifacts = {
+        "cwl_context_contracts-0.1.0-py3-none-any.whl": b"wheel",
+        "cwl_context_contracts-0.2.0.tar.gz": b"sdist",
+        "cwl-context-contracts.spdx.json": json.dumps(
+            {
+                "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+                "@graph": [
+                    {"type": "CreationInfo", "specVersion": "3.0.1"},
+                    {"type": "software_Package", "name": "cwl-context-contracts"},
+                ],
+            },
+            sort_keys=True,
+        ).encode(),
+    }
+    for name, payload in artifacts.items():
+        (tmp_path / name).write_bytes(payload)
+    (tmp_path / "SHA256SUMS").write_text(
+        "".join(
+            f"{_digest(payload)}  {name}\n" for name, payload in artifacts.items()
+        ),
+        encoding="utf-8",
+    )
+
+    report = cwl_context_contracts.verify_package_evidence_directory(tmp_path)
+
+    assert report.verified is False
+    assert report.mismatches == ("artifact_set",)
