@@ -144,10 +144,21 @@ def test_framework_contract_rejects_missing_reference_and_copied_body() -> None:
     assert list(_validator().iter_errors(copied_body))
 
 
-def test_official_reference_uri_fails_closed_without_format_assertion() -> None:
-    """Portable validators must reject a reference that has no URI scheme."""
+@pytest.mark.parametrize(
+    "unsafe_reference",
+    [
+        "not a uri",
+        "http://example.com/framework",
+        "javascript:alert(1)",
+        "data:text/html,framework",
+    ],
+)
+def test_official_reference_uri_fails_closed_without_format_assertion(
+    unsafe_reference: str,
+) -> None:
+    """Portable validators accept only HTTPS publisher reference locations."""
     candidate = deepcopy(_valid_contract())
-    candidate["framework_reference"]["official_reference_uri"] = "not a uri"
+    candidate["framework_reference"]["official_reference_uri"] = unsafe_reference
     assert list(_portable_validator().iter_errors(candidate))
 
 
