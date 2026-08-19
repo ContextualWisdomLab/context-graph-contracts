@@ -21,7 +21,7 @@ The contract layer intentionally avoids credentials, passwords, tokens, DSNs, ra
 ## Trust boundaries
 
 1. **Producer to contract consumer.** Every wire value is untrusted until structural and semantic conformance succeeds. Schema validation alone is insufficient when an invariant requires semantic validation.
-2. **Tenant and authority boundary.** Canonical asset references bind tenant, authority, object type, and UUIDv7 identity. Same-tenant invariants apply to event source/subject, membership, edge, and provenance relationships where the profile requires them.
+2. **Tenant and authority boundary.** Canonical asset references bind tenant, authority, object type, and UUIDv7 identity. Same-tenant invariants apply to event source/subject, membership, edge, and provenance relationships where the profile requires them. Data-management assessment provenance additionally remains under the assessment result's declared authority so another same-tenant product cannot supply a syntactically valid evidence identity and have it relabeled as Data/AI assessment evidence.
 3. **Truth-origin boundary.** `inferred` or `proposed` output is not equivalent to authoritative fact. A consumer must preserve truth origin and apply its own governed promotion process.
 4. **Runtime authorization boundary.** The package has no identity provider, policy engine, database session, or ambient authority. Consumers must verify issuer, audience, tenant, role, purpose, signature, and application policy independently.
 5. **External-reference boundary.** A framework `official_reference_uri` is untrusted metadata, not fetch authority. The public contract requires a canonical HTTPS location, but HTTPS syntax does not prove publisher ownership, DNS safety, content integrity, or permission to dereference it.
@@ -31,7 +31,7 @@ The contract layer intentionally avoids credentials, passwords, tokens, DSNs, ra
 
 | Threat | Contract-layer control | Consumer obligation |
 | --- | --- | --- |
-| Cross-tenant reference confusion | Canonical URI parsing and same-tenant semantic checks reject contradictory producer/subject, membership, edge, and provenance relationships covered by the profile. | Bind authenticated tenant context to the owning command/query boundary; never infer authorization from URI syntax. |
+| Cross-tenant or cross-authority reference confusion | Canonical URI parsing and semantic checks reject contradictory producer/subject, membership, edge, and provenance relationships covered by the profile, including same-tenant foreign-authority provenance for data-management assessment results. | Bind authenticated tenant and authority context to the owning command/query boundary; never infer authorization from URI syntax. |
 | Truth laundering | Truth status remains explicit and conformance rejects unsupported values. | Do not silently promote `inferred` or `proposed` facts to `authoritative`; record the authorized transition and evidence in the owning product. |
 | Timestamp ambiguity or impossible civil time | CWL Timestamp Profile v1 defines canonical RFC 3339 semantics; reference parsing and portable semantic vectors reject impossible or non-profile values. | Non-Python consumers must run the semantic profile or refuse conformance if their JSON Schema implementation only annotates `format`. |
 | Numeric precision loss across languages | CWL JSON interoperability profile accepts integer values only in the exact interoperable range where numeric identity is portable. | Higher-level domain contracts must use an explicit typed/string representation when a larger exact integer is required. |
@@ -54,6 +54,7 @@ The contract layer intentionally avoids credentials, passwords, tokens, DSNs, ra
 - `dataschema` is not an absolute URI;
 - a framework official reference uses a non-HTTPS scheme such as `http:`, `javascript:`, or `data:`;
 - an assertion requiring same-tenant provenance points to another tenant;
+- a data-management assessment uses same-tenant provenance from an authority other than the assessment result's owning authority;
 - an approved conformance-manifest file exceeds the verifier's 1 MiB input ceiling;
 - a consumer attempts to treat schema success as identity, role, purpose or policy authorization;
 - a consumer treats an HTTPS framework locator as permission to perform an outbound fetch without its own SSRF controls;
