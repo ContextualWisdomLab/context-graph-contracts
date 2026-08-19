@@ -13,6 +13,7 @@ from cwl_context_contracts.package_evidence_verifier import PackageEvidenceInput
 
 
 _SBOM_NAME = "cwl-context-contracts.spdx.json"
+_WHEEL_NAME = "cwl_context_contracts-0.1.0-py3-none-any.whl"
 
 
 def _digest(payload: bytes) -> str:
@@ -38,7 +39,7 @@ def _valid_spdx() -> bytes:
 def _write_bundle(tmp_path: Path, sbom_payload: bytes) -> None:
     """Write one checksum-coherent package evidence bundle for release 0.1.0."""
     artifacts = {
-        "cwl_context_contracts-0.1.0-py3-none-any.whl": b"wheel",
+        _WHEEL_NAME: b"wheel",
         "cwl_context_contracts-0.1.0.tar.gz": b"sdist",
         _SBOM_NAME: sbom_payload,
     }
@@ -135,6 +136,27 @@ def test_spdx_invalid_utf8_fails_closed(tmp_path: Path) -> None:
 
     assert report.verified is False
     assert report.mismatches == ("sbom_spdx_3_0_1",)
+
+
+def test_artifact_read_failure_is_structured_rejection(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A post-check artifact read failure cannot escape the verifier boundary."""
+    _write_bundle(tmp_path, _valid_spdx())
+    original_sha256_file = verifier_module._sha256_file
+
+    def unreadable_wheel(path: Path) -> str:
+        if path.name == _WHEEL_NAME:
+            raise OSError("artifact disappeared after the regular-file check")
+        return original_sha256_file(path)
+
+    monkeypatch.setattr(verifier_module, "_sha256_file", unreadable_wheel)
+
+    report = cwl_context_contracts.verify_package_evidence_directory(tmp_path)
+
+    assert report.verified is False
+    assert report.mismatches == (f"artifact_unreadable:{_WHEEL_NAME}",)
 
 
 def test_spdx_disappearing_after_digest_fails_closed(
