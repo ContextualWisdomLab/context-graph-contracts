@@ -15,6 +15,11 @@ All notable changes to this project are documented in this file.
 - Approved conformance-manifest verification now reads at most 1 MiB plus one
   sentinel byte before UTF-8/JSON parsing and fails closed with
   `approved_manifest_too_large` for oversized untrusted input.
+- Downloaded package-evidence verification now bounds `SHA256SUMS` at 64 KiB
+  and SPDX JSON at 16 MiB plus one sentinel byte, rejects duplicate JSON object
+  members and Python-only non-finite constants, requires UTF-8 metadata, and
+  reports post-check artifact read failures as structured mismatches instead of
+  allowing untrusted evidence I/O to escape the verification boundary.
 - Data-management framework references now require a structural lowercase
   `https://` official locator even when JSON Schema `format` is annotation-only,
   and assessment profiles/results carry an exact semantic `profile_version` so
