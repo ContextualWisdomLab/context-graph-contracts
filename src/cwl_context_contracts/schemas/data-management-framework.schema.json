@@ -60,7 +60,7 @@
         "official_reference_uri": {
           "type": "string",
           "format": "uri",
-          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:[^\\s]+$",
+          "pattern": "^https://[^\\s]+$",
           "maxLength": 2048
         },
         "license_classification": {
