@@ -13,7 +13,9 @@ from cwl_context_contracts import contract_release_admission as admission_module
 def _approved_conformance_manifest() -> dict[str, object]:
     """Return an independently mutable semantic-profile approval snapshot."""
     return json.loads(
-        json.dumps(cwl_context_contracts.build_packaged_conformance_manifest().to_mapping())
+        json.dumps(
+            cwl_context_contracts.build_packaged_conformance_manifest().to_mapping()
+        )
     )
 
 
@@ -45,7 +47,8 @@ def test_release_admission_requires_semantics_and_complete_bundle_bytes() -> Non
     )
 
 
-def test_complete_bundle_drift_blocks_release_admission_after_semantic_success() -> None:
+def test_complete_bundle_drift_blocks_release_admission_after_semantic_success(
+) -> None:
     """Semantic success cannot hide drift in a non-profile published resource."""
     approved_bundle = _approved_bundle_manifest()
     approved_bundle["distribution_version"] = "999.0.0"
@@ -63,7 +66,8 @@ def test_complete_bundle_drift_blocks_release_admission_after_semantic_success()
     )
 
 
-def test_conformance_manifest_drift_blocks_release_admission_with_matching_bundle() -> None:
+def test_conformance_manifest_drift_blocks_release_admission_with_matching_bundle(
+) -> None:
     """Complete bundle identity cannot replace approved semantic-profile identity."""
     approved_conformance = _approved_conformance_manifest()
     approved_conformance["distribution_version"] = "999.0.0"
