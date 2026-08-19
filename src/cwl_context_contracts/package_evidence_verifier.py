@@ -123,8 +123,8 @@ def _sdist_version(name: str) -> str | None:
     return version
 
 
-def _artifact_set_is_exact(checksums: dict[str, str]) -> bool:
-    """Return whether checksums name one coherent wheel, sdist, and SPDX SBOM."""
+def _artifact_release_version(checksums: dict[str, str]) -> str | None:
+    """Return the one release version shared by the exact wheel and sdist set."""
     artifact_names = set(checksums)
     wheel_versions = {
         name: _wheel_version(name)
@@ -137,14 +137,21 @@ def _artifact_set_is_exact(checksums: dict[str, str]) -> bool:
         if name.endswith(".tar.gz")
     }
     if len(wheel_versions) != 1 or len(sdist_versions) != 1:
-        return False
+        return None
     wheel_name, wheel_version = next(iter(wheel_versions.items()))
     sdist_name, sdist_version = next(iter(sdist_versions.items()))
-    return (
-        wheel_version is not None
-        and wheel_version == sdist_version
-        and artifact_names == {wheel_name, sdist_name, _SBOM_NAME}
-    )
+    if (
+        wheel_version is None
+        or wheel_version != sdist_version
+        or artifact_names != {wheel_name, sdist_name, _SBOM_NAME}
+    ):
+        return None
+    return wheel_version
+
+
+def _artifact_set_is_exact(checksums: dict[str, str]) -> bool:
+    """Return whether checksums name one coherent wheel, sdist, and SPDX SBOM."""
+    return _artifact_release_version(checksums) is not None
 
 
 def _sha256_file(path: Path) -> str:
@@ -156,8 +163,8 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _spdx_is_3_0_1_package_document(path: Path) -> bool:
-    """Return whether the checked SBOM preserves this SPDX 3.0.1 package shape."""
+def _spdx_is_3_0_1_package_document(path: Path, expected_version: str) -> bool:
+    """Return whether the SPDX package identity matches this exact release version."""
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError):
@@ -179,6 +186,7 @@ def _spdx_is_3_0_1_package_document(path: Path) -> bool:
     has_package = any(
         item.get("type") == "software_Package"
         and item.get("name") == "cwl-context-contracts"
+        and item.get("packageVersion") == expected_version
         for item in mapping_items
     )
     return has_creation_info and has_package
@@ -197,7 +205,8 @@ def verify_package_evidence_directory(
         PackageArtifactEvidence(name=name, sha256=checksums[name])
         for name in sorted(checksums)
     )
-    if not _artifact_set_is_exact(checksums):
+    release_version = _artifact_release_version(checksums)
+    if release_version is None:
         return PackageEvidenceVerification(
             artifacts=artifacts,
             mismatches=("artifact_set",),
@@ -213,7 +222,10 @@ def verify_package_evidence_directory(
 
     sbom_unsafe = f"artifact_unsafe:{_SBOM_NAME}" in mismatches
     sbom_path = evidence_directory / _SBOM_NAME
-    if not sbom_unsafe and not _spdx_is_3_0_1_package_document(sbom_path):
+    if not sbom_unsafe and not _spdx_is_3_0_1_package_document(
+        sbom_path,
+        release_version,
+    ):
         mismatches.append("sbom_spdx_3_0_1")
 
     return PackageEvidenceVerification(
