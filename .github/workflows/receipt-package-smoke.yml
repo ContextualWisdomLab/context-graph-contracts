@@ -52,12 +52,20 @@ jobs:
             > /tmp/contract-release-admission.json
           mkdir -p /tmp/package-evidence
           cp dist/*.whl dist/*.tar.gz /tmp/package-evidence/
-          cat > /tmp/package-evidence/cwl-context-contracts.spdx.json <<'JSON'
+          package_version="$(
+            .receipt-smoke/bin/python -c \
+              'from importlib.metadata import version; print(version("cwl-context-contracts"))'
+          )"
+          cat > /tmp/package-evidence/cwl-context-contracts.spdx.json <<JSON
           {
             "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
             "@graph": [
               {"type": "CreationInfo", "specVersion": "3.0.1"},
-              {"type": "software_Package", "name": "cwl-context-contracts"}
+              {
+                "type": "software_Package",
+                "name": "cwl-context-contracts",
+                "packageVersion": "${package_version}"
+              }
             ]
           }
           JSON
