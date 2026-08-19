@@ -22,12 +22,12 @@ def test_packaged_conformance_runner_executes_every_published_vector() -> None:
 
     assert report.passed is True
     assert report.profile_count == 5
-    assert report.case_count == 36
+    assert report.case_count == 37
     assert report.failures == ()
     assert report.to_mapping() == {
         "status": "pass",
         "profile_count": 5,
-        "case_count": 36,
+        "case_count": 37,
         "failures": [],
     }
 
@@ -324,7 +324,7 @@ def test_cli_prints_machine_readable_pass_report(capsys) -> None:
     payload = json.loads(captured.out)
     assert exit_code == 0
     assert payload["status"] == "pass"
-    assert payload["case_count"] == 36
+    assert payload["case_count"] == 37
     assert captured.err == ""
 
 
