@@ -105,6 +105,29 @@ def test_release_admission_cli_emits_one_machine_readable_decision(
     assert captured.err == ""
 
 
+def test_release_admission_cli_returns_exit_one_for_bundle_drift(
+    tmp_path,
+    capsys,
+) -> None:
+    """Automation receives a non-zero decision when complete bundle bytes drift."""
+    approved_bundle = _approved_bundle_manifest()
+    approved_bundle["distribution_version"] = "999.0.0"
+    conformance_path = tmp_path / "approved-conformance.json"
+    bundle_path = tmp_path / "approved-bundle.json"
+    conformance_path.write_text(
+        json.dumps(_approved_conformance_manifest()),
+        encoding="utf-8",
+    )
+    bundle_path.write_text(json.dumps(approved_bundle), encoding="utf-8")
+
+    exit_code = admission_module.main([str(conformance_path), str(bundle_path)])
+
+    payload = json.loads(capsys.readouterr().out)
+    assert exit_code == 1
+    assert payload["admitted"] is False
+    assert payload["bundle_verification"]["verified"] is False
+
+
 def test_release_admission_cli_fails_closed_on_approved_input_error(
     tmp_path,
     capsys,
