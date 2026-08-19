@@ -13,7 +13,9 @@ from pathlib import Path
 _VERIFICATION_FORMAT = "cwl-context-package-evidence-verification/v1"
 _SBOM_NAME = "cwl-context-contracts.spdx.json"
 _CHECKSUM_NAME = "SHA256SUMS"
-_CHECKSUM_PATTERN = re.compile(r"^([0-9a-f]{64}) [ *]([A-Za-z0-9][A-Za-z0-9._+-]*)$")
+_CHECKSUM_PATTERN = re.compile(
+    r"^([0-9a-f]{64}) [ *]([A-Za-z0-9][A-Za-z0-9._+-]*)$"
+)
 _ACCEPT_ACTION = (
     "verify artifact attestations bind these exact package bytes to the intended "
     "protected main source commit before release"
@@ -75,8 +77,10 @@ class PackageEvidenceVerification:
 
 
 def _load_checksum_manifest(evidence_directory: Path) -> dict[str, str]:
-    """Read a strict GNU-style SHA256SUMS manifest without accepting path escapes."""
+    """Read strict GNU-style SHA256SUMS without accepting external paths."""
     checksum_path = evidence_directory / _CHECKSUM_NAME
+    if checksum_path.is_symlink():
+        raise PackageEvidenceInputError("checksum_manifest_unsafe")
     try:
         checksum_text = checksum_path.read_text(encoding="utf-8")
     except (OSError, UnicodeError) as exc:
@@ -97,7 +101,7 @@ def _load_checksum_manifest(evidence_directory: Path) -> dict[str, str]:
 
 
 def _artifact_set_is_exact(checksums: dict[str, str]) -> bool:
-    """Return whether checksums name exactly one wheel, sdist, and canonical SBOM."""
+    """Return whether checksums name one wheel, one sdist, and the SPDX SBOM."""
     artifact_names = set(checksums)
     wheel_names = {name for name in artifact_names if name.endswith(".whl")}
     sdist_names = {name for name in artifact_names if name.endswith(".tar.gz")}
@@ -118,24 +122,28 @@ def _sha256_file(path: Path) -> str:
 
 
 def _spdx_is_3_0_1_package_document(path: Path) -> bool:
-    """Return whether the checked SBOM preserves the workflow's SPDX 3.0.1 shape."""
+    """Return whether the checked SBOM preserves the SPDX 3.0.1 package shape."""
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError):
         return False
     if not isinstance(payload, dict):
         return False
-    if payload.get("@context") != "https://spdx.org/rdf/3.0.1/spdx-context.jsonld":
+    expected_context = "https://spdx.org/rdf/3.0.1/spdx-context.jsonld"
+    if payload.get("@context") != expected_context:
         return False
     graph = payload.get("@graph")
     if not isinstance(graph, list) or not graph:
         return False
     mapping_items = [item for item in graph if isinstance(item, dict)]
     has_creation_info = any(
-        item.get("type") == "CreationInfo" and item.get("specVersion") == "3.0.1"
+        item.get("type") == "CreationInfo"
+        and item.get("specVersion") == "3.0.1"
         for item in mapping_items
     )
-    has_package = any(item.get("type") == "software_Package" for item in mapping_items)
+    has_package = any(
+        item.get("type") == "software_Package" for item in mapping_items
+    )
     return has_creation_info and has_package
 
 
@@ -166,10 +174,10 @@ def verify_package_evidence_directory(
         elif _sha256_file(artifact_path) != artifact.sha256:
             mismatches.append(f"artifact_sha256:{artifact.name}")
 
+    sbom_unsafe = f"artifact_unsafe:{_SBOM_NAME}" in mismatches
     sbom_path = evidence_directory / _SBOM_NAME
-    if not any(mismatch.startswith(f"artifact_unsafe:{_SBOM_NAME}") for mismatch in mismatches):
-        if not _spdx_is_3_0_1_package_document(sbom_path):
-            mismatches.append("sbom_spdx_3_0_1")
+    if not sbom_unsafe and not _spdx_is_3_0_1_package_document(sbom_path):
+        mismatches.append("sbom_spdx_3_0_1")
 
     return PackageEvidenceVerification(
         artifacts=artifacts,
