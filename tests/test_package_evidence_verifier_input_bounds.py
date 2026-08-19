@@ -11,7 +11,6 @@ import cwl_context_contracts
 from cwl_context_contracts import package_evidence_verifier as verifier_module
 from cwl_context_contracts.package_evidence_verifier import PackageEvidenceInputError
 
-
 _SBOM_NAME = "cwl-context-contracts.spdx.json"
 _WHEEL_NAME = "cwl_context_contracts-0.1.0-py3-none-any.whl"
 
