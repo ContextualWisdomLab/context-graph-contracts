@@ -15,6 +15,10 @@ All notable changes to this project are documented in this file.
 - Approved conformance-manifest verification now reads at most 1 MiB plus one
   sentinel byte before UTF-8/JSON parsing and fails closed with
   `approved_manifest_too_large` for oversized untrusted input.
+- Data-management framework references now require a structural lowercase
+  `https://` official locator even when JSON Schema `format` is annotation-only,
+  and assessment profiles/results carry an exact semantic `profile_version` so
+  historical score meaning cannot drift behind a stable profile code.
 
 ### Added
 
