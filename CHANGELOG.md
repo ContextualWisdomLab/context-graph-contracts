@@ -109,10 +109,11 @@ All notable changes to this project are documented in this file.
   as separate owning gates.
 - Buyer-executable `cwl-context-package-evidence-verify` command and
   `verify_package_evidence_directory()` API that require the workflow's exact
-  wheel/source/SPDX checksum set, reject malformed or escaping checksum names,
-  refuse symlinked required evidence, recalculate every SHA-256 digest, and
-  validate the SPDX 3.0.1 package-evidence shape without promoting checksum
-  equality to artifact provenance or release authority.
+  same-version wheel/source/SPDX checksum set, reject malformed or escaping
+  checksum names, refuse symlinked required evidence, recalculate every SHA-256
+  digest, and require exactly one SPDX 3.0.1 `cwl-context-contracts` package
+  whose `packageVersion` equals the wheel/source release version without
+  promoting checksum equality to artifact provenance or release authority.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
