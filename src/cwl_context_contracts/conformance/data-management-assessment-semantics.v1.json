@@ -93,6 +93,31 @@
       }
     },
     {
+      "case_id": "same_tenant_foreign_provenance_authority",
+      "error_pattern": "provenance must remain under the assessment result authority",
+      "value": {
+        "contract_version": "1.0.0",
+        "assessment_result_id": "urn:cwl:tenant_001:data_context:data_management_assessment:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "framework_code": "dama_dmbok2r",
+        "framework_version": "2024",
+        "profile_code": "baseline_data_management",
+        "profile_version": "1.0.0",
+        "tenant_authority_uri": "urn:cwl:tenant_001:data_context",
+        "subject_ref": "urn:cwl:tenant_001:ea_core:business_capability:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "knowledge_cutoff_at": "2026-08-18T00:00:00Z",
+        "recorded_at": "2026-08-18T00:00:01Z",
+        "overall_score_basis_points": 7600,
+        "dimension_scores": [{"dimension_code": "evidence", "score_basis_points": 7200}],
+        "readiness": "evidence_gap",
+        "missing_evidence_codes": ["control_evidence"],
+        "truth_status": "observed",
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:ea_core:assessment_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
       "case_id": "duplicate_dimension_code",
       "error_pattern": "dimension_code values must be unique",
       "value": {
