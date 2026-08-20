@@ -150,6 +150,7 @@ jobs:
             echo "expected exactly one wheel and one source distribution" >&2
             exit 1
           fi
+          mkdir -p attestation-verification
           for artifact in "${artifacts[@]}"; do
             gh attestation verify "$artifact" \
               --repo "$REPOSITORY" \
@@ -160,7 +161,7 @@ jobs:
               --cert-oidc-issuer https://token.actions.githubusercontent.com \
               --deny-self-hosted-runners \
               --format json \
-              > "/tmp/$(basename "$artifact").provenance.json"
+              > "attestation-verification/$(basename "$artifact").provenance.json"
             gh attestation verify "$artifact" \
               --repo "$REPOSITORY" \
               --source-digest "$SOURCE_SHA" \
@@ -171,5 +172,12 @@ jobs:
               --deny-self-hosted-runners \
               --predicate-type "$SPDX_PREDICATE" \
               --format json \
-              > "/tmp/$(basename "$artifact").sbom.json"
+              > "attestation-verification/$(basename "$artifact").sbom.json"
           done
+      - name: Retain protected-main attestation verification evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attestation-verification-${{ github.sha }}
+          path: attestation-verification/*.json
+          if-no-files-found: error
+          retention-days: 90
