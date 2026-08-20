@@ -295,7 +295,7 @@ def verify_package_evidence_directory(
         }
     except OSError as exc:
         raise PackageEvidenceInputError("evidence_directory_unreadable") from exc
-    if directory_package_names != manifest_package_names:
+    if directory_package_names - manifest_package_names:
         return PackageEvidenceVerification(
             artifacts=artifacts,
             mismatches=("artifact_set",),
