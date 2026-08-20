@@ -119,7 +119,7 @@ def test_post_open_regular_inode_replacement_fails_closed(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A different regular inode at the final path cannot inherit the opened identity."""
+    """A different regular inode at the final path cannot inherit opened identity."""
     target = _write_valid_bundle(tmp_path)
     replacement = tmp_path / "replacement-spdx.json"
     replacement.write_bytes(_valid_sbom())
