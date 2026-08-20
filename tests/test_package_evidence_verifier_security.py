@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 import cwl_context_contracts
+import cwl_context_contracts.package_evidence_verifier as verifier_module
 from cwl_context_contracts.package_evidence_verifier import PackageEvidenceInputError
 
 
@@ -265,3 +266,66 @@ def test_unreadable_package_directory_listing_fails_closed(
         cwl_context_contracts.verify_package_evidence_directory(tmp_path)
 
     assert exc_info.value.error_code == "evidence_directory_unreadable"
+
+
+def test_spdx_semantics_use_the_same_bytes_that_passed_checksum_verification(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Replacing the SBOM after hashing cannot splice two files into one success."""
+    invalid_sbom = json.dumps(
+        {
+            "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+            "@graph": [
+                {"type": "CreationInfo", "specVersion": "3.0.1"},
+                {
+                    "type": "software_Package",
+                    "name": "unrelated-package",
+                    "software_packageVersion": "0.1.0",
+                },
+            ],
+        },
+        sort_keys=True,
+    ).encode()
+    valid_sbom = json.dumps(
+        {
+            "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+            "@graph": [
+                {"type": "CreationInfo", "specVersion": "3.0.1"},
+                {
+                    "type": "software_Package",
+                    "name": "cwl-context-contracts",
+                    "software_packageVersion": "0.1.0",
+                },
+            ],
+        },
+        sort_keys=True,
+    ).encode()
+    artifacts = {
+        "cwl_context_contracts-0.1.0-py3-none-any.whl": b"wheel",
+        "cwl_context_contracts-0.1.0.tar.gz": b"sdist",
+        "cwl-context-contracts.spdx.json": invalid_sbom,
+    }
+    for name, payload in artifacts.items():
+        (tmp_path / name).write_bytes(payload)
+    (tmp_path / "SHA256SUMS").write_text(
+        "".join(
+            f"{_digest(payload)}  {name}\n" for name, payload in artifacts.items()
+        ),
+        encoding="utf-8",
+    )
+
+    original_sha256_file = verifier_module._sha256_file
+
+    def replace_sbom_after_hash(path: Path) -> str:
+        digest = original_sha256_file(path)
+        if path.name == "cwl-context-contracts.spdx.json":
+            path.write_bytes(valid_sbom)
+        return digest
+
+    monkeypatch.setattr(verifier_module, "_sha256_file", replace_sbom_after_hash)
+
+    report = cwl_context_contracts.verify_package_evidence_directory(tmp_path)
+
+    assert report.verified is False
+    assert report.mismatches == ("sbom_spdx_3_0_1",)
