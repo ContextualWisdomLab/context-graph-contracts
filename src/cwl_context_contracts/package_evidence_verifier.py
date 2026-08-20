@@ -43,7 +43,7 @@ class PackageEvidenceInputError(ValueError):
 
 
 class _UnsafeEvidenceFileError(OSError):
-    """Report a non-regular or path-swapped evidence file."""
+    """Report a symlinked or path-swapped evidence file."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -87,10 +87,12 @@ class PackageEvidenceVerification:
 
 
 def _open_stable_regular_file(path: Path) -> BinaryIO:
-    """Open one regular file and reject a path swap between metadata and open."""
+    """Open one regular file and reject symlink or identity replacement races."""
     expected_stat = path.stat(follow_symlinks=False)
+    if stat.S_ISLNK(expected_stat.st_mode):
+        raise _UnsafeEvidenceFileError("evidence path is a symlink")
     if not stat.S_ISREG(expected_stat.st_mode):
-        raise _UnsafeEvidenceFileError("evidence path is not a regular file")
+        raise OSError("evidence path is not a regular file")
 
     handle = path.open("rb")
     opened_stat = os.fstat(handle.fileno())
@@ -304,6 +306,9 @@ def verify_package_evidence_directory(
                 artifact_digest = hashlib.sha256(sbom_bytes).hexdigest()
             else:
                 artifact_digest = _sha256_file(artifact_path)
+        except FileNotFoundError:
+            mismatches.append(f"artifact_unsafe:{artifact.name}")
+            continue
         except _UnsafeEvidenceFileError:
             mismatches.append(f"artifact_unsafe:{artifact.name}")
             continue
