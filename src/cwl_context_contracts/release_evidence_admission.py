@@ -98,7 +98,7 @@ class ReleaseEvidenceAdmissionReport:
 def _verified_package_version(
     package_evidence: PackageEvidenceVerification,
 ) -> str | None:
-    """Return wheel version only after the package verifier accepted the artifact set."""
+    """Return wheel version only after package evidence is verified."""
     if not package_evidence.verified:
         return None
     wheel_name = next(
@@ -115,14 +115,15 @@ def evaluate_release_evidence_admission(
     approved_conformance_manifest: Mapping[str, object],
     approved_bundle_manifest: Mapping[str, object],
 ) -> ReleaseEvidenceAdmissionReport:
-    """Require installed semantic, complete-bundle, and exact package-byte agreement."""
+    """Require installed semantic, complete-bundle, and package-byte agreement."""
     contract_admission = evaluate_packaged_contract_release_admission(
         approved_conformance_manifest,
         approved_bundle_manifest,
     )
     package_evidence = verify_package_evidence_directory(evidence_directory)
     package_version = _verified_package_version(package_evidence)
-    installed_version = contract_admission.bundle_verification.installed_distribution_version
+    bundle_verification = contract_admission.bundle_verification
+    installed_version = bundle_verification.installed_distribution_version
     release_mismatches = (
         ("package_distribution_version",)
         if package_evidence.verified and package_version != installed_version
