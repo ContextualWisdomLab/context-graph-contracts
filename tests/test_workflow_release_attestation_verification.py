@@ -46,3 +46,15 @@ def test_spdx3_attestation_uses_explicit_in_toto_predicate_mode() -> None:
     assert "sbom-path:" not in attestation_step
     assert "predicate-type: https://spdx.dev/Document/v3" in attestation_step
     assert "predicate-path: evidence/cwl-context-contracts.spdx.json" in attestation_step
+
+
+def test_protected_main_retains_attestation_verification_records() -> None:
+    """Keep machine-readable verification results for the exact stable source SHA."""
+    workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
+
+    assert "mkdir -p attestation-verification" in workflow_text
+    assert 'attestation-verification/$(basename "$artifact").provenance.json' in workflow_text
+    assert 'attestation-verification/$(basename "$artifact").sbom.json' in workflow_text
+    assert "name: attestation-verification-${{ github.sha }}" in workflow_text
+    assert "path: attestation-verification/*.json" in workflow_text
+    assert "retention-days: 90" in workflow_text
