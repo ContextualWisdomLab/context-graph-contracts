@@ -96,12 +96,19 @@ def _open_stable_regular_file(path: Path) -> BinaryIO:
 
     handle = path.open("rb")
     opened_stat = os.fstat(handle.fileno())
-    if not stat.S_ISREG(opened_stat.st_mode) or not os.path.samestat(
-        expected_stat,
-        opened_stat,
+    try:
+        current_stat = path.stat(follow_symlinks=False)
+    except OSError as exc:
+        handle.close()
+        raise _UnsafeEvidenceFileError("evidence path changed during open") from exc
+    if (
+        not stat.S_ISREG(opened_stat.st_mode)
+        or not os.path.samestat(expected_stat, opened_stat)
+        or not stat.S_ISREG(current_stat.st_mode)
+        or not os.path.samestat(expected_stat, current_stat)
     ):
         handle.close()
-        raise _UnsafeEvidenceFileError("evidence path changed before open")
+        raise _UnsafeEvidenceFileError("evidence path changed during open")
     return handle
 
 
