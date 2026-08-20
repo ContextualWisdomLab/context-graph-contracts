@@ -119,6 +119,14 @@ All notable changes to this project are documented in this file.
   digest, and require exactly one SPDX 3.0.1 `cwl-context-contracts` package
   whose `packageVersion` equals the wheel/source release version without
   promoting checksum equality to artifact provenance or release authority.
+- Composite `cwl-context-release-evidence-admit` command and
+  `evaluate_release_evidence_admission()` API that combine installed semantic
+  and complete-resource admission with downloaded package-evidence verification
+  and fail closed unless the verified wheel/source distribution version equals
+  the installed approved distribution version, preventing coherent evidence
+  from different releases from being spliced into one positive decision while
+  leaving protected-main provenance, attestation, independent review, release
+  authorization, and runtime authorization to their owning gates.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
