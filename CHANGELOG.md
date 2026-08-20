@@ -117,7 +117,7 @@ All notable changes to this project are documented in this file.
   same-version wheel/source/SPDX checksum set, reject malformed or escaping
   checksum names, refuse symlinked required evidence, recalculate every SHA-256
   digest, and require exactly one SPDX 3.0.1 `cwl-context-contracts` package
-  whose `packageVersion` equals the wheel/source release version without
+  whose `software_packageVersion` equals the wheel/source release version without
   promoting checksum equality to artifact provenance or release authority.
 - Composite `cwl-context-release-evidence-admit` command and
   `evaluate_release_evidence_admission()` API that combine installed semantic
@@ -127,6 +127,12 @@ All notable changes to this project are documented in this file.
   from different releases from being spliced into one positive decision while
   leaving protected-main provenance, attestation, independent review, release
   authorization, and runtime authorization to their owning gates.
+- Protected-main supply-chain admission now signs the one canonical SPDX 3.0.1
+  JSON-LD through explicit in-toto `https://spdx.dev/Document/v3` custom-predicate
+  mode, avoiding pinned `actions/attest` v4.2.2's SPDX-2 field-based automatic
+  detector; it immediately verifies wheel/source SLSA and SPDX attestations
+  against exact repository/ref/source/signer/OIDC/hosted-runner identity and
+  retains machine-readable verifier results under the exact source SHA.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
