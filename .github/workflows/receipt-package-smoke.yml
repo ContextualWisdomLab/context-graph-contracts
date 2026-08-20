@@ -29,7 +29,7 @@ jobs:
           enable-cache: false
       - run: uv lock --check
       - run: uv sync --frozen --extra dev --python 3.14
-      - run: uv build --wheel --out-dir dist
+      - run: uv build --wheel --sdist --out-dir dist
       - run: uv venv .receipt-smoke --python 3.14
       - run: >-
           uv pip install --python .receipt-smoke/bin/python
@@ -50,6 +50,36 @@ jobs:
             /tmp/approved-manifest.json \
             /tmp/contract-bundle-manifest.json \
             > /tmp/contract-release-admission.json
+          mkdir -p /tmp/package-evidence
+          cp dist/*.whl dist/*.tar.gz /tmp/package-evidence/
+          package_version="$(
+            .receipt-smoke/bin/python -c \
+              'from importlib.metadata import version; print(version("cwl-context-contracts"))'
+          )"
+          cat > /tmp/package-evidence/cwl-context-contracts.spdx.json <<JSON
+          {
+            "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+            "@graph": [
+              {"type": "CreationInfo", "specVersion": "3.0.1"},
+              {
+                "type": "software_Package",
+                "name": "cwl-context-contracts",
+                "software_packageVersion": "${package_version}"
+              }
+            ]
+          }
+          JSON
+          (
+            cd /tmp/package-evidence
+            sha256sum \
+              *.whl \
+              *.tar.gz \
+              cwl-context-contracts.spdx.json \
+              > SHA256SUMS
+          )
+          .receipt-smoke/bin/cwl-context-package-evidence-verify \
+            /tmp/package-evidence \
+            > /tmp/package-evidence-verification.json
           .receipt-smoke/bin/python - <<'PY'
           import json
           from pathlib import Path
@@ -67,6 +97,11 @@ jobs:
           )
           release_admission = json.loads(
               Path("/tmp/contract-release-admission.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          package_evidence = json.loads(
+              Path("/tmp/package-evidence-verification.json").read_text(
                   encoding="utf-8"
               )
           )
@@ -130,5 +165,15 @@ jobs:
               "obtain qualifying independent approval and verify artifact provenance, "
               "protected-release evidence, and runtime authorization before enabling "
               "the integration"
+          )
+          assert package_evidence["verification_format"] == (
+              "cwl-context-package-evidence-verification/v1"
+          )
+          assert package_evidence["verified"] is True
+          assert package_evidence["mismatches"] == []
+          assert len(package_evidence["artifacts"]) == 3
+          assert package_evidence["next_action"] == (
+              "verify artifact attestations bind these exact package bytes to the "
+              "intended protected main source commit before release"
           )
           PY

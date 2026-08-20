@@ -15,6 +15,11 @@ All notable changes to this project are documented in this file.
 - Approved conformance-manifest verification now reads at most 1 MiB plus one
   sentinel byte before UTF-8/JSON parsing and fails closed with
   `approved_manifest_too_large` for oversized untrusted input.
+- Downloaded package-evidence verification now bounds `SHA256SUMS` at 64 KiB
+  and SPDX JSON at 16 MiB plus one sentinel byte, rejects duplicate JSON object
+  members and Python-only non-finite constants, requires UTF-8 metadata, and
+  reports post-check artifact read failures as structured mismatches instead of
+  allowing untrusted evidence I/O to escape the verification boundary.
 - Data-management framework references now require a structural lowercase
   `https://` official locator even when JSON Schema `format` is annotation-only,
   and assessment profiles/results carry an exact semantic `profile_version` so
@@ -107,6 +112,13 @@ All notable changes to this project are documented in this file.
   approved complete-resource identity together while leaving protected-release
   policy, artifact provenance, independent approval, and runtime authorization
   as separate owning gates.
+- Buyer-executable `cwl-context-package-evidence-verify` command and
+  `verify_package_evidence_directory()` API that require the workflow's exact
+  same-version wheel/source/SPDX checksum set, reject malformed or escaping
+  checksum names, refuse symlinked required evidence, recalculate every SHA-256
+  digest, and require exactly one SPDX 3.0.1 `cwl-context-contracts` package
+  whose `packageVersion` equals the wheel/source release version without
+  promoting checksum equality to artifact provenance or release authority.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and

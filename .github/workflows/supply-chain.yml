@@ -29,10 +29,20 @@ jobs:
           enable-cache: false
       - run: uv lock --check
       - run: uv build --wheel --sdist --out-dir dist
-      - name: Generate SPDX 3 JSON SBOM from built distributions
+      - name: Install the built wheel into an isolated SBOM root
+        id: sbom-root
+        run: |
+          uv venv .sbom-venv --python 3.14
+          uv pip install --python .sbom-venv/bin/python --no-deps dist/*.whl
+          echo "path=$(.sbom-venv/bin/python - <<'PY'
+          import sysconfig
+          print(sysconfig.get_paths()["purelib"])
+          PY
+          )" >> "$GITHUB_OUTPUT"
+      - name: Generate SPDX 3 JSON SBOM from installed package metadata
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          path: dist
+          path: ${{ steps.sbom-root.outputs.path }}
           format: spdx-json@3.0
           output-file: dist/cwl-context-contracts.spdx.json
           upload-artifact: false
@@ -58,17 +68,24 @@ jobs:
           )
           assert any(
               item.get("type") == "software_Package"
+              and item.get("name") == "cwl-context-contracts"
               for item in graph
               if isinstance(item, dict)
           )
-          assert any(Path("dist").glob("*.whl"))
-          assert any(Path("dist").glob("*.tar.gz"))
+          wheels = list(Path("dist").glob("cwl_context_contracts-*.whl"))
+          sdists = list(Path("dist").glob("cwl_context_contracts-*.tar.gz"))
+          assert len(wheels) == 1
+          assert len(sdists) == 1
           PY
           (
             cd dist
             sha256sum *.whl *.tar.gz cwl-context-contracts.spdx.json > SHA256SUMS
             sha256sum -c SHA256SUMS
           )
+      - name: Verify package evidence with the release tool
+        run: >-
+          uv run --frozen cwl-context-package-evidence-verify dist
+          > dist/package-evidence-verification.json
       - name: Upload checked-out commit package evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -78,6 +95,7 @@ jobs:
             dist/*.tar.gz
             dist/cwl-context-contracts.spdx.json
             dist/SHA256SUMS
+            dist/package-evidence-verification.json
           if-no-files-found: error
           retention-days: 7
 

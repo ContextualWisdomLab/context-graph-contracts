@@ -50,6 +50,12 @@ from .data_management import validate_data_management_assessment_semantics
 from .events import CloudEventEnvelope
 from .fixtures import available_fixture_names, load_fixture
 from .identity import CanonicalAssetUri, CanonicalAuthorityUri
+from .package_evidence_verifier import (
+    PackageArtifactEvidence,
+    PackageEvidenceInputError,
+    PackageEvidenceVerification,
+    verify_package_evidence_directory,
+)
 from .provenance import ProvenanceReference
 from .schemas import available_schema_names, load_schema
 from .temporal import (
@@ -87,6 +93,9 @@ __all__ = [
     "ContractBundleManifestVerification",
     "ContractReleaseAdmissionReport",
     "ContractResourceEvidence",
+    "PackageArtifactEvidence",
+    "PackageEvidenceInputError",
+    "PackageEvidenceVerification",
     "ProvenanceReference",
     "TruthStatus",
     "assert_packaged_conformance",
@@ -115,6 +124,7 @@ __all__ = [
     "run_packaged_conformance",
     "truth_status_rank",
     "validate_data_management_assessment_semantics",
+    "verify_package_evidence_directory",
     "verify_packaged_conformance_manifest",
     "verify_packaged_contract_bundle_manifest",
 ]
