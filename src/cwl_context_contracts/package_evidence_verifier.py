@@ -167,6 +167,12 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _read_bounded_file(path: Path, maximum_bytes: int) -> bytes:
+    """Read one bounded file snapshot so later checks use the exact same bytes."""
+    with path.open("rb") as handle:
+        return handle.read(maximum_bytes + 1)
+
+
 def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
     """Build one JSON object while rejecting ambiguous duplicate member names."""
     result: dict[str, object] = {}
@@ -182,13 +188,11 @@ def _reject_nonstandard_json_constant(value: str) -> object:
     raise ValueError(f"non-standard JSON constant: {value}")
 
 
-def _spdx_is_3_0_1_package_document(path: Path, expected_version: str) -> bool:
-    """Return whether bounded strict SPDX JSON matches this exact release version."""
-    try:
-        with path.open("rb") as sbom_file:
-            sbom_bytes = sbom_file.read(_MAX_SBOM_BYTES + 1)
-    except OSError:
-        return False
+def _spdx_is_3_0_1_package_document(
+    sbom_bytes: bytes,
+    expected_version: str,
+) -> bool:
+    """Return whether one exact bounded SPDX byte snapshot matches this release."""
     if len(sbom_bytes) > _MAX_SBOM_BYTES:
         return False
     try:
@@ -265,13 +269,20 @@ def verify_package_evidence_directory(
         )
 
     mismatches: list[str] = []
+    sbom_bytes: bytes | None = None
     for artifact in artifacts:
         artifact_path = evidence_directory / artifact.name
         if artifact_path.is_symlink() or not artifact_path.is_file():
             mismatches.append(f"artifact_unsafe:{artifact.name}")
             continue
         try:
-            artifact_digest = _sha256_file(artifact_path)
+            if artifact.name == _SBOM_NAME:
+                sbom_bytes = _read_bounded_file(artifact_path, _MAX_SBOM_BYTES)
+                if len(sbom_bytes) > _MAX_SBOM_BYTES:
+                    continue
+                artifact_digest = hashlib.sha256(sbom_bytes).hexdigest()
+            else:
+                artifact_digest = _sha256_file(artifact_path)
         except OSError:
             mismatches.append(f"artifact_unreadable:{artifact.name}")
             continue
@@ -285,10 +296,12 @@ def verify_package_evidence_directory(
         }
         for mismatch in mismatches
     )
-    sbom_path = evidence_directory / _SBOM_NAME
-    if not sbom_unsafe and not _spdx_is_3_0_1_package_document(
-        sbom_path,
-        release_version,
+    if (
+        not sbom_unsafe
+        and (
+            sbom_bytes is None
+            or not _spdx_is_3_0_1_package_document(sbom_bytes, release_version)
+        )
     ):
         mismatches.append("sbom_spdx_3_0_1")
 
