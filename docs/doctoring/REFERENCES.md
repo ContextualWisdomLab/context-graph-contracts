@@ -24,7 +24,13 @@ EDM Association. (2025, June 30). *Announcing DCAM v3: Meet the new standard for
 
 EDM Association. (n.d.). *Data management - DCAM*. Retrieved August 18, 2026, from https://edmcouncil.org/frameworks/dcam/
 
-GitHub. (n.d.). *Using artifact attestations to establish provenance for builds*. GitHub Docs. Retrieved August 17, 2026, from https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations
+GitHub. (2026). *actions/attest* (Version 4.2.2) [Computer software]. GitHub. https://github.com/actions/attest/tree/1e69f48acb82d1966a394da916b4c1698aa569d6
+
+GitHub. (n.d.-a). *gh attestation verify*. GitHub CLI manual. Retrieved August 21, 2026, from https://cli.github.com/manual/gh_attestation_verify
+
+GitHub. (n.d.-b). *Using artifact attestations to establish provenance for builds*. GitHub Docs. Retrieved August 17, 2026, from https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations
+
+in-toto. (n.d.). *Predicate type: SPDX (v3)*. Retrieved August 21, 2026, from https://github.com/in-toto/attestation/blob/main/spec/predicates/spdx.md
 
 Jensen, C. S., & Snodgrass, R. T. (1996). Semantics of time-varying information. *Information Systems, 21*(4), 311–352. https://doi.org/10.1016/0306-4379(96)00016-8
 
