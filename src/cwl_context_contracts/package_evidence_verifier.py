@@ -250,11 +250,14 @@ def verify_package_evidence_directory(
     manifest_package_names = {
         name for name in checksums if name.endswith((".whl", ".tar.gz"))
     }
-    directory_package_names = {
-        path.name
-        for pattern in ("*.whl", "*.tar.gz")
-        for path in evidence_directory.glob(pattern)
-    }
+    try:
+        directory_package_names = {
+            path.name
+            for pattern in ("*.whl", "*.tar.gz")
+            for path in evidence_directory.glob(pattern)
+        }
+    except OSError as exc:
+        raise PackageEvidenceInputError("evidence_directory_unreadable") from exc
     if directory_package_names != manifest_package_names:
         return PackageEvidenceVerification(
             artifacts=artifacts,
