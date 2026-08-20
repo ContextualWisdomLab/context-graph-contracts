@@ -77,6 +77,16 @@
   command preserves distinct success, rejected-valid-input, and malformed-input
   exit semantics and never promotes deterministic consistency to provenance or
   release authority.
+- Protected-main attestation workflow regressions require the canonical SPDX
+  3.0.1 JSON-LD to be supplied to pinned `actions/attest` through explicit
+  `https://spdx.dev/Document/v3` custom-predicate mode rather than its SPDX-2
+  automatic detector. They require exact repository/ref/source-digest/signer
+  identity, GitHub Actions OIDC issuer, hosted-runner policy, one wheel plus one
+  source distribution, both SLSA and SPDX predicate verification, and
+  machine-readable verification-result retention under the exact source SHA.
+  Pull-request tests prove the workflow contract only; operational attestation
+  verification is not considered passing evidence until this same job executes
+  successfully on an exact integrated protected `main` SHA.
 - Verifier regressions fail closed on package-version drift, missing,
   unexpected, duplicate, malformed, or digest-different profile/resource
   evidence, type-confused counts, unreadable or invalid UTF-8/JSON input, and
