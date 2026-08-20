@@ -80,6 +80,11 @@ jobs:
           .receipt-smoke/bin/cwl-context-package-evidence-verify \
             /tmp/package-evidence \
             > /tmp/package-evidence-verification.json
+          .receipt-smoke/bin/cwl-context-release-evidence-admit \
+            /tmp/package-evidence \
+            /tmp/approved-manifest.json \
+            /tmp/contract-bundle-manifest.json \
+            > /tmp/complete-release-evidence-admission.json
           .receipt-smoke/bin/python - <<'PY'
           import json
           from pathlib import Path
@@ -102,6 +107,11 @@ jobs:
           )
           package_evidence = json.loads(
               Path("/tmp/package-evidence-verification.json").read_text(
+                  encoding="utf-8"
+              )
+          )
+          complete_release_evidence = json.loads(
+              Path("/tmp/complete-release-evidence-admission.json").read_text(
                   encoding="utf-8"
               )
           )
@@ -175,5 +185,27 @@ jobs:
           assert package_evidence["next_action"] == (
               "verify artifact attestations bind these exact package bytes to the "
               "intended protected main source commit before release"
+          )
+          assert complete_release_evidence["admission_format"] == (
+              "cwl-context-complete-release-evidence-admission/v1"
+          )
+          assert complete_release_evidence["admitted"] is True
+          assert complete_release_evidence["installed_distribution_version"] == (
+              bundle_manifest["distribution_version"]
+          )
+          assert complete_release_evidence["package_distribution_version"] == (
+              bundle_manifest["distribution_version"]
+          )
+          assert complete_release_evidence["release_mismatches"] == []
+          assert complete_release_evidence["contract_release_admission"][
+              "admitted"
+          ] is True
+          assert complete_release_evidence["package_evidence_verification"][
+              "verified"
+          ] is True
+          assert complete_release_evidence["next_action"] == (
+              "verify artifact attestations bind these exact package bytes to the "
+              "intended protected main source commit, then satisfy independent review "
+              "and release authorization before publication"
           )
           PY

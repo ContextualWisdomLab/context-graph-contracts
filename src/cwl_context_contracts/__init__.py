@@ -57,6 +57,10 @@ from .package_evidence_verifier import (
     verify_package_evidence_directory,
 )
 from .provenance import ProvenanceReference
+from .release_evidence_admission import (
+    ReleaseEvidenceAdmissionReport,
+    evaluate_release_evidence_admission,
+)
 from .schemas import available_schema_names, load_schema
 from .temporal import (
     BitemporalInterval,
@@ -97,6 +101,7 @@ __all__ = [
     "PackageEvidenceInputError",
     "PackageEvidenceVerification",
     "ProvenanceReference",
+    "ReleaseEvidenceAdmissionReport",
     "TruthStatus",
     "assert_packaged_conformance",
     "available_conformance_profile_names",
@@ -109,6 +114,7 @@ __all__ = [
     "conformance_profile_sha256",
     "evaluate_packaged_conformance_admission",
     "evaluate_packaged_contract_release_admission",
+    "evaluate_release_evidence_admission",
     "format_cwl_timestamp",
     "format_rfc3339_timestamp",
     "load_approved_conformance_manifest",

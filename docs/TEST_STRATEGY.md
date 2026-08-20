@@ -56,13 +56,27 @@
   `verify_packaged_contract_bundle_manifest()`. They require exact package
   identity, strict integer count semantics, unique resource paths, and exact
   missing/unexpected/digest-different resource mismatch identities.
-- Full release-admission tests compose both existing evidence layers through
-  `cwl-context-release-admit` and
+- Full installed release-admission tests compose both existing evidence layers
+  through `cwl-context-release-admit` and
   `evaluate_packaged_contract_release_admission()`. They require semantic
   execution plus exact approved semantic-profile and complete-resource identity,
   prove either approval layer can independently block admission, verify distinct
   exit `0`/`1`/`2` machine semantics, and preserve protected-release,
   provenance, independent-review, and runtime-authorization boundaries.
+- Package-evidence tests independently verify the workflow-produced wheel,
+  source distribution, SPDX 3.0.1 document, and `SHA256SUMS` set. Regressions
+  cover artifact/version-set drift, digest drift, malformed checksum input,
+  duplicate identities, traversal, symlink/path replacement, bounded metadata,
+  duplicate/non-standard JSON, and exact installed-wheel command behavior.
+- Complete release-evidence admission tests compose installed release admission
+  with package-evidence verification through
+  `cwl-context-release-evidence-admit` and
+  `evaluate_release_evidence_admission()`. A coherent package bundle from a
+  different distribution version must fail even when both component gates pass;
+  tampered package bytes and approved contract drift fail independently. The
+  command preserves distinct success, rejected-valid-input, and malformed-input
+  exit semantics and never promotes deterministic consistency to provenance or
+  release authority.
 - Verifier regressions fail closed on package-version drift, missing,
   unexpected, duplicate, malformed, or digest-different profile/resource
   evidence, type-confused counts, unreadable or invalid UTF-8/JSON input, and
@@ -78,8 +92,9 @@
   schemas, fixtures, contracts, and semantic conformance profiles are present,
   then execute the installed conformance runner, semantic manifest generator,
   approved-manifest verifier, composite admission gate, admission receipt,
-  complete contract-bundle manifest, approved full-bundle verifier, and full
-  release-admission command from an isolated wheel installation.
+  complete contract-bundle manifest, approved full-bundle verifier, installed
+  release-admission command, package-evidence verifier, and complete
+  release-evidence admission command from an isolated wheel installation.
 
 Future language SDKs must consume the same fixture and conformance-profile
 corpus and produce byte-wise compatible structured events after canonical
