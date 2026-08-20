@@ -329,7 +329,10 @@ def test_artifact_path_swap_to_symlink_cannot_escape_evidence_directory(
     }
     for name, payload in artifacts.items():
         (tmp_path / name).write_bytes(payload)
-    checksummed_payloads = {**artifacts, "cwl-context-contracts.spdx.json": external_payload}
+    checksummed_payloads = {
+        **artifacts,
+        "cwl-context-contracts.spdx.json": external_payload,
+    }
     (tmp_path / "SHA256SUMS").write_text(
         "".join(
             f"{_digest(payload)}  {name}\n"
