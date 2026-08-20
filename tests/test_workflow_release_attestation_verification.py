@@ -32,3 +32,17 @@ def test_protected_main_verifies_provenance_and_spdx3_attestations() -> None:
     assert 'artifacts=(evidence/*.whl evidence/*.tar.gz)' in workflow_text
     assert 'if (( ${#artifacts[@]} != 2 )); then' in workflow_text
     assert workflow_text.count('gh attestation verify "$artifact"') == 2
+
+
+def test_spdx3_attestation_uses_explicit_in_toto_predicate_mode() -> None:
+    """Do not feed SPDX 3 JSON-LD to actions/attest's SPDX-2-only auto detector."""
+    workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
+    attestation_step = workflow_text.split("- name: Attest SPDX SBOM", maxsplit=1)[1]
+    attestation_step = attestation_step.split(
+        "- name: Verify protected-main provenance and SBOM attestations",
+        maxsplit=1,
+    )[0]
+
+    assert "sbom-path:" not in attestation_step
+    assert "predicate-type: https://spdx.dev/Document/v3" in attestation_step
+    assert "predicate-path: evidence/cwl-context-contracts.spdx.json" in attestation_step
