@@ -8,10 +8,13 @@ _SUPPLY_CHAIN_PATH = Path(".github/workflows/supply-chain.yml")
 
 
 def test_protected_main_verifies_provenance_and_spdx3_attestations() -> None:
-    """Require exact protected-main source and signer identity for package attestations."""
+    """Require exact protected-main source and signer identity."""
     workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
 
-    assert "name: Verify protected-main provenance and SBOM attestations" in workflow_text
+    assert (
+        "name: Verify protected-main provenance and SBOM attestations"
+        in workflow_text
+    )
     assert 'SOURCE_SHA: ${{ github.sha }}' in workflow_text
     assert 'SOURCE_REF: ${{ github.ref }}' in workflow_text
     assert 'EXPECTED_SOURCE_REF: refs/heads/main' in workflow_text
@@ -35,7 +38,7 @@ def test_protected_main_verifies_provenance_and_spdx3_attestations() -> None:
 
 
 def test_spdx3_attestation_uses_explicit_in_toto_predicate_mode() -> None:
-    """Do not feed SPDX 3 JSON-LD to actions/attest's SPDX-2-only auto detector."""
+    """Use explicit predicate mode for SPDX 3 JSON-LD attestations."""
     workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
     attestation_step = workflow_text.split("- name: Attest SPDX SBOM", maxsplit=1)[1]
     attestation_step = attestation_step.split(
@@ -45,16 +48,25 @@ def test_spdx3_attestation_uses_explicit_in_toto_predicate_mode() -> None:
 
     assert "sbom-path:" not in attestation_step
     assert "predicate-type: https://spdx.dev/Document/v3" in attestation_step
-    assert "predicate-path: evidence/cwl-context-contracts.spdx.json" in attestation_step
+    assert (
+        "predicate-path: evidence/cwl-context-contracts.spdx.json"
+        in attestation_step
+    )
 
 
 def test_protected_main_retains_attestation_verification_records() -> None:
-    """Keep machine-readable verification results for the exact stable source SHA."""
+    """Keep machine-readable records for the exact stable source SHA."""
     workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
 
     assert "mkdir -p attestation-verification" in workflow_text
-    assert 'attestation-verification/$(basename "$artifact").provenance.json' in workflow_text
-    assert 'attestation-verification/$(basename "$artifact").sbom.json' in workflow_text
+    assert (
+        'attestation-verification/$(basename "$artifact").provenance.json'
+        in workflow_text
+    )
+    assert (
+        'attestation-verification/$(basename "$artifact").sbom.json'
+        in workflow_text
+    )
     assert "name: attestation-verification-${{ github.sha }}" in workflow_text
     assert "path: attestation-verification/*.json" in workflow_text
     assert "retention-days: 90" in workflow_text
