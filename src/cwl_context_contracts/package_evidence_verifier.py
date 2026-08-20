@@ -5,10 +5,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
+import stat
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import BinaryIO
 
 _VERIFICATION_FORMAT = "cwl-context-package-evidence-verification/v1"
 _DISTRIBUTION_PREFIX = "cwl_context_contracts-"
@@ -37,6 +40,10 @@ class PackageEvidenceInputError(ValueError):
         """Create an input error with a stable machine-readable error code."""
         super().__init__(error_code)
         self.error_code = error_code
+
+
+class _UnsafeEvidenceFileError(OSError):
+    """Report a non-regular or path-swapped evidence file."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,14 +86,31 @@ class PackageEvidenceVerification:
         }
 
 
+def _open_stable_regular_file(path: Path) -> BinaryIO:
+    """Open one regular file and reject a path swap between metadata and open."""
+    expected_stat = path.stat(follow_symlinks=False)
+    if not stat.S_ISREG(expected_stat.st_mode):
+        raise _UnsafeEvidenceFileError("evidence path is not a regular file")
+
+    handle = path.open("rb")
+    opened_stat = os.fstat(handle.fileno())
+    if not stat.S_ISREG(opened_stat.st_mode) or not os.path.samestat(
+        expected_stat,
+        opened_stat,
+    ):
+        handle.close()
+        raise _UnsafeEvidenceFileError("evidence path changed before open")
+    return handle
+
+
 def _load_checksum_manifest(evidence_directory: Path) -> dict[str, str]:
-    """Read strict bounded GNU-style SHA256SUMS without following a symlink."""
+    """Read strict bounded GNU-style SHA256SUMS from one stable regular file."""
     checksum_path = evidence_directory / _CHECKSUM_NAME
-    if checksum_path.is_symlink():
-        raise PackageEvidenceInputError("checksum_manifest_unsafe")
     try:
-        with checksum_path.open("rb") as checksum_file:
+        with _open_stable_regular_file(checksum_path) as checksum_file:
             checksum_bytes = checksum_file.read(_MAX_CHECKSUM_MANIFEST_BYTES + 1)
+    except _UnsafeEvidenceFileError as exc:
+        raise PackageEvidenceInputError("checksum_manifest_unsafe") from exc
     except OSError as exc:
         raise PackageEvidenceInputError("checksum_manifest_unreadable") from exc
     if len(checksum_bytes) > _MAX_CHECKSUM_MANIFEST_BYTES:
@@ -159,17 +183,17 @@ def _artifact_release_version(checksums: dict[str, str]) -> str | None:
 
 
 def _sha256_file(path: Path) -> str:
-    """Hash one regular artifact without loading the complete file into memory."""
+    """Hash one stable regular artifact without loading it completely into memory."""
     digest = hashlib.sha256()
-    with path.open("rb") as handle:
+    with _open_stable_regular_file(path) as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
 
 
 def _read_bounded_file(path: Path, maximum_bytes: int) -> bytes:
-    """Read one bounded file snapshot so later checks use the exact same bytes."""
-    with path.open("rb") as handle:
+    """Read one stable bounded file snapshot for checksum and semantic checks."""
+    with _open_stable_regular_file(path) as handle:
         return handle.read(maximum_bytes + 1)
 
 
@@ -272,9 +296,6 @@ def verify_package_evidence_directory(
     sbom_bytes: bytes | None = None
     for artifact in artifacts:
         artifact_path = evidence_directory / artifact.name
-        if artifact_path.is_symlink() or not artifact_path.is_file():
-            mismatches.append(f"artifact_unsafe:{artifact.name}")
-            continue
         try:
             if artifact.name == _SBOM_NAME:
                 sbom_bytes = _read_bounded_file(artifact_path, _MAX_SBOM_BYTES)
@@ -283,6 +304,9 @@ def verify_package_evidence_directory(
                 artifact_digest = hashlib.sha256(sbom_bytes).hexdigest()
             else:
                 artifact_digest = _sha256_file(artifact_path)
+        except _UnsafeEvidenceFileError:
+            mismatches.append(f"artifact_unsafe:{artifact.name}")
+            continue
         except OSError:
             mismatches.append(f"artifact_unreadable:{artifact.name}")
             continue
