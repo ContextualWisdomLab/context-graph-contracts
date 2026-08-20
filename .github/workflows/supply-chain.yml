@@ -128,3 +128,47 @@ jobs:
             evidence/*.whl
             evidence/*.tar.gz
           sbom-path: evidence/cwl-context-contracts.spdx.json
+      - name: Verify protected-main provenance and SBOM attestations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.sha }}
+          SOURCE_REF: ${{ github.ref }}
+          EXPECTED_SOURCE_REF: refs/heads/main
+          REPOSITORY: ContextualWisdomLab/context-graph-contracts
+          SIGNER_WORKFLOW: ContextualWisdomLab/context-graph-contracts/.github/workflows/supply-chain.yml
+          SPDX_PREDICATE: https://spdx.dev/Document/v3
+        run: |
+          set -euo pipefail
+          if [[ "$SOURCE_REF" != "$EXPECTED_SOURCE_REF" ]]; then
+            echo "refusing attestation verification outside protected main" >&2
+            exit 1
+          fi
+          shopt -s nullglob
+          artifacts=(evidence/*.whl evidence/*.tar.gz)
+          if (( ${#artifacts[@]} != 2 )); then
+            echo "expected exactly one wheel and one source distribution" >&2
+            exit 1
+          fi
+          for artifact in "${artifacts[@]}"; do
+            gh attestation verify "$artifact" \
+              --repo "$REPOSITORY" \
+              --source-digest "$SOURCE_SHA" \
+              --source-ref "$EXPECTED_SOURCE_REF" \
+              --signer-digest "$SOURCE_SHA" \
+              --signer-workflow "$SIGNER_WORKFLOW" \
+              --cert-oidc-issuer https://token.actions.githubusercontent.com \
+              --deny-self-hosted-runners \
+              --format json \
+              > "/tmp/$(basename "$artifact").provenance.json"
+            gh attestation verify "$artifact" \
+              --repo "$REPOSITORY" \
+              --source-digest "$SOURCE_SHA" \
+              --source-ref "$EXPECTED_SOURCE_REF" \
+              --signer-digest "$SOURCE_SHA" \
+              --signer-workflow "$SIGNER_WORKFLOW" \
+              --cert-oidc-issuer https://token.actions.githubusercontent.com \
+              --deny-self-hosted-runners \
+              --predicate-type "$SPDX_PREDICATE" \
+              --format json \
+              > "/tmp/$(basename "$artifact").sbom.json"
+          done
