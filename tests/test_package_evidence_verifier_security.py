@@ -18,6 +18,24 @@ def _digest(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _valid_sbom() -> bytes:
+    """Return one valid SPDX package document for release 0.1.0."""
+    return json.dumps(
+        {
+            "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+            "@graph": [
+                {"type": "CreationInfo", "specVersion": "3.0.1"},
+                {
+                    "type": "software_Package",
+                    "name": "cwl-context-contracts",
+                    "software_packageVersion": "0.1.0",
+                },
+            ],
+        },
+        sort_keys=True,
+    ).encode()
+
+
 def test_symlinked_checksum_manifest_is_not_followed(tmp_path: Path) -> None:
     """A checksum authority outside the supplied evidence directory fails closed."""
     artifacts = {
@@ -188,20 +206,7 @@ def test_unlisted_installable_artifact_fails_closed(tmp_path: Path) -> None:
     artifacts = {
         "cwl_context_contracts-0.1.0-py3-none-any.whl": b"wheel",
         "cwl_context_contracts-0.1.0.tar.gz": b"sdist",
-        "cwl-context-contracts.spdx.json": json.dumps(
-            {
-                "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
-                "@graph": [
-                    {"type": "CreationInfo", "specVersion": "3.0.1"},
-                    {
-                        "type": "software_Package",
-                        "name": "cwl-context-contracts",
-                        "software_packageVersion": "0.1.0",
-                    },
-                ],
-            },
-            sort_keys=True,
-        ).encode(),
+        "cwl-context-contracts.spdx.json": _valid_sbom(),
     }
     for name, payload in artifacts.items():
         (tmp_path / name).write_bytes(payload)
@@ -229,20 +234,7 @@ def test_unreadable_package_directory_listing_fails_closed(
     artifacts = {
         "cwl_context_contracts-0.1.0-py3-none-any.whl": b"wheel",
         "cwl_context_contracts-0.1.0.tar.gz": b"sdist",
-        "cwl-context-contracts.spdx.json": json.dumps(
-            {
-                "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
-                "@graph": [
-                    {"type": "CreationInfo", "specVersion": "3.0.1"},
-                    {
-                        "type": "software_Package",
-                        "name": "cwl-context-contracts",
-                        "software_packageVersion": "0.1.0",
-                    },
-                ],
-            },
-            sort_keys=True,
-        ).encode(),
+        "cwl-context-contracts.spdx.json": _valid_sbom(),
     }
     for name, payload in artifacts.items():
         (tmp_path / name).write_bytes(payload)
@@ -272,7 +264,7 @@ def test_spdx_semantics_use_the_same_bytes_that_passed_checksum_verification(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Replacing the SBOM after hashing cannot splice two files into one success."""
+    """Replacing the SBOM after its snapshot cannot splice two files into success."""
     invalid_sbom = json.dumps(
         {
             "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
@@ -281,20 +273,6 @@ def test_spdx_semantics_use_the_same_bytes_that_passed_checksum_verification(
                 {
                     "type": "software_Package",
                     "name": "unrelated-package",
-                    "software_packageVersion": "0.1.0",
-                },
-            ],
-        },
-        sort_keys=True,
-    ).encode()
-    valid_sbom = json.dumps(
-        {
-            "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
-            "@graph": [
-                {"type": "CreationInfo", "specVersion": "3.0.1"},
-                {
-                    "type": "software_Package",
-                    "name": "cwl-context-contracts",
                     "software_packageVersion": "0.1.0",
                 },
             ],
@@ -315,17 +293,66 @@ def test_spdx_semantics_use_the_same_bytes_that_passed_checksum_verification(
         encoding="utf-8",
     )
 
-    original_sha256_file = verifier_module._sha256_file
+    original_read_bounded_file = verifier_module._read_bounded_file
 
-    def replace_sbom_after_hash(path: Path) -> str:
-        digest = original_sha256_file(path)
+    def replace_sbom_after_snapshot(path: Path, maximum_bytes: int) -> bytes:
+        snapshot = original_read_bounded_file(path, maximum_bytes)
         if path.name == "cwl-context-contracts.spdx.json":
-            path.write_bytes(valid_sbom)
-        return digest
+            path.write_bytes(_valid_sbom())
+        return snapshot
 
-    monkeypatch.setattr(verifier_module, "_sha256_file", replace_sbom_after_hash)
+    monkeypatch.setattr(
+        verifier_module,
+        "_read_bounded_file",
+        replace_sbom_after_snapshot,
+    )
 
     report = cwl_context_contracts.verify_package_evidence_directory(tmp_path)
 
     assert report.verified is False
     assert report.mismatches == ("sbom_spdx_3_0_1",)
+
+
+def test_artifact_path_swap_to_symlink_cannot_escape_evidence_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Replacing a checked regular SBOM with an external symlink fails closed."""
+    external_sbom = tmp_path.parent / f"{tmp_path.name}-external-spdx.json"
+    external_payload = _valid_sbom()
+    external_sbom.write_bytes(external_payload)
+
+    artifacts = {
+        "cwl_context_contracts-0.1.0-py3-none-any.whl": b"wheel",
+        "cwl_context_contracts-0.1.0.tar.gz": b"sdist",
+        "cwl-context-contracts.spdx.json": b"checked-inside-before-swap",
+    }
+    for name, payload in artifacts.items():
+        (tmp_path / name).write_bytes(payload)
+    checksummed_payloads = {**artifacts, "cwl-context-contracts.spdx.json": external_payload}
+    (tmp_path / "SHA256SUMS").write_text(
+        "".join(
+            f"{_digest(payload)}  {name}\n"
+            for name, payload in checksummed_payloads.items()
+        ),
+        encoding="utf-8",
+    )
+
+    target = tmp_path / "cwl-context-contracts.spdx.json"
+    original_open = Path.open
+    swapped = False
+
+    def swap_before_open(path: Path, *args: object, **kwargs: object):
+        nonlocal swapped
+        if path == target and not swapped:
+            swapped = True
+            path.unlink()
+            path.symlink_to(external_sbom)
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", swap_before_open)
+
+    report = cwl_context_contracts.verify_package_evidence_directory(tmp_path)
+
+    assert report.verified is False
+    assert report.mismatches == ("artifact_unsafe:cwl-context-contracts.spdx.json",)
