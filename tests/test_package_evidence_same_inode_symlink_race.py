@@ -1,4 +1,4 @@
-"""Regression for same-inode symlink replacement at the evidence-file boundary."""
+"""Regressions for path replacement at the package-evidence file boundary."""
 
 from __future__ import annotations
 
@@ -34,11 +34,8 @@ def _valid_sbom() -> bytes:
     ).encode()
 
 
-def test_same_inode_symlink_swap_fails_closed(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """A symlink replacement cannot pass merely by resolving to the checked inode."""
+def _write_valid_bundle(tmp_path: Path) -> Path:
+    """Write one internally coherent package-evidence directory and return its SBOM."""
     artifacts = {
         "cwl_context_contracts-0.1.0-py3-none-any.whl": b"wheel",
         "cwl_context_contracts-0.1.0.tar.gz": b"sdist",
@@ -52,8 +49,25 @@ def test_same_inode_symlink_swap_fails_closed(
         ),
         encoding="utf-8",
     )
+    return tmp_path / "cwl-context-contracts.spdx.json"
 
-    target = tmp_path / "cwl-context-contracts.spdx.json"
+
+def _assert_sbom_unsafe(tmp_path: Path) -> None:
+    """Require the public verifier to reject the SBOM as unsafe evidence."""
+    report = verify_package_evidence_directory(tmp_path)
+
+    assert report.verified is False
+    assert report.mismatches == (
+        "artifact_unsafe:cwl-context-contracts.spdx.json",
+    )
+
+
+def test_same_inode_symlink_swap_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A symlink replacement cannot pass merely by resolving to the checked inode."""
+    target = _write_valid_bundle(tmp_path)
     renamed_target = tmp_path / "checked-spdx-same-inode.json"
     original_open = Path.open
     swapped = False
@@ -72,9 +86,59 @@ def test_same_inode_symlink_swap_fails_closed(
 
     monkeypatch.setattr(Path, "open", replace_with_symlink_to_same_inode)
 
-    report = verify_package_evidence_directory(tmp_path)
+    _assert_sbom_unsafe(tmp_path)
 
-    assert report.verified is False
-    assert report.mismatches == (
-        "artifact_unsafe:cwl-context-contracts.spdx.json",
-    )
+
+def test_post_open_path_disappearance_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Losing the final path after open cannot leave an accepted file descriptor."""
+    target = _write_valid_bundle(tmp_path)
+    original_stat = Path.stat
+    nofollow_stat_count = 0
+
+    def disappear_on_post_open_stat(
+        path: Path,
+        *args: object,
+        **kwargs: object,
+    ):
+        nonlocal nofollow_stat_count
+        if path == target and kwargs.get("follow_symlinks") is False:
+            nofollow_stat_count += 1
+            if nofollow_stat_count == 2:
+                raise FileNotFoundError("evidence path disappeared after open")
+        return original_stat(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", disappear_on_post_open_stat)
+
+    _assert_sbom_unsafe(tmp_path)
+
+
+def test_post_open_regular_inode_replacement_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A different regular inode at the final path cannot inherit the opened identity."""
+    target = _write_valid_bundle(tmp_path)
+    replacement = tmp_path / "replacement-spdx.json"
+    replacement.write_bytes(_valid_sbom())
+    replacement_stat = replacement.stat(follow_symlinks=False)
+    original_stat = Path.stat
+    nofollow_stat_count = 0
+
+    def report_replaced_regular_inode(
+        path: Path,
+        *args: object,
+        **kwargs: object,
+    ):
+        nonlocal nofollow_stat_count
+        if path == target and kwargs.get("follow_symlinks") is False:
+            nofollow_stat_count += 1
+            if nofollow_stat_count == 2:
+                return replacement_stat
+        return original_stat(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", report_replaced_regular_inode)
+
+    _assert_sbom_unsafe(tmp_path)
