@@ -32,6 +32,7 @@ cwl-context-bundle-manifest = "cwl_context_contracts.contract_bundle_manifest:ma
 cwl-context-bundle-verify = "cwl_context_contracts.contract_bundle_manifest_verifier:main"
 cwl-context-release-admit = "cwl_context_contracts.contract_release_admission:main"
 cwl-context-package-evidence-verify = "cwl_context_contracts.package_evidence_verifier:main"
+cwl-context-release-evidence-admit = "cwl_context_contracts.release_evidence_admission:main"
 
 [project.optional-dependencies]
 dev = [
