@@ -247,6 +247,20 @@ def verify_package_evidence_directory(
             mismatches=("artifact_set",),
         )
 
+    manifest_package_names = {
+        name for name in checksums if name.endswith((".whl", ".tar.gz"))
+    }
+    directory_package_names = {
+        path.name
+        for pattern in ("*.whl", "*.tar.gz")
+        for path in evidence_directory.glob(pattern)
+    }
+    if directory_package_names != manifest_package_names:
+        return PackageEvidenceVerification(
+            artifacts=artifacts,
+            mismatches=("artifact_set",),
+        )
+
     mismatches: list[str] = []
     for artifact in artifacts:
         artifact_path = evidence_directory / artifact.name
