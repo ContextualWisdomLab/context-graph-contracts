@@ -191,10 +191,10 @@ jobs:
           )
           assert complete_release_evidence["admitted"] is True
           assert complete_release_evidence["installed_distribution_version"] == (
-              package_version
+              bundle_manifest["distribution_version"]
           )
           assert complete_release_evidence["package_distribution_version"] == (
-              package_version
+              bundle_manifest["distribution_version"]
           )
           assert complete_release_evidence["release_mismatches"] == []
           assert complete_release_evidence["contract_release_admission"][
