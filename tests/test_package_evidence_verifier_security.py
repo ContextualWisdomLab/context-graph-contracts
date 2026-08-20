@@ -96,7 +96,7 @@ def test_spdx_package_version_must_match_release_artifacts(tmp_path: Path) -> No
                     {
                         "type": "software_Package",
                         "name": "cwl-context-contracts",
-                        "packageVersion": "9.9.9",
+                        "software_packageVersion": "9.9.9",
                     },
                 ],
             },
