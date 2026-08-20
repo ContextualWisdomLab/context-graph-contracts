@@ -158,23 +158,22 @@ def test_artifact_read_failure_is_structured_rejection(
     assert report.mismatches == (f"artifact_unreadable:{_WHEEL_NAME}",)
 
 
-def test_spdx_disappearing_after_digest_fails_closed(
+def test_spdx_snapshot_read_failure_is_structured_rejection(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """A post-digest metadata disappearance remains a structured rejection."""
+    """A failed SBOM snapshot read remains a structured artifact rejection."""
     _write_bundle(tmp_path, _valid_spdx())
-    original_sha256_file = verifier_module._sha256_file
+    original_read_bounded_file = verifier_module._read_bounded_file
 
-    def hash_then_remove(path: Path) -> str:
-        digest = original_sha256_file(path)
+    def unreadable_sbom(path: Path, maximum_bytes: int) -> bytes:
         if path.name == _SBOM_NAME:
-            path.unlink()
-        return digest
+            raise OSError("SBOM disappeared before its snapshot could be read")
+        return original_read_bounded_file(path, maximum_bytes)
 
-    monkeypatch.setattr(verifier_module, "_sha256_file", hash_then_remove)
+    monkeypatch.setattr(verifier_module, "_read_bounded_file", unreadable_sbom)
 
     report = cwl_context_contracts.verify_package_evidence_directory(tmp_path)
 
     assert report.verified is False
-    assert report.mismatches == ("sbom_spdx_3_0_1",)
+    assert report.mismatches == (f"artifact_unreadable:{_SBOM_NAME}",)
