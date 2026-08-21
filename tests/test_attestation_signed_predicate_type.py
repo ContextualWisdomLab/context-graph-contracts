@@ -1,4 +1,4 @@
-"""Bind retained attestation evidence to the expected signed predicate type."""
+"""Bind retained attestation evidence to the expected signed statement policy."""
 
 from __future__ import annotations
 
@@ -10,16 +10,22 @@ from pathlib import Path
 from typing import Any
 
 _SCRIPT_PATH = Path("scripts/verify_attestation_output.py")
+_STATEMENT_TYPE = "https://in-toto.io/Statement/v1"
+_OTHER_STATEMENT_TYPE = "https://in-toto.io/Statement/v2"
 _PROVENANCE_PREDICATE = "https://slsa.dev/provenance/v1"
 _SPDX_PREDICATE = "https://spdx.dev/Document/v3"
 _ARTIFACT_BYTES = b"release-artifact"
 
 
-def _verification_result(predicate_type: str) -> str:
+def _verification_result(
+    predicate_type: str,
+    *,
+    statement_type: str = _STATEMENT_TYPE,
+) -> str:
     """Return gh-shaped JSON carrying one exact signed DSSE statement."""
     artifact_digest = hashlib.sha256(_ARTIFACT_BYTES).hexdigest()
     statement: dict[str, Any] = {
-        "_type": "https://in-toto.io/Statement/v1",
+        "_type": statement_type,
         "subject": [{"digest": {"sha256": artifact_digest}}],
         "predicateType": predicate_type,
         "predicate": {},
@@ -46,6 +52,7 @@ def _run_verifier(
     *,
     signed_predicate_type: str,
     expected_predicate_type: str,
+    statement_type: str = _STATEMENT_TYPE,
 ) -> subprocess.CompletedProcess[str]:
     """Execute the verifier against one already-cryptographically-verified candidate."""
     output_path = tmp_path / "verification.json"
@@ -58,7 +65,10 @@ def _run_verifier(
             artifact_digest,
             expected_predicate_type,
         ],
-        input=_verification_result(signed_predicate_type),
+        input=_verification_result(
+            signed_predicate_type,
+            statement_type=statement_type,
+        ),
         check=False,
         capture_output=True,
         text=True,
@@ -87,4 +97,18 @@ def test_verifier_rejects_wrong_signed_predicate_type(tmp_path: Path) -> None:
 
     assert result.returncode != 0
     assert "attestation predicate type does not match expected policy" in result.stderr
+    assert not (tmp_path / "verification.json").exists()
+
+
+def test_verifier_rejects_wrong_signed_statement_type(tmp_path: Path) -> None:
+    """Require the authenticated payload to be an in-toto Statement v1 object."""
+    result = _run_verifier(
+        tmp_path,
+        signed_predicate_type=_PROVENANCE_PREDICATE,
+        expected_predicate_type=_PROVENANCE_PREDICATE,
+        statement_type=_OTHER_STATEMENT_TYPE,
+    )
+
+    assert result.returncode != 0
+    assert "signed DSSE statement type does not match in-toto v1" in result.stderr
     assert not (tmp_path / "verification.json").exists()
