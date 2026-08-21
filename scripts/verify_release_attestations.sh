@@ -38,49 +38,92 @@ if [[ ! -f "$sbom_path" || -L "$sbom_path" ]]; then
   exit 1
 fi
 
-snapshot_artifact_digest() {
-  python - "$1" <<'PY'
+snapshot_package_evidence() {
+  PYTHONPATH="$SCRIPT_DIR/../src" python - "$EVIDENCE_DIR" <<'PY'
 from __future__ import annotations
 
-import hashlib
-import os
-import stat
+import json
 import sys
 from pathlib import Path
 
+from cwl_context_contracts.package_evidence_verifier import (
+    PackageEvidenceInputError,
+    verify_package_evidence_directory,
+)
 
-path = Path(sys.argv[1])
+
 try:
-    nofollow = getattr(os, "O_NOFOLLOW", None)
-    if nofollow is None:
-        raise OSError("platform lacks O_NOFOLLOW for release artifact")
-    descriptor = os.open(path, os.O_RDONLY | nofollow)
-    try:
-        opened_stat = os.fstat(descriptor)
-        if not stat.S_ISREG(opened_stat.st_mode):
-            raise ValueError(f"release artifact is not a regular file: {path}")
-        digest = hashlib.sha256()
-        while chunk := os.read(descriptor, 1024 * 1024):
-            digest.update(chunk)
-        path_stat = os.stat(path, follow_symlinks=False)
-        if not stat.S_ISREG(path_stat.st_mode):
-            raise ValueError(f"release artifact path stopped being regular: {path}")
-        if (opened_stat.st_dev, opened_stat.st_ino) != (
-            path_stat.st_dev,
-            path_stat.st_ino,
-        ):
-            raise ValueError(f"release artifact path changed while being read: {path}")
-    finally:
-        os.close(descriptor)
-except (OSError, ValueError) as exc:
-    print(f"unable to snapshot release artifact strictly: {exc}", file=sys.stderr)
+    report = verify_package_evidence_directory(Path(sys.argv[1]))
+except PackageEvidenceInputError as exc:
+    print(f"unable to snapshot package evidence strictly: {exc.error_code}", file=sys.stderr)
     raise SystemExit(1) from exc
-
-print(digest.hexdigest())
+if not report.verified:
+    mismatches = ",".join(report.mismatches)
+    print(f"package evidence is not internally coherent: {mismatches}", file=sys.stderr)
+    raise SystemExit(1)
+print(json.dumps(report.to_mapping(), sort_keys=True, separators=(",", ":")))
 PY
 }
 
-expected_sbom_digest="$(python "$SCRIPT_DIR/strict_json_identity.py" "$sbom_path")"
+artifact_digest_from_snapshot() {
+  python - "$1" "$2" <<'PY'
+from __future__ import annotations
+
+import json
+import sys
+
+
+snapshot = json.loads(sys.argv[1])
+artifact_name = sys.argv[2]
+matches = [
+    artifact["sha256"]
+    for artifact in snapshot["artifacts"]
+    if artifact["name"] == artifact_name
+]
+if len(matches) != 1:
+    print(f"package snapshot does not identify artifact exactly once: {artifact_name}", file=sys.stderr)
+    raise SystemExit(1)
+print(matches[0])
+PY
+}
+
+snapshot_spdx_semantic_digest() {
+  PYTHONPATH="$SCRIPT_DIR" python - "$sbom_path" "$1" <<'PY'
+from __future__ import annotations
+
+import hashlib
+import sys
+from pathlib import Path
+
+from strict_json_identity import (
+    load_strict_json,
+    read_stable_regular_file,
+    semantic_json_sha256,
+)
+
+
+path = Path(sys.argv[1])
+expected_raw_digest = sys.argv[2]
+try:
+    data = read_stable_regular_file(path, label="downloaded SPDX evidence")
+    raw_digest = hashlib.sha256(data).hexdigest()
+    if raw_digest != expected_raw_digest:
+        raise ValueError("downloaded SPDX bytes do not match package snapshot")
+    value = load_strict_json(data)
+    if not isinstance(value, dict):
+        raise ValueError("downloaded SPDX evidence must be a JSON object")
+except (OSError, UnicodeError, ValueError) as exc:
+    print(f"unable to snapshot downloaded SPDX evidence strictly: {exc}", file=sys.stderr)
+    raise SystemExit(1) from exc
+print(semantic_json_sha256(value))
+PY
+}
+
+initial_package_snapshot="$(snapshot_package_evidence)"
+expected_sbom_raw_digest="$(
+  artifact_digest_from_snapshot "$initial_package_snapshot" "$(basename "$sbom_path")"
+)"
+expected_sbom_digest="$(snapshot_spdx_semantic_digest "$expected_sbom_raw_digest")"
 
 if [[ -e "$VERIFICATION_DIR" || -L "$VERIFICATION_DIR" ]]; then
   echo "verification directory must not pre-exist" >&2
@@ -101,7 +144,9 @@ common_policy=(
 
 for artifact in "${artifacts[@]}"; do
   artifact_name="$(basename "$artifact")"
-  expected_artifact_digest="$(snapshot_artifact_digest "$artifact")"
+  expected_artifact_digest="$(
+    artifact_digest_from_snapshot "$initial_package_snapshot" "$artifact_name"
+  )"
   gh attestation verify "$artifact" \
     "${common_policy[@]}" \
     --predicate-type="$PROVENANCE_PREDICATE" \
@@ -122,3 +167,11 @@ for artifact in "${artifacts[@]}"; do
         "$SPDX_PREDICATE" \
         "$expected_sbom_digest"
 done
+
+final_package_snapshot="$(snapshot_package_evidence)"
+final_sbom_digest="$(snapshot_spdx_semantic_digest "$expected_sbom_raw_digest")"
+if [[ "$final_package_snapshot" != "$initial_package_snapshot" \
+   || "$final_sbom_digest" != "$expected_sbom_digest" ]]; then
+  echo "package evidence changed during attestation verification" >&2
+  exit 1
+fi
