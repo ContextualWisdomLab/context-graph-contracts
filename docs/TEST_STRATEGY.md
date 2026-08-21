@@ -84,9 +84,15 @@
   identity, GitHub Actions OIDC issuer, hosted-runner policy, one wheel plus one
   source distribution, both SLSA and SPDX predicate verification, and
   machine-readable verification-result retention under the exact source SHA.
-  Pull-request tests prove the workflow contract only; operational attestation
-  verification is not considered passing evidence until this same job executes
-  successfully on an exact integrated protected `main` SHA.
+  The executable verifier additionally requires the downloaded canonical SPDX
+  document to be a regular file, parses both the retained document and GitHub
+  CLI verification output with strict bounded JSON semantics, and rejects a
+  custom SPDX attestation unless at least one verified statement's parsed
+  predicate exactly equals the downloaded canonical SBOM. Predicate type alone
+  is therefore insufficient evidence of SBOM identity. Pull-request tests prove
+  the workflow contract only; operational attestation verification is not
+  considered passing evidence until this same job executes successfully on an
+  exact integrated protected `main` SHA.
 - Verifier regressions fail closed on package-version drift, missing,
   unexpected, duplicate, malformed, or digest-different profile/resource
   evidence, type-confused counts, unreadable or invalid UTF-8/JSON input, and
