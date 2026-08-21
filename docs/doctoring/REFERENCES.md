@@ -30,7 +30,11 @@ GitHub. (n.d.-a). *gh attestation verify*. GitHub CLI manual. Retrieved August 2
 
 GitHub. (n.d.-b). *Using artifact attestations to establish provenance for builds*. GitHub Docs. Retrieved August 17, 2026, from https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations
 
-in-toto. (n.d.). *Predicate type: SPDX (v3)*. Retrieved August 21, 2026, from https://github.com/in-toto/attestation/blob/main/spec/predicates/spdx.md
+in-toto. (n.d.-a). *Statement layer specification* (Attestation Framework Version 1.2). Retrieved August 21, 2026, from https://github.com/in-toto/attestation/blob/main/spec/v1/statement.md
+
+in-toto. (n.d.-b). *DigestSet field type specification* (Attestation Framework Version 1.2). Retrieved August 21, 2026, from https://github.com/in-toto/attestation/blob/main/spec/v1/digest_set.md
+
+in-toto. (n.d.-c). *Predicate type: SPDX (v3)*. Retrieved August 21, 2026, from https://github.com/in-toto/attestation/blob/main/spec/predicates/spdx.md
 
 Jensen, C. S., & Snodgrass, R. T. (1996). Semantics of time-varying information. *Information Systems, 21*(4), 311–352. https://doi.org/10.1016/0306-4379(96)00016-8
 
