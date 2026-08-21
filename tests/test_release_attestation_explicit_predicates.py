@@ -68,7 +68,7 @@ def test_every_attestation_lookup_selects_its_predicate_explicitly(
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n"
         'case " $* " in\n'
-        f'  *" --predicate-type {_PROVENANCE_PREDICATE} "*) '
+        f'  *" --predicate-type={_PROVENANCE_PREDICATE} "*) '
         'printf \'%s\\n\' "$GH_PROVENANCE" ;;\n'
         f'  *" --predicate-type {_SPDX_PREDICATE} "*) '
         'printf \'%s\\n\' "$GH_SBOM" ;;\n'
