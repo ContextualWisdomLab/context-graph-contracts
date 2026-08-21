@@ -100,7 +100,10 @@ def _write_exclusive_regular_file(path: Path, data: bytes) -> None:
         view = memoryview(data)
         written = 0
         while written < len(view):
-            written += os.write(descriptor, view[written:])
+            chunk_size = os.write(descriptor, view[written:])
+            if chunk_size <= 0:
+                raise OSError("unable to make progress writing verification output")
+            written += chunk_size
         os.fsync(descriptor)
         path_stat = os.stat(path, follow_symlinks=False)
         if not stat.S_ISREG(path_stat.st_mode):
@@ -138,7 +141,7 @@ def main(argv: list[str]) -> int:
         if expected_digest is not None:
             _require_matching_spdx_predicate(verification, expected_digest)
         _write_exclusive_regular_file(output_path, data)
-    except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeError, ValueError) as exc:
         print(f"unable to verify/retain attestation evidence strictly: {exc}", file=sys.stderr)
         return 1
     return 0
