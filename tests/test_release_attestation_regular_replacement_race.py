@@ -112,4 +112,5 @@ def test_verifier_rejects_regular_output_replacement_after_gh_writes(
     )
 
     assert result.returncode != 0
-    assert "attested SPDX predicate does not match downloaded package SBOM" in result.stderr
+    expected_message = "attested SPDX predicate does not match downloaded package SBOM"
+    assert expected_message in result.stderr
