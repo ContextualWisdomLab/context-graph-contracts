@@ -49,14 +49,15 @@ def test_protected_main_binds_attestations_to_build_job_package_snapshot() -> No
         "package-snapshot: "
         "${{ steps.package-evidence-verification.outputs.package_snapshot }}"
     )
-    assert expected_output in package_job
-    assert "id: package-evidence-verification" in package_job
-    assert 'echo "package_snapshot=$package_snapshot" >> "$GITHUB_OUTPUT"' in package_job
-    assert (
+    output_write = 'echo "package_snapshot=$package_snapshot" >> "$GITHUB_OUTPUT"'
+    expected_input = (
         "EXPECTED_PACKAGE_SNAPSHOT: "
         "${{ needs.package-evidence.outputs.package-snapshot }}"
-        in attestation_job
     )
+    assert expected_output in package_job
+    assert "id: package-evidence-verification" in package_job
+    assert output_write in package_job
+    assert expected_input in attestation_job
 
 
 def test_protected_main_pins_python_before_python_backed_verification() -> None:
