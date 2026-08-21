@@ -64,7 +64,8 @@ def _normalized_json(value: Any) -> bytes:
 def _require_nonempty_verification_array(verification: Any) -> list[Any]:
     """Require the documented non-empty array shape emitted by ``gh attestation``."""
     if not isinstance(verification, list) or not verification:
-        raise ValueError("gh attestation verification must return a non-empty JSON array")
+        message = "gh attestation verification must return a non-empty JSON array"
+        raise ValueError(message)
     return verification
 
 
@@ -112,7 +113,8 @@ def _write_exclusive_regular_file(path: Path, data: bytes) -> None:
             path_stat.st_dev,
             path_stat.st_ino,
         ):
-            raise ValueError(f"verification output path changed while being written: {path}")
+            message = f"verification output path changed while being written: {path}"
+            raise ValueError(message)
     finally:
         os.close(descriptor)
 
@@ -142,7 +144,8 @@ def main(argv: list[str]) -> int:
             _require_matching_spdx_predicate(verification, expected_digest)
         _write_exclusive_regular_file(output_path, data)
     except (OSError, UnicodeError, ValueError) as exc:
-        print(f"unable to verify/retain attestation evidence strictly: {exc}", file=sys.stderr)
+        message = f"unable to verify/retain attestation evidence strictly: {exc}"
+        print(message, file=sys.stderr)
         return 1
     return 0
 
