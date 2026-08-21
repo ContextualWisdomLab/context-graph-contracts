@@ -88,7 +88,7 @@ def test_verifier_accepts_exact_signed_predicate_type(tmp_path: Path) -> None:
 
 
 def test_verifier_rejects_wrong_signed_predicate_type(tmp_path: Path) -> None:
-    """Do not rely only on gh's parsed/default predicate policy for retained evidence."""
+    """Reject a signed predicate that differs from the retained evidence policy."""
     result = _run_verifier(
         tmp_path,
         signed_predicate_type=_SPDX_PREDICATE,
