@@ -51,8 +51,10 @@ from pathlib import Path
 
 path = Path(sys.argv[1])
 try:
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-    descriptor = os.open(path, flags)
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    if nofollow is None:
+        raise OSError("platform lacks O_NOFOLLOW for release artifact")
+    descriptor = os.open(path, os.O_RDONLY | nofollow)
     try:
         opened_stat = os.fstat(descriptor)
         if not stat.S_ISREG(opened_stat.st_mode):
@@ -102,6 +104,7 @@ for artifact in "${artifacts[@]}"; do
   expected_artifact_digest="$(snapshot_artifact_digest "$artifact")"
   gh attestation verify "$artifact" \
     "${common_policy[@]}" \
+    --predicate-type "$PROVENANCE_PREDICATE" \
     --format json \
     | python "$SCRIPT_DIR/verify_attestation_output.py" \
         "$VERIFICATION_DIR/$artifact_name.provenance.json" \
