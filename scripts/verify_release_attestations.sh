@@ -104,7 +104,7 @@ for artifact in "${artifacts[@]}"; do
   expected_artifact_digest="$(snapshot_artifact_digest "$artifact")"
   gh attestation verify "$artifact" \
     "${common_policy[@]}" \
-    --predicate-type "$PROVENANCE_PREDICATE" \
+    --predicate-type="$PROVENANCE_PREDICATE" \
     --format json \
     | python "$SCRIPT_DIR/verify_attestation_output.py" \
         "$VERIFICATION_DIR/$artifact_name.provenance.json" \
