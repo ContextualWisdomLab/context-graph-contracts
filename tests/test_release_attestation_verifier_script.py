@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import os
@@ -31,16 +32,31 @@ _EXPECTED_SBOM: dict[str, Any] = {
 def _verification_result(
     artifact_digest: str,
     predicate: dict[str, Any],
+    predicate_type: str,
 ) -> list[dict[str, Any]]:
-    """Build the documented gh verification statement shape for one artifact."""
+    """Build gh's verified result together with the exact signed DSSE statement."""
+    statement = {
+        "_type": "https://in-toto.io/Statement/v1",
+        "subject": [{"digest": {"sha256": artifact_digest}}],
+        "predicateType": predicate_type,
+        "predicate": predicate,
+    }
+    signed_payload = json.dumps(
+        statement,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
     return [
         {
-            "verificationResult": {
-                "statement": {
-                    "subject": [{"digest": {"sha256": artifact_digest}}],
-                    "predicate": predicate,
-                },
-            }
+            "attestation": {
+                "bundle": {
+                    "dsseEnvelope": {
+                        "payload": base64.b64encode(signed_payload).decode("ascii"),
+                        "payloadType": "application/vnd.in-toto+json",
+                    }
+                }
+            },
+            "verificationResult": {"statement": statement},
         }
     ]
 
@@ -109,12 +125,26 @@ def _run_verifier(
     sbom_artifact_digest = (
         replacement_digest if replace_artifact_between_attestations else initial_digest
     )
-    provenance_result = _verification_result(initial_digest, {})
-    sbom_result = _verification_result(sbom_artifact_digest, signed_sbom)
+    provenance_result = _verification_result(
+        initial_digest,
+        {},
+        "https://slsa.dev/provenance/v1",
+    )
+    sbom_result = _verification_result(
+        sbom_artifact_digest,
+        signed_sbom,
+        "https://spdx.dev/Document/v3",
+    )
     attacker_result_path = tmp_path / "attacker-verification-result.json"
     if replace_verification_outputs:
         attacker_result_path.write_text(
-            json.dumps(_verification_result(initial_digest, _EXPECTED_SBOM)),
+            json.dumps(
+                _verification_result(
+                    initial_digest,
+                    _EXPECTED_SBOM,
+                    "https://spdx.dev/Document/v3",
+                )
+            ),
             encoding="utf-8",
         )
     env = os.environ.copy()
