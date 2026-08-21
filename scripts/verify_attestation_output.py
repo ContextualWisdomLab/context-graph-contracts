@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
 import os
 import stat
 import sys
@@ -10,6 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from strict_json_identity import MAX_JSON_BYTES, load_strict_json, semantic_json_sha256
+
+_IN_TOTO_PAYLOAD_TYPE = "application/vnd.in-toto+json"
 
 
 def _read_bounded_stdin() -> bytes:
@@ -28,19 +32,50 @@ def _require_nonempty_verification_array(verification: Any) -> list[Any]:
     return verification
 
 
+def _signed_statement_from_verified_candidate(candidate: Any) -> dict[str, Any] | None:
+    """Return the exact signed in-toto statement paired with one verified result."""
+    if not isinstance(candidate, dict):
+        return None
+    result = candidate.get("verificationResult")
+    if not isinstance(result, dict):
+        return None
+
+    attestation = candidate.get("attestation")
+    if not isinstance(attestation, dict):
+        raise ValueError("verified attestation is missing its signed bundle")
+    bundle = attestation.get("bundle")
+    if not isinstance(bundle, dict):
+        raise ValueError("verified attestation is missing its signed bundle")
+    envelope = bundle.get("dsseEnvelope")
+    if not isinstance(envelope, dict):
+        raise ValueError("verified attestation is missing its DSSE envelope")
+    if envelope.get("payloadType") != _IN_TOTO_PAYLOAD_TYPE:
+        raise ValueError("verified attestation has an unexpected DSSE payload type")
+
+    encoded_payload = envelope.get("payload")
+    if not isinstance(encoded_payload, str):
+        raise ValueError("verified attestation is missing its signed DSSE payload")
+    try:
+        payload = base64.b64decode(encoded_payload, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise ValueError("verified attestation has invalid base64 DSSE payload") from exc
+    if len(payload) > MAX_JSON_BYTES:
+        raise ValueError("signed DSSE statement exceeds 16 MiB")
+
+    statement = load_strict_json(payload)
+    if not isinstance(statement, dict):
+        raise ValueError("signed DSSE payload must be an in-toto JSON object")
+    return statement
+
+
 def _matching_artifact_statements(
     verification: list[Any], expected_artifact_digest: str
 ) -> list[dict[str, Any]]:
-    """Return verified statements whose subject names the exact artifact digest."""
+    """Return signed verified statements whose subject names the exact artifact digest."""
     statements: list[dict[str, Any]] = []
     for candidate in verification:
-        if not isinstance(candidate, dict):
-            continue
-        result = candidate.get("verificationResult")
-        if not isinstance(result, dict):
-            continue
-        statement = result.get("statement")
-        if not isinstance(statement, dict):
+        statement = _signed_statement_from_verified_candidate(candidate)
+        if statement is None:
             continue
         subjects = statement.get("subject")
         if not isinstance(subjects, list):
@@ -60,7 +95,7 @@ def _matching_artifact_statements(
 def _require_matching_spdx_predicate(
     statements: list[dict[str, Any]], expected_digest: str
 ) -> None:
-    """Require one subject-matched statement whose SPDX predicate matches the SBOM."""
+    """Require one subject-matched signed SPDX predicate to match the retained SBOM."""
     for statement in statements:
         if "predicate" not in statement:
             continue
