@@ -11,6 +11,7 @@ set -euo pipefail
 EVIDENCE_DIR="${EVIDENCE_DIR:-evidence}"
 VERIFICATION_DIR="${VERIFICATION_DIR:-attestation-verification}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROVENANCE_PREDICATE="https://slsa.dev/provenance/v1"
 
 if [[ "$SOURCE_REF" != "$EXPECTED_SOURCE_REF" ]]; then
   echo "refusing attestation verification outside protected main" >&2
@@ -104,7 +105,8 @@ for artifact in "${artifacts[@]}"; do
     --format json \
     | python "$SCRIPT_DIR/verify_attestation_output.py" \
         "$VERIFICATION_DIR/$artifact_name.provenance.json" \
-        "$expected_artifact_digest"
+        "$expected_artifact_digest" \
+        "$PROVENANCE_PREDICATE"
 
   sbom_verification="$VERIFICATION_DIR/$artifact_name.sbom.json"
   gh attestation verify "$artifact" \
@@ -114,5 +116,6 @@ for artifact in "${artifacts[@]}"; do
     | python "$SCRIPT_DIR/verify_attestation_output.py" \
         "$sbom_verification" \
         "$expected_artifact_digest" \
+        "$SPDX_PREDICATE" \
         "$expected_sbom_digest"
 done
