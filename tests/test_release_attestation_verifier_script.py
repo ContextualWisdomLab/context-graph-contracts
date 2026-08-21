@@ -35,6 +35,9 @@ def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n"
         'printf \'%s\\n\' \"$*\" >> \"$GH_FAKE_LOG\"\n'
+        'if [[ -n "${GH_FAKE_REPLACEMENT_SBOM:-}" ]]; then\n'
+        '  printf \'%s\\n\' "$GH_FAKE_REPLACEMENT_SBOM" > "$GH_FAKE_SBOM_PATH"\n'
+        "fi\n"
         "if [[ \" $* \" == *\" --predicate-type \"* ]]; then\n"
         "  printf '%s\\n' \"$GH_FAKE_SBOM_RESULT\"\n"
         "else\n"
@@ -53,14 +56,16 @@ def _run_verifier(
     source_ref: str = "refs/heads/main",
     attested_sbom: dict[str, Any] | None = None,
     include_downloaded_sbom: bool = True,
+    replacement_downloaded_sbom: dict[str, Any] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run the verifier with isolated evidence and a fake GitHub CLI."""
     evidence_dir = tmp_path / "evidence"
     evidence_dir.mkdir()
     for artifact_name in artifact_names:
         (evidence_dir / artifact_name).write_bytes(b"artifact")
+    sbom_path = evidence_dir / "cwl-context-contracts.spdx.json"
     if include_downloaded_sbom:
-        (evidence_dir / "cwl-context-contracts.spdx.json").write_text(
+        sbom_path.write_text(
             json.dumps(_EXPECTED_SBOM),
             encoding="utf-8",
         )
@@ -81,6 +86,7 @@ def _run_verifier(
             "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}",
             "GH_FAKE_LOG": str(log_path),
             "GH_FAKE_SBOM_RESULT": json.dumps(sbom_result),
+            "GH_FAKE_SBOM_PATH": str(sbom_path),
             "SOURCE_SHA": _SOURCE_SHA,
             "SOURCE_REF": source_ref,
             "EXPECTED_SOURCE_REF": "refs/heads/main",
@@ -91,6 +97,8 @@ def _run_verifier(
             "VERIFICATION_DIR": str(verification_dir),
         }
     )
+    if replacement_downloaded_sbom is not None:
+        env["GH_FAKE_REPLACEMENT_SBOM"] = json.dumps(replacement_downloaded_sbom)
     return subprocess.run(
         ["bash", str(_SCRIPT_PATH)],
         check=False,
@@ -200,6 +208,33 @@ def test_verifier_rejects_attested_spdx_predicate_drift(tmp_path: Path) -> None:
             "cwl_context_contracts-0.1.tar.gz",
         ),
         attested_sbom=attested_sbom,
+    )
+
+    assert result.returncode != 0
+    assert "attested SPDX predicate does not match downloaded package SBOM" in result.stderr
+
+
+def test_verifier_rejects_mid_verification_downloaded_sbom_replacement(
+    tmp_path: Path,
+) -> None:
+    """Bind the attestation to the SBOM snapshot present before GitHub verification."""
+    replacement_sbom = {
+        **_EXPECTED_SBOM,
+        "@graph": [
+            {
+                "type": "software_Package",
+                "name": "replacement-package",
+            }
+        ],
+    }
+    result = _run_verifier(
+        tmp_path,
+        (
+            "cwl_context_contracts-0.1-py3-none-any.whl",
+            "cwl_context_contracts-0.1.tar.gz",
+        ),
+        attested_sbom=replacement_sbom,
+        replacement_downloaded_sbom=replacement_sbom,
     )
 
     assert result.returncode != 0
