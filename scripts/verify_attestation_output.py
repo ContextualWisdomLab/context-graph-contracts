@@ -61,7 +61,9 @@ def _signed_statement_from_verified_candidate(candidate: Any) -> dict[str, Any] 
     try:
         payload = base64.b64decode(encoded_payload, validate=True)
     except (binascii.Error, ValueError) as exc:
-        raise ValueError("verified attestation has invalid base64 DSSE payload") from exc
+        raise ValueError(
+            "verified attestation has invalid base64 DSSE payload"
+        ) from exc
     if len(payload) > MAX_JSON_BYTES:
         raise ValueError("signed DSSE statement exceeds 16 MiB")
 
@@ -78,7 +80,7 @@ def _matching_artifact_statements(
     expected_artifact_digest: str,
     expected_predicate_type: str | None,
 ) -> list[dict[str, Any]]:
-    """Return signed statements matching exact artifact and optional predicate policy."""
+    """Return signed statements matching artifact and optional predicate policy."""
     subject_matched = False
     statements: list[dict[str, Any]] = []
     for candidate in verification:
