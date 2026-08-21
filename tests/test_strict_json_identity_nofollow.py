@@ -8,7 +8,6 @@ from typing import Any
 
 import pytest
 
-
 _SCRIPT_PATH = Path("scripts/strict_json_identity.py")
 _VERIFIER_SCRIPT_PATH = Path("scripts/verify_attestation_output.py")
 
