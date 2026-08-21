@@ -71,9 +71,12 @@ def _signed_statement_from_verified_candidate(candidate: Any) -> dict[str, Any] 
 
 
 def _matching_artifact_statements(
-    verification: list[Any], expected_artifact_digest: str
+    verification: list[Any],
+    expected_artifact_digest: str,
+    expected_predicate_type: str | None,
 ) -> list[dict[str, Any]]:
-    """Return signed statements whose subject names the exact artifact digest."""
+    """Return signed statements matching exact artifact and optional predicate policy."""
+    subject_matched = False
     statements: list[dict[str, Any]] = []
     for candidate in verification:
         statement = _signed_statement_from_verified_candidate(candidate)
@@ -82,16 +85,26 @@ def _matching_artifact_statements(
         subjects = statement.get("subject")
         if not isinstance(subjects, list):
             continue
-        if any(
+        artifact_matches = any(
             isinstance(subject, dict)
             and isinstance(subject.get("digest"), dict)
             and subject["digest"].get("sha256") == expected_artifact_digest
             for subject in subjects
+        )
+        if not artifact_matches:
+            continue
+        subject_matched = True
+        if (
+            expected_predicate_type is not None
+            and statement.get("predicateType") != expected_predicate_type
         ):
-            statements.append(statement)
-    if not statements:
-        raise ValueError("attestation subject does not match release artifact")
-    return statements
+            continue
+        statements.append(statement)
+    if statements:
+        return statements
+    if subject_matched and expected_predicate_type is not None:
+        raise ValueError("attestation predicate type does not match expected policy")
+    raise ValueError("attestation subject does not match release artifact")
 
 
 def _require_matching_spdx_predicate(
@@ -144,19 +157,24 @@ def _is_lower_sha256(value: str) -> bool:
 
 def main(argv: list[str]) -> int:
     """Verify stdin and retain it only after all requested semantic checks pass."""
-    if len(argv) not in {3, 4}:
+    if len(argv) not in {3, 4, 5}:
         print(
             "usage: verify_attestation_output.py OUTPUT_PATH "
-            "EXPECTED_ARTIFACT_DIGEST [EXPECTED_SBOM_DIGEST]",
+            "EXPECTED_ARTIFACT_DIGEST [EXPECTED_PREDICATE_TYPE] "
+            "[EXPECTED_SBOM_DIGEST]",
             file=sys.stderr,
         )
         return 2
 
     output_path = Path(argv[1])
     expected_artifact_digest = argv[2]
-    expected_sbom_digest = argv[3] if len(argv) == 4 else None
+    expected_predicate_type = argv[3] if len(argv) >= 4 else None
+    expected_sbom_digest = argv[4] if len(argv) == 5 else None
     if not _is_lower_sha256(expected_artifact_digest):
         print("expected artifact digest must be lowercase SHA-256 hex", file=sys.stderr)
+        return 1
+    if expected_predicate_type is not None and not expected_predicate_type:
+        print("expected predicate type must be non-empty", file=sys.stderr)
         return 1
     if expected_sbom_digest is not None and not _is_lower_sha256(expected_sbom_digest):
         print("expected SBOM digest must be lowercase SHA-256 hex", file=sys.stderr)
@@ -166,7 +184,9 @@ def main(argv: list[str]) -> int:
         data = _read_bounded_stdin()
         verification = _require_nonempty_verification_array(load_strict_json(data))
         statements = _matching_artifact_statements(
-            verification, expected_artifact_digest
+            verification,
+            expected_artifact_digest,
+            expected_predicate_type,
         )
         if expected_sbom_digest is not None:
             _require_matching_spdx_predicate(statements, expected_sbom_digest)
