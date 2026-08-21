@@ -8,10 +8,31 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from typing import Any
 
 _SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
 _SOURCE_SHA = "a" * 40
 _ARTIFACT_BYTES = b"artifact"
+
+
+def _verification_result(
+    statement_bytes: bytes,
+    parsed_statement: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Pair an exact signed DSSE statement with gh's parsed statement view."""
+    return [
+        {
+            "attestation": {
+                "bundle": {
+                    "dsseEnvelope": {
+                        "payload": base64.b64encode(statement_bytes).decode("ascii"),
+                        "payloadType": "application/vnd.in-toto+json",
+                    }
+                }
+            },
+            "verificationResult": {"statement": parsed_statement},
+        }
+    ]
 
 
 def test_spdx_predicate_identity_rejects_distinct_large_decimal_values(
@@ -44,13 +65,20 @@ def test_spdx_predicate_identity_rejects_distinct_large_decimal_values(
 
     artifact_digest = hashlib.sha256(_ARTIFACT_BYTES).hexdigest()
     subject = [{"digest": {"sha256": artifact_digest}}]
-    provenance_result = [
-        {
-            "verificationResult": {
-                "statement": {"subject": subject, "predicate": {}},
-            }
-        }
-    ]
+    provenance_statement = {
+        "_type": "https://in-toto.io/Statement/v1",
+        "subject": subject,
+        "predicateType": "https://slsa.dev/provenance/v1",
+        "predicate": {},
+    }
+    provenance_bytes = json.dumps(
+        provenance_statement,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    provenance_result = _verification_result(
+        provenance_bytes,
+        provenance_statement,
+    )
 
     signed_statement = (
         '{"_type":"https://in-toto.io/Statement/v1",'
@@ -64,24 +92,13 @@ def test_spdx_predicate_identity_rejects_distinct_large_decimal_values(
     # is binary64. Simulate gh's parsed view rounding the signed 2^53+1 value down
     # to 2^53 while retaining the exact signed DSSE payload in the bundle.
     rounded_predicate = json.loads(downloaded_sbom)
-    sbom_result = [
-        {
-            "attestation": {
-                "bundle": {
-                    "dsseEnvelope": {
-                        "payload": base64.b64encode(signed_statement).decode("ascii"),
-                        "payloadType": "application/vnd.in-toto+json",
-                    }
-                }
-            },
-            "verificationResult": {
-                "statement": {
-                    "subject": subject,
-                    "predicate": rounded_predicate,
-                },
-            },
-        }
-    ]
+    parsed_sbom_statement = {
+        "_type": "https://in-toto.io/Statement/v1",
+        "subject": subject,
+        "predicateType": "https://spdx.dev/Document/v3",
+        "predicate": rounded_predicate,
+    }
+    sbom_result = _verification_result(signed_statement, parsed_sbom_statement)
 
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
