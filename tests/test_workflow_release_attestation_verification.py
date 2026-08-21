@@ -7,8 +7,8 @@ from pathlib import Path
 _SUPPLY_CHAIN_PATH = Path(".github/workflows/supply-chain.yml")
 
 
-def test_protected_main_verifies_provenance_and_spdx3_attestations() -> None:
-    """Require exact protected-main source and signer identity."""
+def test_protected_main_invokes_executable_attestation_verifier() -> None:
+    """Require the protected-main workflow to execute the regression-tested verifier."""
     workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
 
     assert (
@@ -24,17 +24,9 @@ def test_protected_main_verifies_provenance_and_spdx3_attestations() -> None:
     ) in workflow_text
     assert 'REPOSITORY: ContextualWisdomLab/context-graph-contracts' in workflow_text
     assert 'SPDX_PREDICATE: https://spdx.dev/Document/v3' in workflow_text
-    assert '--source-digest "$SOURCE_SHA"' in workflow_text
-    assert '--source-ref "$EXPECTED_SOURCE_REF"' in workflow_text
-    assert '--signer-digest "$SOURCE_SHA"' in workflow_text
-    assert '--signer-workflow "$SIGNER_WORKFLOW"' in workflow_text
-    assert '--repo "$REPOSITORY"' in workflow_text
-    assert '--deny-self-hosted-runners' in workflow_text
-    assert '--predicate-type "$SPDX_PREDICATE"' in workflow_text
-    assert 'if [[ "$SOURCE_REF" != "$EXPECTED_SOURCE_REF" ]]' in workflow_text
-    assert 'artifacts=(evidence/*.whl evidence/*.tar.gz)' in workflow_text
-    assert 'if (( ${#artifacts[@]} != 2 )); then' in workflow_text
-    assert workflow_text.count('gh attestation verify "$artifact"') == 2
+    assert 'EVIDENCE_DIR: evidence' in workflow_text
+    assert 'VERIFICATION_DIR: attestation-verification' in workflow_text
+    assert "run: bash scripts/verify_release_attestations.sh" in workflow_text
 
 
 def test_spdx3_attestation_uses_explicit_in_toto_predicate_mode() -> None:
@@ -58,15 +50,6 @@ def test_protected_main_retains_attestation_verification_records() -> None:
     """Keep machine-readable records for the exact stable source SHA."""
     workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
 
-    assert "mkdir -p attestation-verification" in workflow_text
-    assert (
-        'attestation-verification/$(basename "$artifact").provenance.json'
-        in workflow_text
-    )
-    assert (
-        'attestation-verification/$(basename "$artifact").sbom.json'
-        in workflow_text
-    )
     assert "name: attestation-verification-${{ github.sha }}" in workflow_text
     assert "path: attestation-verification/*.json" in workflow_text
     assert "retention-days: 90" in workflow_text
