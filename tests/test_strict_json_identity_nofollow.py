@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import runpy
 from pathlib import Path
+from runpy import run_path
 from typing import Any
 
 import pytest
@@ -14,7 +14,7 @@ _SCRIPT_PATH = Path("scripts/strict_json_identity.py")
 
 def _load_script() -> dict[str, Any]:
     """Load the release-evidence helper without requiring scripts to be a package."""
-    return runpy.run_path(str(_SCRIPT_PATH), run_name="strict_json_identity_under_test")
+    return run_path(str(_SCRIPT_PATH), run_name="strict_json_identity_under_test")
 
 
 def test_stable_json_reader_fails_closed_without_o_nofollow(
