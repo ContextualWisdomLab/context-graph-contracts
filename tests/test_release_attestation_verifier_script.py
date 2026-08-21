@@ -8,6 +8,10 @@ from pathlib import Path
 
 _SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
 _SOURCE_SHA = "a" * 40
+_REPOSITORY = "ContextualWisdomLab/context-graph-contracts"
+_SIGNER_WORKFLOW = (
+    "ContextualWisdomLab/context-graph-contracts/.github/workflows/supply-chain.yml"
+)
 
 
 def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
@@ -49,11 +53,8 @@ def _run_verifier(
             "SOURCE_SHA": _SOURCE_SHA,
             "SOURCE_REF": source_ref,
             "EXPECTED_SOURCE_REF": "refs/heads/main",
-            "REPOSITORY": "ContextualWisdomLab/context-graph-contracts",
-            "SIGNER_WORKFLOW": (
-                "ContextualWisdomLab/context-graph-contracts/"
-                ".github/workflows/supply-chain.yml"
-            ),
+            "REPOSITORY": _REPOSITORY,
+            "SIGNER_WORKFLOW": _SIGNER_WORKFLOW,
             "SPDX_PREDICATE": "https://spdx.dev/Document/v3",
             "EVIDENCE_DIR": str(evidence_dir),
             "VERIFICATION_DIR": str(verification_dir),
@@ -83,7 +84,7 @@ def test_verifier_requires_one_wheel_and_one_sdist(tmp_path: Path) -> None:
 
 
 def test_verifier_executes_both_attestation_policies(tmp_path: Path) -> None:
-    """Verify SLSA and SPDX predicates for both release artifacts."""
+    """Verify exact producer identity and both predicates for both release artifacts."""
     result = _run_verifier(
         tmp_path,
         (
@@ -96,9 +97,26 @@ def test_verifier_executes_both_attestation_policies(tmp_path: Path) -> None:
     log_lines = (tmp_path / "gh.log").read_text(encoding="utf-8").splitlines()
     assert len(log_lines) == 4
     assert sum("--predicate-type https://spdx.dev/Document/v3" in line for line in log_lines) == 2
+    assert all(f"--repo {_REPOSITORY}" in line for line in log_lines)
     assert all(f"--source-digest {_SOURCE_SHA}" in line for line in log_lines)
     assert all("--source-ref refs/heads/main" in line for line in log_lines)
+    assert all(f"--signer-digest {_SOURCE_SHA}" in line for line in log_lines)
+    assert all(f"--signer-workflow {_SIGNER_WORKFLOW}" in line for line in log_lines)
+    assert all(
+        "--cert-oidc-issuer https://token.actions.githubusercontent.com" in line
+        for line in log_lines
+    )
     assert all("--deny-self-hosted-runners" in line for line in log_lines)
+
+    verification_files = sorted(
+        path.name for path in (tmp_path / "verification").glob("*.json")
+    )
+    assert verification_files == [
+        "cwl_context_contracts-0.1-py3-none-any.whl.provenance.json",
+        "cwl_context_contracts-0.1-py3-none-any.whl.sbom.json",
+        "cwl_context_contracts-0.1.tar.gz.provenance.json",
+        "cwl_context_contracts-0.1.tar.gz.sbom.json",
+    ]
 
 
 def test_verifier_rejects_non_release_ref_before_calling_gh(tmp_path: Path) -> None:
