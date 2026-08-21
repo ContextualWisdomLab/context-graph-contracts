@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -14,6 +15,8 @@ _REPOSITORY = "ContextualWisdomLab/context-graph-contracts"
 _SIGNER_WORKFLOW = (
     "ContextualWisdomLab/context-graph-contracts/.github/workflows/supply-chain.yml"
 )
+_ARTIFACT_BYTES = b"artifact"
+_REPLACEMENT_ARTIFACT_BYTES = b"replacement-artifact"
 _EXPECTED_SBOM: dict[str, Any] = {
     "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
     "@graph": [
@@ -23,6 +26,23 @@ _EXPECTED_SBOM: dict[str, Any] = {
         }
     ],
 }
+
+
+def _verification_result(
+    artifact_digest: str,
+    predicate: dict[str, Any],
+) -> list[dict[str, Any]]:
+    """Build the documented gh verification statement shape for one artifact."""
+    return [
+        {
+            "verificationResult": {
+                "statement": {
+                    "subject": [{"digest": {"sha256": artifact_digest}}],
+                    "predicate": predicate,
+                },
+            }
+        }
+    ]
 
 
 def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
@@ -46,7 +66,11 @@ def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
         '    ln -s "$GH_FAKE_ATTACKER_VERIFICATION_RESULT" "$output_path"\n'
         "  fi\n"
         "else\n"
-        "  printf '[{\"verificationResult\":{\"statement\":{\"predicate\":{}}}}]\\n'\n"
+        "  printf '%s\\n' \"$GH_FAKE_PROVENANCE_RESULT\"\n"
+        '  if [[ -n "${GH_FAKE_REPLACEMENT_ARTIFACT_PATH:-}" ]] '
+        '&& [[ "$3" == "$GH_FAKE_REPLACEMENT_ARTIFACT_PATH" ]]; then\n'
+        '    printf \'%s\' "$GH_FAKE_REPLACEMENT_ARTIFACT" > "$3"\n'
+        "  fi\n"
         "fi\n",
         encoding="utf-8",
     )
@@ -63,12 +87,13 @@ def _run_verifier(
     include_downloaded_sbom: bool = True,
     replacement_downloaded_sbom: dict[str, Any] | None = None,
     replace_verification_outputs: bool = False,
+    replace_artifact_between_attestations: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     """Run the verifier with isolated evidence and a fake GitHub CLI."""
     evidence_dir = tmp_path / "evidence"
     evidence_dir.mkdir()
     for artifact_name in artifact_names:
-        (evidence_dir / artifact_name).write_bytes(b"artifact")
+        (evidence_dir / artifact_name).write_bytes(_ARTIFACT_BYTES)
     sbom_path = evidence_dir / "cwl-context-contracts.spdx.json"
     if include_downloaded_sbom:
         sbom_path.write_text(
@@ -79,25 +104,17 @@ def _run_verifier(
     bin_dir, log_path = _write_fake_gh(tmp_path)
     verification_dir = tmp_path / "verification"
     signed_sbom = _EXPECTED_SBOM if attested_sbom is None else attested_sbom
-    sbom_result = [
-        {
-            "verificationResult": {
-                "statement": {"predicate": signed_sbom},
-            }
-        }
-    ]
+    initial_digest = hashlib.sha256(_ARTIFACT_BYTES).hexdigest()
+    replacement_digest = hashlib.sha256(_REPLACEMENT_ARTIFACT_BYTES).hexdigest()
+    sbom_artifact_digest = (
+        replacement_digest if replace_artifact_between_attestations else initial_digest
+    )
+    provenance_result = _verification_result(initial_digest, {})
+    sbom_result = _verification_result(sbom_artifact_digest, signed_sbom)
     attacker_result_path = tmp_path / "attacker-verification-result.json"
     if replace_verification_outputs:
         attacker_result_path.write_text(
-            json.dumps(
-                [
-                    {
-                        "verificationResult": {
-                            "statement": {"predicate": _EXPECTED_SBOM},
-                        }
-                    }
-                ]
-            ),
+            json.dumps(_verification_result(initial_digest, _EXPECTED_SBOM)),
             encoding="utf-8",
         )
     env = os.environ.copy()
@@ -105,6 +122,7 @@ def _run_verifier(
         {
             "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}",
             "GH_FAKE_LOG": str(log_path),
+            "GH_FAKE_PROVENANCE_RESULT": json.dumps(provenance_result),
             "GH_FAKE_SBOM_RESULT": json.dumps(sbom_result),
             "GH_FAKE_SBOM_PATH": str(sbom_path),
             "GH_FAKE_REPLACE_VERIFICATION_OUTPUTS": (
@@ -124,6 +142,11 @@ def _run_verifier(
     )
     if replacement_downloaded_sbom is not None:
         env["GH_FAKE_REPLACEMENT_SBOM"] = json.dumps(replacement_downloaded_sbom)
+    if replace_artifact_between_attestations:
+        env["GH_FAKE_REPLACEMENT_ARTIFACT_PATH"] = str(
+            evidence_dir / artifact_names[0]
+        )
+        env["GH_FAKE_REPLACEMENT_ARTIFACT"] = _REPLACEMENT_ARTIFACT_BYTES.decode()
     return subprocess.run(
         ["bash", str(_SCRIPT_PATH)],
         check=False,
@@ -276,6 +299,23 @@ def test_verifier_rejects_mid_verification_downloaded_sbom_replacement(
         "attested SPDX predicate does not match downloaded package SBOM"
         in result.stderr
     )
+
+
+def test_verifier_rejects_artifact_replacement_between_attestation_checks(
+    tmp_path: Path,
+) -> None:
+    """Require provenance and SPDX statements to bind the same artifact bytes."""
+    result = _run_verifier(
+        tmp_path,
+        (
+            "cwl_context_contracts-0.1-py3-none-any.whl",
+            "cwl_context_contracts-0.1.tar.gz",
+        ),
+        replace_artifact_between_attestations=True,
+    )
+
+    assert result.returncode != 0
+    assert "attestation subject does not match release artifact" in result.stderr
 
 
 def test_verifier_rejects_mid_verification_output_symlink_replacement(
