@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -133,3 +134,84 @@ def test_verifier_rejects_non_release_ref_before_calling_gh(tmp_path: Path) -> N
     assert result.returncode != 0
     assert "refusing attestation verification outside protected main" in result.stderr
     assert not (tmp_path / "gh.log").exists()
+
+
+def test_verifier_rejects_attested_spdx_predicate_drift(tmp_path: Path) -> None:
+    """Reject an SPDX attestation whose signed predicate is not the downloaded SBOM."""
+    evidence_dir = tmp_path / "evidence"
+    evidence_dir.mkdir()
+    (evidence_dir / "cwl_context_contracts-0.1-py3-none-any.whl").write_bytes(
+        b"wheel"
+    )
+    (evidence_dir / "cwl_context_contracts-0.1.tar.gz").write_bytes(b"sdist")
+    expected_sbom = {
+        "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+        "@graph": [
+            {
+                "type": "software_Package",
+                "name": "cwl-context-contracts",
+            }
+        ],
+    }
+    (evidence_dir / "cwl-context-contracts.spdx.json").write_text(
+        json.dumps(expected_sbom),
+        encoding="utf-8",
+    )
+
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    gh_path = bin_dir / "gh"
+    gh_path.write_text(
+        "#!/usr/bin/env bash\n"
+        "set -euo pipefail\n"
+        "if [[ \" $* \" == *\" --predicate-type \"* ]]; then\n"
+        "  printf '%s\\n' \"$GH_FAKE_SBOM_RESULT\"\n"
+        "else\n"
+        "  printf '[{\"verificationResult\":{\"statement\":{\"predicate\":{}}}}]\\n'\n"
+        "fi\n",
+        encoding="utf-8",
+    )
+    gh_path.chmod(0o755)
+    attested_sbom = {
+        **expected_sbom,
+        "@graph": [
+            {
+                "type": "software_Package",
+                "name": "different-package",
+            }
+        ],
+    }
+    env = os.environ.copy()
+    env.update(
+        {
+            "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}",
+            "GH_FAKE_SBOM_RESULT": json.dumps(
+                [
+                    {
+                        "verificationResult": {
+                            "statement": {"predicate": attested_sbom}
+                        }
+                    }
+                ]
+            ),
+            "SOURCE_SHA": _SOURCE_SHA,
+            "SOURCE_REF": "refs/heads/main",
+            "EXPECTED_SOURCE_REF": "refs/heads/main",
+            "REPOSITORY": _REPOSITORY,
+            "SIGNER_WORKFLOW": _SIGNER_WORKFLOW,
+            "SPDX_PREDICATE": "https://spdx.dev/Document/v3",
+            "EVIDENCE_DIR": str(evidence_dir),
+            "VERIFICATION_DIR": str(tmp_path / "verification"),
+        }
+    )
+
+    result = subprocess.run(
+        ["bash", str(_SCRIPT_PATH)],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+    assert result.returncode != 0
+    assert "attested SPDX predicate does not match downloaded package SBOM" in result.stderr
