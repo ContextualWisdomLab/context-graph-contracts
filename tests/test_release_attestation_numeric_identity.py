@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -41,7 +42,10 @@ def test_spdx_predicate_identity_rejects_distinct_large_decimal_values(
     )
 
     artifact_digest = hashlib.sha256(_ARTIFACT_BYTES).hexdigest()
-    subject = f'[{"{"}"digest":{"{"}"sha256":"{artifact_digest}"{"}"}{"}"}]'
+    subject = json.dumps(
+        [{"digest": {"sha256": artifact_digest}}],
+        separators=(",", ":"),
+    )
     provenance_result = (
         '[{"verificationResult":{"statement":{"subject":'
         f'{subject},"predicate":{{}}}}}}]'
