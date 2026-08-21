@@ -126,7 +126,10 @@ def _require_matching_spdx_predicate(
 
 def _write_exclusive_regular_file(path: Path, data: bytes) -> None:
     """Retain exactly the verified bytes without following or replacing a path."""
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    if nofollow is None:
+        raise OSError(f"platform lacks O_NOFOLLOW for verification output: {path}")
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | nofollow
     descriptor = os.open(path, flags, 0o600)
     try:
         opened_stat = os.fstat(descriptor)
