@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from cwl_context_contracts.package_evidence_verifier import (
+    PackageEvidenceInputError,
     verify_package_evidence_directory,
 )
 
@@ -101,8 +102,11 @@ def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
 
 
 def _package_snapshot(evidence_dir: Path) -> str:
-    """Return the canonical build-job snapshot for one valid evidence bundle."""
-    report = verify_package_evidence_directory(evidence_dir)
+    """Return the canonical build-job snapshot for a valid evidence bundle."""
+    try:
+        report = verify_package_evidence_directory(evidence_dir)
+    except PackageEvidenceInputError:
+        return "{}"
     if not report.verified:
         return "{}"
     return json.dumps(
