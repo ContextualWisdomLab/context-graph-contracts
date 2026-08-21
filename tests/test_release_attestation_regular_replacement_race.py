@@ -10,24 +10,32 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from cwl_context_contracts.package_evidence_verifier import (
+    verify_package_evidence_directory,
+)
+
 _SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
 _SOURCE_SHA = "a" * 40
 _EXPECTED_SBOM: dict[str, Any] = {
     "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
     "@graph": [
+        {"type": "CreationInfo", "specVersion": "3.0.1"},
         {
             "type": "software_Package",
             "name": "cwl-context-contracts",
-        }
+            "software_packageVersion": "0.1",
+        },
     ],
 }
 _MISMATCHED_SBOM: dict[str, Any] = {
     **_EXPECTED_SBOM,
     "@graph": [
+        {"type": "CreationInfo", "specVersion": "3.0.1"},
         {
             "type": "software_Package",
             "name": "different-signed-package",
-        }
+            "software_packageVersion": "0.1",
+        },
     ],
 }
 
@@ -68,11 +76,25 @@ def test_verifier_rejects_regular_output_replacement_after_gh_writes(
     evidence_dir.mkdir()
     wheel = evidence_dir / "cwl_context_contracts-0.1-py3-none-any.whl"
     sdist = evidence_dir / "cwl_context_contracts-0.1.tar.gz"
+    sbom_path = evidence_dir / "cwl-context-contracts.spdx.json"
     wheel.write_bytes(b"wheel")
     sdist.write_bytes(b"sdist")
-    (evidence_dir / "cwl-context-contracts.spdx.json").write_text(
-        json.dumps(_EXPECTED_SBOM),
+    sbom_path.write_text(json.dumps(_EXPECTED_SBOM), encoding="utf-8")
+    evidence_files = [wheel, sdist, sbom_path]
+    checksum_lines = [
+        f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}"
+        for path in sorted(evidence_files)
+    ]
+    (evidence_dir / "SHA256SUMS").write_text(
+        "\n".join(checksum_lines) + "\n",
         encoding="utf-8",
+    )
+    package_report = verify_package_evidence_directory(evidence_dir)
+    assert package_report.verified
+    package_snapshot = json.dumps(
+        package_report.to_mapping(),
+        sort_keys=True,
+        separators=(",", ":"),
     )
 
     verification_dir = tmp_path / "verification"
@@ -133,6 +155,7 @@ def test_verifier_rejects_regular_output_replacement_after_gh_writes(
                 ".github/workflows/supply-chain.yml"
             ),
             "SPDX_PREDICATE": "https://spdx.dev/Document/v3",
+            "EXPECTED_PACKAGE_SNAPSHOT": package_snapshot,
             "EVIDENCE_DIR": str(evidence_dir),
             "VERIFICATION_DIR": str(verification_dir),
         }
