@@ -69,10 +69,11 @@ def _require_nonempty_verification_array(verification: Any) -> list[Any]:
     return verification
 
 
-def _require_matching_spdx_predicate(
-    verification: list[Any], expected_digest: str
-) -> None:
-    """Require one signed predicate whose parsed-value digest matches the SBOM."""
+def _matching_artifact_statements(
+    verification: list[Any], expected_artifact_digest: str
+) -> list[dict[str, Any]]:
+    """Return verified statements whose subject names the exact artifact digest."""
+    statements: list[dict[str, Any]] = []
     for candidate in verification:
         if not isinstance(candidate, dict):
             continue
@@ -80,7 +81,29 @@ def _require_matching_spdx_predicate(
         if not isinstance(result, dict):
             continue
         statement = result.get("statement")
-        if not isinstance(statement, dict) or "predicate" not in statement:
+        if not isinstance(statement, dict):
+            continue
+        subjects = statement.get("subject")
+        if not isinstance(subjects, list):
+            continue
+        if any(
+            isinstance(subject, dict)
+            and isinstance(subject.get("digest"), dict)
+            and subject["digest"].get("sha256") == expected_artifact_digest
+            for subject in subjects
+        ):
+            statements.append(statement)
+    if not statements:
+        raise ValueError("attestation subject does not match release artifact")
+    return statements
+
+
+def _require_matching_spdx_predicate(
+    statements: list[dict[str, Any]], expected_digest: str
+) -> None:
+    """Require one subject-matched statement whose SPDX predicate matches the SBOM."""
+    for statement in statements:
+        if "predicate" not in statement:
             continue
         candidate_digest = hashlib.sha256(
             _normalized_json(statement["predicate"])
@@ -119,29 +142,41 @@ def _write_exclusive_regular_file(path: Path, data: bytes) -> None:
         os.close(descriptor)
 
 
+def _is_lower_sha256(value: str) -> bool:
+    """Return whether a value is an exact lowercase SHA-256 hexadecimal digest."""
+    return len(value) == 64 and all(
+        character in "0123456789abcdef" for character in value
+    )
+
+
 def main(argv: list[str]) -> int:
     """Verify stdin and retain it only after all requested semantic checks pass."""
-    if len(argv) not in {2, 3}:
+    if len(argv) not in {3, 4}:
         print(
-            "usage: verify_attestation_output.py OUTPUT_PATH [EXPECTED_SBOM_DIGEST]",
+            "usage: verify_attestation_output.py OUTPUT_PATH "
+            "EXPECTED_ARTIFACT_DIGEST [EXPECTED_SBOM_DIGEST]",
             file=sys.stderr,
         )
         return 2
 
     output_path = Path(argv[1])
-    expected_digest = argv[2] if len(argv) == 3 else None
-    if expected_digest is not None and (
-        len(expected_digest) != 64
-        or any(character not in "0123456789abcdef" for character in expected_digest)
-    ):
+    expected_artifact_digest = argv[2]
+    expected_sbom_digest = argv[3] if len(argv) == 4 else None
+    if not _is_lower_sha256(expected_artifact_digest):
+        print("expected artifact digest must be lowercase SHA-256 hex", file=sys.stderr)
+        return 1
+    if expected_sbom_digest is not None and not _is_lower_sha256(expected_sbom_digest):
         print("expected SBOM digest must be lowercase SHA-256 hex", file=sys.stderr)
         return 1
 
     try:
         data = _read_bounded_stdin()
         verification = _require_nonempty_verification_array(_load_strict_json(data))
-        if expected_digest is not None:
-            _require_matching_spdx_predicate(verification, expected_digest)
+        statements = _matching_artifact_statements(
+            verification, expected_artifact_digest
+        )
+        if expected_sbom_digest is not None:
+            _require_matching_spdx_predicate(statements, expected_sbom_digest)
         _write_exclusive_regular_file(output_path, data)
     except (OSError, UnicodeError, ValueError) as exc:
         message = f"unable to verify/retain attestation evidence strictly: {exc}"
