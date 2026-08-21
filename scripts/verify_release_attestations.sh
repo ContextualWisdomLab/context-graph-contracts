@@ -135,7 +135,12 @@ PY
 
 expected_sbom_digest="$(snapshot_downloaded_sbom_digest)"
 
-mkdir -p "$VERIFICATION_DIR"
+if [[ -e "$VERIFICATION_DIR" || -L "$VERIFICATION_DIR" ]]; then
+  echo "verification directory must not pre-exist" >&2
+  exit 1
+fi
+umask 077
+mkdir "$VERIFICATION_DIR"
 common_policy=(
   --repo "$REPOSITORY"
   --source-digest "$SOURCE_SHA"
