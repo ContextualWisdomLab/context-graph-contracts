@@ -6,6 +6,7 @@ import json
 import os
 import subprocess
 from pathlib import Path
+from typing import Any
 
 _SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
 _SOURCE_SHA = "a" * 40
@@ -13,6 +14,15 @@ _REPOSITORY = "ContextualWisdomLab/context-graph-contracts"
 _SIGNER_WORKFLOW = (
     "ContextualWisdomLab/context-graph-contracts/.github/workflows/supply-chain.yml"
 )
+_EXPECTED_SBOM: dict[str, Any] = {
+    "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+    "@graph": [
+        {
+            "type": "software_Package",
+            "name": "cwl-context-contracts",
+        }
+    ],
+}
 
 
 def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
@@ -25,7 +35,11 @@ def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n"
         'printf \'%s\\n\' \"$*\" >> \"$GH_FAKE_LOG\"\n'
-        "printf '{}\\n'\n",
+        "if [[ \" $* \" == *\" --predicate-type \"* ]]; then\n"
+        "  printf '%s\\n' \"$GH_FAKE_SBOM_RESULT\"\n"
+        "else\n"
+        "  printf '[{\"verificationResult\":{\"statement\":{\"predicate\":{}}}}]\\n'\n"
+        "fi\n",
         encoding="utf-8",
     )
     gh_path.chmod(0o755)
@@ -37,20 +51,36 @@ def _run_verifier(
     artifact_names: tuple[str, ...],
     *,
     source_ref: str = "refs/heads/main",
+    attested_sbom: dict[str, Any] | None = None,
+    include_downloaded_sbom: bool = True,
 ) -> subprocess.CompletedProcess[str]:
     """Run the verifier with isolated evidence and a fake GitHub CLI."""
     evidence_dir = tmp_path / "evidence"
     evidence_dir.mkdir()
     for artifact_name in artifact_names:
         (evidence_dir / artifact_name).write_bytes(b"artifact")
+    if include_downloaded_sbom:
+        (evidence_dir / "cwl-context-contracts.spdx.json").write_text(
+            json.dumps(_EXPECTED_SBOM),
+            encoding="utf-8",
+        )
 
     bin_dir, log_path = _write_fake_gh(tmp_path)
     verification_dir = tmp_path / "verification"
+    signed_sbom = _EXPECTED_SBOM if attested_sbom is None else attested_sbom
+    sbom_result = [
+        {
+            "verificationResult": {
+                "statement": {"predicate": signed_sbom},
+            }
+        }
+    ]
     env = os.environ.copy()
     env.update(
         {
             "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}",
             "GH_FAKE_LOG": str(log_path),
+            "GH_FAKE_SBOM_RESULT": json.dumps(sbom_result),
             "SOURCE_SHA": _SOURCE_SHA,
             "SOURCE_REF": source_ref,
             "EXPECTED_SOURCE_REF": "refs/heads/main",
@@ -82,6 +112,22 @@ def test_verifier_requires_one_wheel_and_one_sdist(tmp_path: Path) -> None:
 
     assert result.returncode != 0
     assert "expected exactly one wheel and one source distribution" in result.stderr
+
+
+def test_verifier_requires_downloaded_spdx_document(tmp_path: Path) -> None:
+    """Fail closed when the signed predicate has no downloaded SBOM to bind."""
+    result = _run_verifier(
+        tmp_path,
+        (
+            "cwl_context_contracts-0.1-py3-none-any.whl",
+            "cwl_context_contracts-0.1.tar.gz",
+        ),
+        include_downloaded_sbom=False,
+    )
+
+    assert result.returncode != 0
+    assert "expected one regular downloaded SPDX evidence document" in result.stderr
+    assert not (tmp_path / "gh.log").exists()
 
 
 def test_verifier_executes_both_attestation_policies(tmp_path: Path) -> None:
@@ -138,42 +184,8 @@ def test_verifier_rejects_non_release_ref_before_calling_gh(tmp_path: Path) -> N
 
 def test_verifier_rejects_attested_spdx_predicate_drift(tmp_path: Path) -> None:
     """Reject an SPDX attestation whose signed predicate is not the downloaded SBOM."""
-    evidence_dir = tmp_path / "evidence"
-    evidence_dir.mkdir()
-    (evidence_dir / "cwl_context_contracts-0.1-py3-none-any.whl").write_bytes(
-        b"wheel"
-    )
-    (evidence_dir / "cwl_context_contracts-0.1.tar.gz").write_bytes(b"sdist")
-    expected_sbom = {
-        "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
-        "@graph": [
-            {
-                "type": "software_Package",
-                "name": "cwl-context-contracts",
-            }
-        ],
-    }
-    (evidence_dir / "cwl-context-contracts.spdx.json").write_text(
-        json.dumps(expected_sbom),
-        encoding="utf-8",
-    )
-
-    bin_dir = tmp_path / "bin"
-    bin_dir.mkdir()
-    gh_path = bin_dir / "gh"
-    gh_path.write_text(
-        "#!/usr/bin/env bash\n"
-        "set -euo pipefail\n"
-        "if [[ \" $* \" == *\" --predicate-type \"* ]]; then\n"
-        "  printf '%s\\n' \"$GH_FAKE_SBOM_RESULT\"\n"
-        "else\n"
-        "  printf '[{\"verificationResult\":{\"statement\":{\"predicate\":{}}}}]\\n'\n"
-        "fi\n",
-        encoding="utf-8",
-    )
-    gh_path.chmod(0o755)
     attested_sbom = {
-        **expected_sbom,
+        **_EXPECTED_SBOM,
         "@graph": [
             {
                 "type": "software_Package",
@@ -181,36 +193,13 @@ def test_verifier_rejects_attested_spdx_predicate_drift(tmp_path: Path) -> None:
             }
         ],
     }
-    env = os.environ.copy()
-    env.update(
-        {
-            "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}",
-            "GH_FAKE_SBOM_RESULT": json.dumps(
-                [
-                    {
-                        "verificationResult": {
-                            "statement": {"predicate": attested_sbom}
-                        }
-                    }
-                ]
-            ),
-            "SOURCE_SHA": _SOURCE_SHA,
-            "SOURCE_REF": "refs/heads/main",
-            "EXPECTED_SOURCE_REF": "refs/heads/main",
-            "REPOSITORY": _REPOSITORY,
-            "SIGNER_WORKFLOW": _SIGNER_WORKFLOW,
-            "SPDX_PREDICATE": "https://spdx.dev/Document/v3",
-            "EVIDENCE_DIR": str(evidence_dir),
-            "VERIFICATION_DIR": str(tmp_path / "verification"),
-        }
-    )
-
-    result = subprocess.run(
-        ["bash", str(_SCRIPT_PATH)],
-        check=False,
-        capture_output=True,
-        text=True,
-        env=env,
+    result = _run_verifier(
+        tmp_path,
+        (
+            "cwl_context_contracts-0.1-py3-none-any.whl",
+            "cwl_context_contracts-0.1.tar.gz",
+        ),
+        attested_sbom=attested_sbom,
     )
 
     assert result.returncode != 0
