@@ -74,7 +74,7 @@ def test_spdx_predicate_identity_rejects_distinct_large_decimal_values(
     provenance_bytes = json.dumps(
         provenance_statement,
         separators=(",", ":"),
-    ).encode("utf-8")
+    ).encode()
     provenance_result = _verification_result(
         provenance_bytes,
         provenance_statement,
@@ -86,7 +86,7 @@ def test_spdx_predicate_identity_rejects_distinct_large_decimal_values(
         '"predicateType":"https://spdx.dev/Document/v3",'
         f'"predicate":{signed_sbom}'
         "}"
-    ).encode("utf-8")
+    ).encode()
     # sigstore-go materializes the verified statement as an in-toto protobuf.
     # Its generic predicate is a protobuf Struct, whose JSON number representation
     # is binary64. Simulate gh's parsed view rounding the signed 2^53+1 value down
