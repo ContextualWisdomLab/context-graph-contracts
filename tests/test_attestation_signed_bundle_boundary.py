@@ -12,7 +12,10 @@ _SCRIPT_PATH = Path("scripts/verify_attestation_output.py")
 _ARTIFACT_DIGEST = "a" * 64
 
 
-def _run_verifier(tmp_path: Path, verification: Any) -> subprocess.CompletedProcess[str]:
+def _run_verifier(
+    tmp_path: Path,
+    verification: Any,
+) -> subprocess.CompletedProcess[str]:
     """Run the stream verifier against one isolated gh-format JSON value."""
     return subprocess.run(
         [
@@ -28,7 +31,11 @@ def _run_verifier(tmp_path: Path, verification: Any) -> subprocess.CompletedProc
     )
 
 
-def _candidate(*, payload: str, payload_type: str = "application/vnd.in-toto+json") -> dict[str, Any]:
+def _candidate(
+    *,
+    payload: str,
+    payload_type: str = "application/vnd.in-toto+json",
+) -> dict[str, Any]:
     """Build one gh-format verified candidate around caller-controlled DSSE text."""
     return {
         "attestation": {
