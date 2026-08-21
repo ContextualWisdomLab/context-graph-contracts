@@ -37,103 +37,6 @@ if [[ ! -f "$sbom_path" || -L "$sbom_path" ]]; then
   exit 1
 fi
 
-snapshot_downloaded_sbom_digest() {
-  python - "$sbom_path" <<'PY'
-from __future__ import annotations
-
-import hashlib
-import json
-import os
-import stat
-import sys
-from pathlib import Path
-from typing import Any
-
-
-class DuplicateJsonMember(ValueError):
-    """Reject ambiguous JSON objects with duplicate member names."""
-
-
-def reject_duplicate_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    """Build a JSON object only when every member name is unique."""
-    result: dict[str, Any] = {}
-    for key, value in pairs:
-        if key in result:
-            raise DuplicateJsonMember(f"duplicate JSON member: {key}")
-        result[key] = value
-    return result
-
-
-def reject_nonstandard_constant(value: str) -> None:
-    """Reject NaN and Infinity extensions that are not valid JSON."""
-    raise ValueError(f"non-standard JSON numeric constant: {value}")
-
-
-def read_stable_regular_file(path: Path) -> bytes:
-    """Read one bounded regular file without following a replacement symlink."""
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-    descriptor = os.open(path, flags)
-    try:
-        opened_stat = os.fstat(descriptor)
-        if not stat.S_ISREG(opened_stat.st_mode):
-            raise ValueError(f"SPDX evidence is not a regular file: {path}")
-        chunks: list[bytes] = []
-        remaining = 16 * 1024 * 1024 + 1
-        while remaining > 0:
-            chunk = os.read(descriptor, min(1024 * 1024, remaining))
-            if not chunk:
-                break
-            chunks.append(chunk)
-            remaining -= len(chunk)
-        data = b"".join(chunks)
-        if len(data) > 16 * 1024 * 1024:
-            raise ValueError(f"JSON evidence exceeds 16 MiB: {path}")
-    finally:
-        os.close(descriptor)
-
-    path_stat = os.stat(path, follow_symlinks=False)
-    if not stat.S_ISREG(path_stat.st_mode):
-        raise ValueError(f"SPDX evidence path stopped being a regular file: {path}")
-    if (opened_stat.st_dev, opened_stat.st_ino) != (path_stat.st_dev, path_stat.st_ino):
-        raise ValueError(f"SPDX evidence path changed while being read: {path}")
-    return data
-
-
-def load_strict_json_bytes(data: bytes) -> Any:
-    """Parse bounded JSON bytes with strict member and number semantics."""
-    return json.loads(
-        data.decode("utf-8"),
-        object_pairs_hook=reject_duplicate_members,
-        parse_constant=reject_nonstandard_constant,
-    )
-
-
-def normalized_json(value: Any) -> bytes:
-    """Return deterministic UTF-8 JSON for parsed-value identity."""
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    ).encode("utf-8")
-
-
-path = Path(sys.argv[1])
-try:
-    expected = load_strict_json_bytes(read_stable_regular_file(path))
-except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
-    print(f"unable to snapshot downloaded SPDX evidence strictly: {exc}", file=sys.stderr)
-    raise SystemExit(1) from exc
-
-if not isinstance(expected, dict):
-    print("downloaded SPDX evidence must be a JSON object", file=sys.stderr)
-    raise SystemExit(1)
-
-print(hashlib.sha256(normalized_json(expected)).hexdigest())
-PY
-}
-
 snapshot_artifact_digest() {
   python - "$1" <<'PY'
 from __future__ import annotations
@@ -156,14 +59,16 @@ try:
         digest = hashlib.sha256()
         while chunk := os.read(descriptor, 1024 * 1024):
             digest.update(chunk)
+        path_stat = os.stat(path, follow_symlinks=False)
+        if not stat.S_ISREG(path_stat.st_mode):
+            raise ValueError(f"release artifact path stopped being regular: {path}")
+        if (opened_stat.st_dev, opened_stat.st_ino) != (
+            path_stat.st_dev,
+            path_stat.st_ino,
+        ):
+            raise ValueError(f"release artifact path changed while being read: {path}")
     finally:
         os.close(descriptor)
-
-    path_stat = os.stat(path, follow_symlinks=False)
-    if not stat.S_ISREG(path_stat.st_mode):
-        raise ValueError(f"release artifact path stopped being regular: {path}")
-    if (opened_stat.st_dev, opened_stat.st_ino) != (path_stat.st_dev, path_stat.st_ino):
-        raise ValueError(f"release artifact path changed while being read: {path}")
 except (OSError, ValueError) as exc:
     print(f"unable to snapshot release artifact strictly: {exc}", file=sys.stderr)
     raise SystemExit(1) from exc
@@ -172,7 +77,7 @@ print(digest.hexdigest())
 PY
 }
 
-expected_sbom_digest="$(snapshot_downloaded_sbom_digest)"
+expected_sbom_digest="$(python "$SCRIPT_DIR/strict_json_identity.py" "$sbom_path")"
 
 if [[ -e "$VERIFICATION_DIR" || -L "$VERIFICATION_DIR" ]]; then
   echo "verification directory must not pre-exist" >&2
