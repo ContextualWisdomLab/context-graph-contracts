@@ -14,6 +14,7 @@ from typing import Any
 from strict_json_identity import MAX_JSON_BYTES, load_strict_json, semantic_json_sha256
 
 _IN_TOTO_PAYLOAD_TYPE = "application/vnd.in-toto+json"
+_IN_TOTO_STATEMENT_TYPE = "https://in-toto.io/Statement/v1"
 
 
 def _read_bounded_stdin() -> bytes:
@@ -67,6 +68,8 @@ def _signed_statement_from_verified_candidate(candidate: Any) -> dict[str, Any] 
     statement = load_strict_json(payload)
     if not isinstance(statement, dict):
         raise ValueError("signed DSSE payload must be an in-toto JSON object")
+    if statement.get("_type") != _IN_TOTO_STATEMENT_TYPE:
+        raise ValueError("signed DSSE statement type does not match in-toto v1")
     return statement
 
 
