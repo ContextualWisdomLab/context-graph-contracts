@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
 import subprocess
@@ -28,6 +30,34 @@ _MISMATCHED_SBOM: dict[str, Any] = {
         }
     ],
 }
+
+
+def _verification_result(
+    artifact_digest: str,
+    predicate: dict[str, Any],
+    predicate_type: str,
+) -> list[dict[str, Any]]:
+    """Build one verified gh result carrying the exact signed DSSE statement."""
+    statement = {
+        "_type": "https://in-toto.io/Statement/v1",
+        "subject": [{"digest": {"sha256": artifact_digest}}],
+        "predicateType": predicate_type,
+        "predicate": predicate,
+    }
+    payload = json.dumps(statement, separators=(",", ":")).encode("utf-8")
+    return [
+        {
+            "attestation": {
+                "bundle": {
+                    "dsseEnvelope": {
+                        "payload": base64.b64encode(payload).decode("ascii"),
+                        "payloadType": "application/vnd.in-toto+json",
+                    }
+                }
+            },
+            "verificationResult": {"statement": statement},
+        }
+    ]
 
 
 def test_verifier_rejects_regular_output_replacement_after_gh_writes(
@@ -58,34 +88,39 @@ def test_verifier_rejects_regular_output_replacement_after_gh_writes(
         '  rm -f "$output_path"\n'
         '  printf \'%s\\n\' "$GH_FAKE_ATTACKER_RESULT" > "$output_path"\n'
         "else\n"
-        "  printf '[{\"verificationResult\":{\"statement\":{\"predicate\":{}}}}]\\n'\n"
+        '  printf \'%s\\n\' "$GH_FAKE_PROVENANCE_RESULT"\n'
         "fi\n",
         encoding="utf-8",
     )
     gh_path.chmod(0o755)
 
+    wheel_digest = hashlib.sha256(b"wheel").hexdigest()
+    provenance_result = json.dumps(
+        _verification_result(
+            wheel_digest,
+            {},
+            "https://slsa.dev/provenance/v1",
+        )
+    )
     mismatched_result = json.dumps(
-        [
-            {
-                "verificationResult": {
-                    "statement": {"predicate": _MISMATCHED_SBOM},
-                }
-            }
-        ]
+        _verification_result(
+            wheel_digest,
+            _MISMATCHED_SBOM,
+            "https://spdx.dev/Document/v3",
+        )
     )
     attacker_result = json.dumps(
-        [
-            {
-                "verificationResult": {
-                    "statement": {"predicate": _EXPECTED_SBOM},
-                }
-            }
-        ]
+        _verification_result(
+            wheel_digest,
+            _EXPECTED_SBOM,
+            "https://spdx.dev/Document/v3",
+        )
     )
     env = os.environ.copy()
     env.update(
         {
             "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}",
+            "GH_FAKE_PROVENANCE_RESULT": provenance_result,
             "GH_FAKE_MISMATCHED_RESULT": mismatched_result,
             "GH_FAKE_ATTACKER_RESULT": attacker_result,
             "GH_FAKE_VERIFICATION_DIR": str(verification_dir),
