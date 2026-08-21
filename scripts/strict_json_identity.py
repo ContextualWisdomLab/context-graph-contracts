@@ -96,8 +96,10 @@ def semantic_json_sha256(value: Any) -> str:
 
 def read_stable_regular_file(path: Path, *, label: str) -> bytes:
     """Read one bounded regular file without following a replacement symlink."""
-    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
-    descriptor = os.open(path, flags)
+    nofollow = getattr(os, "O_NOFOLLOW", None)
+    if nofollow is None:
+        raise OSError(f"platform lacks O_NOFOLLOW for {label}")
+    descriptor = os.open(path, os.O_RDONLY | nofollow)
     try:
         opened_stat = os.fstat(descriptor)
         if not stat.S_ISREG(opened_stat.st_mode):
