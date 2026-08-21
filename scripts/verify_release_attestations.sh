@@ -7,6 +7,7 @@ set -euo pipefail
 : "${REPOSITORY:?REPOSITORY is required}"
 : "${SIGNER_WORKFLOW:?SIGNER_WORKFLOW is required}"
 : "${SPDX_PREDICATE:?SPDX_PREDICATE is required}"
+: "${EXPECTED_PACKAGE_SNAPSHOT:?EXPECTED_PACKAGE_SNAPSHOT is required}"
 
 EVIDENCE_DIR="${EVIDENCE_DIR:-evidence}"
 VERIFICATION_DIR="${VERIFICATION_DIR:-attestation-verification}"
@@ -65,6 +66,28 @@ print(json.dumps(report.to_mapping(), sort_keys=True, separators=(",", ":")))
 PY
 }
 
+normalize_package_snapshot() {
+  PYTHONPATH="$SCRIPT_DIR" python - "$1" <<'PY'
+from __future__ import annotations
+
+import json
+import sys
+
+from strict_json_identity import load_strict_json
+
+
+try:
+    snapshot = load_strict_json(sys.argv[1].encode("utf-8"))
+except (UnicodeError, ValueError, json.JSONDecodeError) as exc:
+    print(f"build package snapshot is malformed: {exc}", file=sys.stderr)
+    raise SystemExit(1) from exc
+if not isinstance(snapshot, dict) or snapshot.get("verified") is not True:
+    print("build package snapshot is not a verified report", file=sys.stderr)
+    raise SystemExit(1)
+print(json.dumps(snapshot, sort_keys=True, separators=(",", ":")))
+PY
+}
+
 artifact_digest_from_snapshot() {
   python - "$1" "$2" <<'PY'
 from __future__ import annotations
@@ -119,9 +142,14 @@ print(semantic_json_sha256(value))
 PY
 }
 
+expected_package_snapshot="$(normalize_package_snapshot "$EXPECTED_PACKAGE_SNAPSHOT")"
 initial_package_snapshot="$(snapshot_package_evidence)"
+if [[ "$initial_package_snapshot" != "$expected_package_snapshot" ]]; then
+  echo "package evidence changed since build verification" >&2
+  exit 1
+fi
 expected_sbom_raw_digest="$(
-  artifact_digest_from_snapshot "$initial_package_snapshot" "$(basename "$sbom_path")"
+  artifact_digest_from_snapshot "$expected_package_snapshot" "$(basename "$sbom_path")"
 )"
 expected_sbom_digest="$(snapshot_spdx_semantic_digest "$expected_sbom_raw_digest")"
 
@@ -145,7 +173,7 @@ common_policy=(
 for artifact in "${artifacts[@]}"; do
   artifact_name="$(basename "$artifact")"
   expected_artifact_digest="$(
-    artifact_digest_from_snapshot "$initial_package_snapshot" "$artifact_name"
+    artifact_digest_from_snapshot "$expected_package_snapshot" "$artifact_name"
   )"
   gh attestation verify "$artifact" \
     "${common_policy[@]}" \
@@ -170,7 +198,7 @@ done
 
 final_package_snapshot="$(snapshot_package_evidence)"
 final_sbom_digest="$(snapshot_spdx_semantic_digest "$expected_sbom_raw_digest")"
-if [[ "$final_package_snapshot" != "$initial_package_snapshot" \
+if [[ "$final_package_snapshot" != "$expected_package_snapshot" \
    || "$final_sbom_digest" != "$expected_sbom_digest" ]]; then
   echo "package evidence changed during attestation verification" >&2
   exit 1
