@@ -1,4 +1,4 @@
-"""Reject coherent package-evidence replacement across attestation verification."""
+"""Reject package-evidence replacement between build verification and attestation."""
 
 from __future__ import annotations
 
@@ -17,7 +17,6 @@ from cwl_context_contracts.package_evidence_verifier import (
 _SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
 _SOURCE_SHA = "a" * 40
 _SPDX_PREDICATE = "https://spdx.dev/Document/v3"
-_PROVENANCE_PREDICATE = "https://slsa.dev/provenance/v1"
 _VERSION = "0.1.0"
 _WHEEL_NAME = f"cwl_context_contracts-{_VERSION}-py3-none-any.whl"
 _SDIST_NAME = f"cwl_context_contracts-{_VERSION}.tar.gz"
@@ -68,13 +67,12 @@ def _write_bundle(
 
 
 def _fake_gh_source() -> str:
-    """Return a fake gh that swaps to another coherent bundle after final verify."""
+    """Return a fake gh that verifies the artifact and SPDX bytes it receives."""
     return r'''#!/usr/bin/env python3
 import base64
 import hashlib
 import json
 import os
-import shutil
 import sys
 from pathlib import Path
 
@@ -116,23 +114,15 @@ result = [
         "verificationResult": {"statement": statement},
     }
 ]
-print(json.dumps(result), flush=True)
-
-is_final_spdx = artifact.name.endswith(".tar.gz") and predicate_type == os.environ["SPDX_PREDICATE"]
-if is_final_spdx:
-    evidence = Path(os.environ["EVIDENCE_DIR"])
-    replacement = Path(os.environ["REPLACEMENT_DIR"])
-    for name in os.environ["REPLACEMENT_NAMES"].split(":"):
-        shutil.copyfile(replacement / name, evidence / name)
+print(json.dumps(result))
 '''
 
 
-def test_verifier_rejects_coherent_bundle_replacement_after_attestations(
+def test_verifier_rejects_coherent_bundle_replacement_after_build_snapshot(
     tmp_path: Path,
 ) -> None:
-    """Bind verification to one exact package bundle, not two valid snapshots."""
+    """Attest only the exact bundle verified and exported by the build job."""
     evidence_dir = tmp_path / "evidence"
-    replacement_dir = tmp_path / "replacement"
     original_sbom = _sbom(comment="original")
     replacement_sbom = _sbom(comment="replacement")
     _write_bundle(
@@ -141,17 +131,26 @@ def test_verifier_rejects_coherent_bundle_replacement_after_attestations(
         sdist_bytes=b"original-sdist",
         sbom=original_sbom,
     )
+    original_report = verify_package_evidence_directory(evidence_dir)
+    assert original_report.verified
+    expected_snapshot = json.dumps(
+        original_report.to_mapping(),
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+    # Model a coherent workspace replacement after the package-evidence job has
+    # already published its exact snapshot but before the attestation job signs.
     _write_bundle(
-        replacement_dir,
+        evidence_dir,
         wheel_bytes=b"replacement-wheel",
         sdist_bytes=b"replacement-sdist",
         sbom=replacement_sbom,
     )
     assert verify_package_evidence_directory(evidence_dir).verified
-    assert verify_package_evidence_directory(replacement_dir).verified
 
     signed_sbom_path = tmp_path / "signed-sbom.json"
-    signed_sbom_path.write_text(json.dumps(original_sbom), encoding="utf-8")
+    signed_sbom_path.write_text(json.dumps(replacement_sbom), encoding="utf-8")
 
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
@@ -176,10 +175,7 @@ def test_verifier_rejects_coherent_bundle_replacement_after_attestations(
             "EVIDENCE_DIR": str(evidence_dir),
             "VERIFICATION_DIR": str(verification_dir),
             "SIGNED_SBOM_PATH": str(signed_sbom_path),
-            "REPLACEMENT_DIR": str(replacement_dir),
-            "REPLACEMENT_NAMES": ":".join(
-                [_WHEEL_NAME, _SDIST_NAME, _SBOM_NAME, "SHA256SUMS"]
-            ),
+            "EXPECTED_PACKAGE_SNAPSHOT": expected_snapshot,
         }
     )
 
@@ -191,6 +187,6 @@ def test_verifier_rejects_coherent_bundle_replacement_after_attestations(
         env=env,
     )
 
-    assert verify_package_evidence_directory(evidence_dir).verified
     assert result.returncode != 0
-    assert "package evidence changed during attestation verification" in result.stderr
+    assert "package evidence changed since build verification" in result.stderr
+    assert not verification_dir.exists()
