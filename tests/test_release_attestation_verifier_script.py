@@ -40,6 +40,11 @@ def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
         "fi\n"
         "if [[ \" $* \" == *\" --predicate-type \"* ]]; then\n"
         "  printf '%s\\n' \"$GH_FAKE_SBOM_RESULT\"\n"
+        '  if [[ "${GH_FAKE_REPLACE_VERIFICATION_OUTPUTS:-0}" == "1" ]]; then\n'
+        '    output_path="$GH_FAKE_VERIFICATION_DIR/$(basename "$3").sbom.json"\n'
+        '    rm -f "$output_path"\n'
+        '    ln -s "$GH_FAKE_ATTACKER_VERIFICATION_RESULT" "$output_path"\n'
+        "  fi\n"
         "else\n"
         "  printf '[{\"verificationResult\":{\"statement\":{\"predicate\":{}}}}]\\n'\n"
         "fi\n",
@@ -57,6 +62,7 @@ def _run_verifier(
     attested_sbom: dict[str, Any] | None = None,
     include_downloaded_sbom: bool = True,
     replacement_downloaded_sbom: dict[str, Any] | None = None,
+    replace_verification_outputs: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     """Run the verifier with isolated evidence and a fake GitHub CLI."""
     evidence_dir = tmp_path / "evidence"
@@ -80,6 +86,20 @@ def _run_verifier(
             }
         }
     ]
+    attacker_result_path = tmp_path / "attacker-verification-result.json"
+    if replace_verification_outputs:
+        attacker_result_path.write_text(
+            json.dumps(
+                [
+                    {
+                        "verificationResult": {
+                            "statement": {"predicate": _EXPECTED_SBOM},
+                        }
+                    }
+                ]
+            ),
+            encoding="utf-8",
+        )
     env = os.environ.copy()
     env.update(
         {
@@ -87,6 +107,11 @@ def _run_verifier(
             "GH_FAKE_LOG": str(log_path),
             "GH_FAKE_SBOM_RESULT": json.dumps(sbom_result),
             "GH_FAKE_SBOM_PATH": str(sbom_path),
+            "GH_FAKE_REPLACE_VERIFICATION_OUTPUTS": (
+                "1" if replace_verification_outputs else "0"
+            ),
+            "GH_FAKE_VERIFICATION_DIR": str(verification_dir),
+            "GH_FAKE_ATTACKER_VERIFICATION_RESULT": str(attacker_result_path),
             "SOURCE_SHA": _SOURCE_SHA,
             "SOURCE_REF": source_ref,
             "EXPECTED_SOURCE_REF": "refs/heads/main",
@@ -245,3 +270,29 @@ def test_verifier_rejects_mid_verification_downloaded_sbom_replacement(
 
     assert result.returncode != 0
     assert "attested SPDX predicate does not match downloaded package SBOM" in result.stderr
+
+
+def test_verifier_rejects_mid_verification_output_symlink_replacement(
+    tmp_path: Path,
+) -> None:
+    """Reject verification output replaced after gh writes the signed predicate."""
+    mismatched_sbom = {
+        **_EXPECTED_SBOM,
+        "@graph": [
+            {
+                "type": "software_Package",
+                "name": "different-signed-package",
+            }
+        ],
+    }
+    result = _run_verifier(
+        tmp_path,
+        (
+            "cwl_context_contracts-0.1-py3-none-any.whl",
+            "cwl_context_contracts-0.1.tar.gz",
+        ),
+        attested_sbom=mismatched_sbom,
+        replace_verification_outputs=True,
+    )
+
+    assert result.returncode != 0
