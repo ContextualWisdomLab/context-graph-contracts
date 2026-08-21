@@ -9,13 +9,27 @@ import os
 import subprocess
 from pathlib import Path
 
+from cwl_context_contracts.package_evidence_verifier import (
+    verify_package_evidence_directory,
+)
+
 _SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
 _SOURCE_SHA = "a" * 40
 _ARTIFACT_BYTES = b"artifact"
 _ARTIFACT_DIGEST = hashlib.sha256(_ARTIFACT_BYTES).hexdigest()
 _PROVENANCE_PREDICATE = "https://slsa.dev/provenance/v1"
 _SPDX_PREDICATE = "https://spdx.dev/Document/v3"
-_SBOM = {"name": "cwl-context-contracts"}
+_SBOM = {
+    "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
+    "@graph": [
+        {"type": "CreationInfo", "specVersion": "3.0.1"},
+        {
+            "type": "software_Package",
+            "name": "cwl-context-contracts",
+            "software_packageVersion": "0.1",
+        },
+    ],
+}
 
 
 def _signed_result(predicate_type: str, predicate: object) -> str:
@@ -52,13 +66,27 @@ def test_every_attestation_lookup_selects_its_predicate_explicitly(
     """Do not rely on the GitHub CLI default predicate when multiple types exist."""
     evidence_dir = tmp_path / "evidence"
     evidence_dir.mkdir()
-    (evidence_dir / "cwl_context_contracts-0.1-py3-none-any.whl").write_bytes(
-        _ARTIFACT_BYTES
-    )
-    (evidence_dir / "cwl_context_contracts-0.1.tar.gz").write_bytes(_ARTIFACT_BYTES)
-    (evidence_dir / "cwl-context-contracts.spdx.json").write_text(
-        json.dumps(_SBOM),
+    wheel = evidence_dir / "cwl_context_contracts-0.1-py3-none-any.whl"
+    sdist = evidence_dir / "cwl_context_contracts-0.1.tar.gz"
+    sbom_path = evidence_dir / "cwl-context-contracts.spdx.json"
+    wheel.write_bytes(_ARTIFACT_BYTES)
+    sdist.write_bytes(_ARTIFACT_BYTES)
+    sbom_path.write_text(json.dumps(_SBOM), encoding="utf-8")
+    evidence_files = [wheel, sdist, sbom_path]
+    checksum_lines = [
+        f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}"
+        for path in sorted(evidence_files)
+    ]
+    (evidence_dir / "SHA256SUMS").write_text(
+        "\n".join(checksum_lines) + "\n",
         encoding="utf-8",
+    )
+    report = verify_package_evidence_directory(evidence_dir)
+    assert report.verified
+    package_snapshot = json.dumps(
+        report.to_mapping(),
+        sort_keys=True,
+        separators=(",", ":"),
     )
 
     bin_dir = tmp_path / "bin"
@@ -93,6 +121,7 @@ def test_every_attestation_lookup_selects_its_predicate_explicitly(
                 ".github/workflows/supply-chain.yml"
             ),
             "SPDX_PREDICATE": _SPDX_PREDICATE,
+            "EXPECTED_PACKAGE_SNAPSHOT": package_snapshot,
             "EVIDENCE_DIR": str(evidence_dir),
             "VERIFICATION_DIR": str(tmp_path / "verification"),
         }
