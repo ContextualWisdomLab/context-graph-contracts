@@ -73,7 +73,7 @@ def _signed_statement_from_verified_candidate(candidate: Any) -> dict[str, Any] 
 def _matching_artifact_statements(
     verification: list[Any], expected_artifact_digest: str
 ) -> list[dict[str, Any]]:
-    """Return signed verified statements whose subject names the exact artifact digest."""
+    """Return signed statements whose subject names the exact artifact digest."""
     statements: list[dict[str, Any]] = []
     for candidate in verification:
         statement = _signed_statement_from_verified_candidate(candidate)
