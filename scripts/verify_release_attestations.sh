@@ -134,6 +134,44 @@ print(hashlib.sha256(normalized_json(expected)).hexdigest())
 PY
 }
 
+snapshot_artifact_digest() {
+  python - "$1" <<'PY'
+from __future__ import annotations
+
+import hashlib
+import os
+import stat
+import sys
+from pathlib import Path
+
+
+path = Path(sys.argv[1])
+try:
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = os.open(path, flags)
+    try:
+        opened_stat = os.fstat(descriptor)
+        if not stat.S_ISREG(opened_stat.st_mode):
+            raise ValueError(f"release artifact is not a regular file: {path}")
+        digest = hashlib.sha256()
+        while chunk := os.read(descriptor, 1024 * 1024):
+            digest.update(chunk)
+    finally:
+        os.close(descriptor)
+
+    path_stat = os.stat(path, follow_symlinks=False)
+    if not stat.S_ISREG(path_stat.st_mode):
+        raise ValueError(f"release artifact path stopped being regular: {path}")
+    if (opened_stat.st_dev, opened_stat.st_ino) != (path_stat.st_dev, path_stat.st_ino):
+        raise ValueError(f"release artifact path changed while being read: {path}")
+except (OSError, ValueError) as exc:
+    print(f"unable to snapshot release artifact strictly: {exc}", file=sys.stderr)
+    raise SystemExit(1) from exc
+
+print(digest.hexdigest())
+PY
+}
+
 expected_sbom_digest="$(snapshot_downloaded_sbom_digest)"
 
 if [[ -e "$VERIFICATION_DIR" || -L "$VERIFICATION_DIR" ]]; then
@@ -155,11 +193,13 @@ common_policy=(
 
 for artifact in "${artifacts[@]}"; do
   artifact_name="$(basename "$artifact")"
+  expected_artifact_digest="$(snapshot_artifact_digest "$artifact")"
   gh attestation verify "$artifact" \
     "${common_policy[@]}" \
     --format json \
     | python "$SCRIPT_DIR/verify_attestation_output.py" \
-        "$VERIFICATION_DIR/$artifact_name.provenance.json"
+        "$VERIFICATION_DIR/$artifact_name.provenance.json" \
+        "$expected_artifact_digest"
 
   sbom_verification="$VERIFICATION_DIR/$artifact_name.sbom.json"
   gh attestation verify "$artifact" \
@@ -168,5 +208,6 @@ for artifact in "${artifacts[@]}"; do
     --format json \
     | python "$SCRIPT_DIR/verify_attestation_output.py" \
         "$sbom_verification" \
+        "$expected_artifact_digest" \
         "$expected_sbom_digest"
 done
