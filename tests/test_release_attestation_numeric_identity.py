@@ -10,6 +10,10 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from cwl_context_contracts.package_evidence_verifier import (
+    verify_package_evidence_directory,
+)
+
 _SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
 _SOURCE_SHA = "a" * 40
 _ARTIFACT_BYTES = b"artifact"
@@ -48,19 +52,35 @@ def test_spdx_predicate_identity_rejects_distinct_large_decimal_values(
 
     downloaded_sbom = (
         '{"@context":"https://spdx.org/rdf/3.0.1/spdx-context.jsonld",'
-        '"@graph":[{"type":"software_Package",'
-        '"name":"cwl-context-contracts",'
+        '"@graph":[{"type":"CreationInfo","specVersion":"3.0.1"},'
+        '{"type":"software_Package","name":"cwl-context-contracts",'
+        '"software_packageVersion":"0.1",'
         '"precisionProbe":9007199254740992.0}]}'
     )
     signed_sbom = (
         '{"@context":"https://spdx.org/rdf/3.0.1/spdx-context.jsonld",'
-        '"@graph":[{"type":"software_Package",'
-        '"name":"cwl-context-contracts",'
+        '"@graph":[{"type":"CreationInfo","specVersion":"3.0.1"},'
+        '{"type":"software_Package","name":"cwl-context-contracts",'
+        '"software_packageVersion":"0.1",'
         '"precisionProbe":9007199254740993.0}]}'
     )
-    (evidence_dir / "cwl-context-contracts.spdx.json").write_text(
-        downloaded_sbom,
+    sbom_path = evidence_dir / "cwl-context-contracts.spdx.json"
+    sbom_path.write_text(downloaded_sbom, encoding="utf-8")
+    evidence_files = [wheel, sdist, sbom_path]
+    checksum_lines = [
+        f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}"
+        for path in sorted(evidence_files)
+    ]
+    (evidence_dir / "SHA256SUMS").write_text(
+        "\n".join(checksum_lines) + "\n",
         encoding="utf-8",
+    )
+    package_report = verify_package_evidence_directory(evidence_dir)
+    assert package_report.verified
+    package_snapshot = json.dumps(
+        package_report.to_mapping(),
+        sort_keys=True,
+        separators=(",", ":"),
     )
 
     artifact_digest = hashlib.sha256(_ARTIFACT_BYTES).hexdigest()
@@ -130,6 +150,7 @@ def test_spdx_predicate_identity_rejects_distinct_large_decimal_values(
                 ".github/workflows/supply-chain.yml"
             ),
             "SPDX_PREDICATE": "https://spdx.dev/Document/v3",
+            "EXPECTED_PACKAGE_SNAPSHOT": package_snapshot,
             "EVIDENCE_DIR": str(evidence_dir),
             "VERIFICATION_DIR": str(tmp_path / "verification"),
         }
