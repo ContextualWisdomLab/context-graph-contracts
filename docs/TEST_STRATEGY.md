@@ -85,14 +85,24 @@
   source distribution, both SLSA and SPDX predicate verification, and
   machine-readable verification-result retention under the exact source SHA.
   The executable verifier additionally requires the downloaded canonical SPDX
-  document to be a regular file, parses both the retained document and GitHub
-  CLI verification output with strict bounded JSON semantics, and rejects a
-  custom SPDX attestation unless at least one verified statement's parsed
-  predicate exactly equals the downloaded canonical SBOM. Predicate type alone
-  is therefore insufficient evidence of SBOM identity. Pull-request tests prove
-  the workflow contract only; operational attestation verification is not
-  considered passing evidence until this same job executes successfully on an
-  exact integrated protected `main` SHA.
+  document to be a regular file, parses the retained document with strict
+  bounded JSON semantics, and treats `gh attestation verify --format json` as a
+  paired verified-bundle/result envelope: it requires `verificationResult` to
+  exist, then decodes the exact base64 `attestation.bundle.dsseEnvelope.payload`,
+  requires the in-toto payload type, and parses the signed statement itself with
+  duplicate-safe exact-decimal semantics. Artifact subjects and the SPDX
+  predicate are compared only from this signed DSSE statement, never from the
+  convenience protobuf/protojson `verificationResult.statement` identity view.
+  The large-decimal regression deliberately gives the signed payload
+  `9007199254740993.0` while the parsed statement view is rounded to
+  `9007199254740992`, proving that the rounded view cannot authorize admission.
+  Missing/malformed bundle structure, invalid base64, wrong payload type,
+  subject drift, predicate drift, mutable SBOM/output paths, and cross-check
+  artifact replacement all fail closed. Predicate type alone is therefore
+  insufficient evidence of SBOM identity. Pull-request tests prove the workflow
+  contract only; operational attestation verification is not considered passing
+  evidence until this same job executes successfully on an exact integrated
+  protected `main` SHA.
 - Verifier regressions fail closed on package-version drift, missing,
   unexpected, duplicate, malformed, or digest-different profile/resource
   evidence, type-confused counts, unreadable or invalid UTF-8/JSON input, and
