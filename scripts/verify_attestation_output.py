@@ -3,62 +3,21 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 import os
 import stat
 import sys
 from pathlib import Path
 from typing import Any
 
-_MAX_JSON_BYTES = 16 * 1024 * 1024
-
-
-class DuplicateJsonMember(ValueError):
-    """Signal that an input JSON object repeats a member name."""
-
-
-def _reject_duplicate_members(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    """Build a JSON object only when every member name is unique."""
-    result: dict[str, Any] = {}
-    for key, value in pairs:
-        if key in result:
-            raise DuplicateJsonMember(f"duplicate JSON member: {key}")
-        result[key] = value
-    return result
-
-
-def _reject_nonstandard_constant(value: str) -> None:
-    """Reject NaN and Infinity extensions because they are not valid JSON."""
-    raise ValueError(f"non-standard JSON numeric constant: {value}")
+from strict_json_identity import MAX_JSON_BYTES, load_strict_json, semantic_json_sha256
 
 
 def _read_bounded_stdin() -> bytes:
     """Read at most 16 MiB of attestation JSON plus one overflow sentinel byte."""
-    data = sys.stdin.buffer.read(_MAX_JSON_BYTES + 1)
-    if len(data) > _MAX_JSON_BYTES:
+    data = sys.stdin.buffer.read(MAX_JSON_BYTES + 1)
+    if len(data) > MAX_JSON_BYTES:
         raise ValueError("GitHub attestation verification JSON exceeds 16 MiB")
     return data
-
-
-def _load_strict_json(data: bytes) -> Any:
-    """Parse UTF-8 JSON without duplicate members or non-standard numbers."""
-    return json.loads(
-        data.decode("utf-8"),
-        object_pairs_hook=_reject_duplicate_members,
-        parse_constant=_reject_nonstandard_constant,
-    )
-
-
-def _normalized_json(value: Any) -> bytes:
-    """Return deterministic UTF-8 JSON used only for parsed-value identity."""
-    return json.dumps(
-        value,
-        ensure_ascii=False,
-        sort_keys=True,
-        separators=(",", ":"),
-        allow_nan=False,
-    ).encode("utf-8")
 
 
 def _require_nonempty_verification_array(verification: Any) -> list[Any]:
@@ -105,10 +64,7 @@ def _require_matching_spdx_predicate(
     for statement in statements:
         if "predicate" not in statement:
             continue
-        candidate_digest = hashlib.sha256(
-            _normalized_json(statement["predicate"])
-        ).hexdigest()
-        if candidate_digest == expected_digest:
+        if semantic_json_sha256(statement["predicate"]) == expected_digest:
             return
     raise ValueError("attested SPDX predicate does not match downloaded package SBOM")
 
@@ -171,7 +127,7 @@ def main(argv: list[str]) -> int:
 
     try:
         data = _read_bounded_stdin()
-        verification = _require_nonempty_verification_array(_load_strict_json(data))
+        verification = _require_nonempty_verification_array(load_strict_json(data))
         statements = _matching_artifact_statements(
             verification, expected_artifact_digest
         )
