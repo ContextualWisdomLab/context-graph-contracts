@@ -34,7 +34,7 @@ def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
     gh_path.write_text(
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n"
-        'printf \'%s\\n\' \"$*\" >> \"$GH_FAKE_LOG\"\n'
+        'printf \'%s\\n\' "$*" >> "$GH_FAKE_LOG"\n'
         'if [[ -n "${GH_FAKE_REPLACEMENT_SBOM:-}" ]]; then\n'
         '  printf \'%s\\n\' "$GH_FAKE_REPLACEMENT_SBOM" > "$GH_FAKE_SBOM_PATH"\n'
         "fi\n"
@@ -242,7 +242,10 @@ def test_verifier_rejects_attested_spdx_predicate_drift(tmp_path: Path) -> None:
     )
 
     assert result.returncode != 0
-    assert "attested SPDX predicate does not match downloaded package SBOM" in result.stderr
+    assert (
+        "attested SPDX predicate does not match downloaded package SBOM"
+        in result.stderr
+    )
 
 
 def test_verifier_rejects_mid_verification_downloaded_sbom_replacement(
@@ -269,7 +272,10 @@ def test_verifier_rejects_mid_verification_downloaded_sbom_replacement(
     )
 
     assert result.returncode != 0
-    assert "attested SPDX predicate does not match downloaded package SBOM" in result.stderr
+    assert (
+        "attested SPDX predicate does not match downloaded package SBOM"
+        in result.stderr
+    )
 
 
 def test_verifier_rejects_mid_verification_output_symlink_replacement(
