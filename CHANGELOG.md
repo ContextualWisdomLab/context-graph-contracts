@@ -20,6 +20,10 @@ All notable changes to this project are documented in this file.
   members and Python-only non-finite constants, requires UTF-8 metadata, and
   reports post-check artifact read failures as structured mismatches instead of
   allowing untrusted evidence I/O to escape the verification boundary.
+- Protected-main custom SPDX attestation verification now requires the parsed
+  signed predicate to exactly equal the downloaded canonical SPDX 3.0.1
+  document for each package artifact; matching predicate type and producer
+  identity alone no longer admit a different signed SBOM.
 - Data-management framework references now require a structural lowercase
   `https://` official locator even when JSON Schema `format` is annotation-only,
   and assessment profiles/results carry an exact semantic `profile_version` so
