@@ -66,10 +66,8 @@ def test_protected_main_revalidates_downloaded_evidence_before_attesting() -> No
 
     assert download_index < verify_index < attest_index
     verification_step = workflow_text[verify_index:attest_index]
-    assert (
-        "PYTHONPATH=src python -m cwl_context_contracts.package_evidence_verifier evidence"
-        in verification_step
-    )
+    assert "PYTHONPATH: src" in verification_step
+    assert 'raise SystemExit(main(["evidence"]))' in verification_step
 
 
 def test_receipt_smoke_uses_syft_spdx_package_version_field() -> None:
