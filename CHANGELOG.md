@@ -24,6 +24,15 @@ All notable changes to this project are documented in this file.
   signed predicate to exactly equal the downloaded canonical SPDX 3.0.1
   document for each package artifact; matching predicate type and producer
   identity alone no longer admit a different signed SBOM.
+- Protected-main signing now re-runs strict package-evidence admission after
+  downloading the exact-head bundle and before the first attestation action, so
+  corrupted, mixed, or download-drifted wheel/source/SPDX/checksum evidence
+  cannot be converted into newly valid signed release evidence.
+- Protected-main attestation verification now snapshots each release artifact
+  before GitHub lookup and requires both the provenance and SPDX verified
+  in-toto statements to carry that exact SHA-256 subject digest. SPDX predicate
+  identity is evaluated only inside subject-matched statements, preventing
+  provenance and SBOM evidence for different package bytes from being spliced.
 - Data-management framework references now require a structural lowercase
   `https://` official locator even when JSON Schema `format` is annotation-only,
   and assessment profiles/results carry an exact semantic `profile_version` so
@@ -137,6 +146,10 @@ All notable changes to this project are documented in this file.
   detector; it immediately verifies wheel/source SLSA and SPDX attestations
   against exact repository/ref/source/signer/OIDC/hosted-runner identity and
   retains machine-readable verifier results under the exact source SHA.
+- ADR 0015 documents the protected-release attestation admission boundary,
+  including downloaded-bundle re-admission, in-toto subject-digest binding,
+  canonical SPDX 3 predicate identity, mutable-path rejection, and the explicit
+  separation between deterministic evidence consistency and release authority.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
