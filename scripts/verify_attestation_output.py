@@ -39,6 +39,8 @@ def _signed_statement_from_verified_candidate(candidate: Any) -> dict[str, Any] 
     result = candidate.get("verificationResult")
     if not isinstance(result, dict):
         return None
+    if not isinstance(result.get("statement"), dict):
+        raise ValueError("verified attestation is missing its parsed statement")
 
     attestation = candidate.get("attestation")
     if not isinstance(attestation, dict):
