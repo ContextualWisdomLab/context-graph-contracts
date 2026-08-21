@@ -13,6 +13,12 @@ def _protected_main_job(workflow_text: str) -> str:
     return workflow_text.split("  attest-protected-main:\n", maxsplit=1)[1]
 
 
+def _package_evidence_job(workflow_text: str) -> str:
+    """Return the package-evidence job source before protected-main attestation."""
+    jobs = workflow_text.split("  package-evidence:\n", maxsplit=1)[1]
+    return jobs.split("  attest-protected-main:\n", maxsplit=1)[0]
+
+
 def test_protected_main_invokes_executable_attestation_verifier() -> None:
     """Require the protected-main workflow to execute the regression-tested verifier."""
     workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
@@ -31,6 +37,26 @@ def test_protected_main_invokes_executable_attestation_verifier() -> None:
     assert "EVIDENCE_DIR: evidence" in job
     assert "VERIFICATION_DIR: attestation-verification" in job
     assert "run: bash scripts/verify_release_attestations.sh" in job
+
+
+def test_protected_main_binds_attestations_to_build_job_package_snapshot() -> None:
+    """Carry the verified build-job package identity across the job trust boundary."""
+    workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
+    package_job = _package_evidence_job(workflow_text)
+    attestation_job = _protected_main_job(workflow_text)
+
+    expected_output = (
+        "package-snapshot: "
+        "${{ steps.package-evidence-verification.outputs.package_snapshot }}"
+    )
+    assert expected_output in package_job
+    assert "id: package-evidence-verification" in package_job
+    assert 'echo "package_snapshot=$package_snapshot" >> "$GITHUB_OUTPUT"' in package_job
+    assert (
+        "EXPECTED_PACKAGE_SNAPSHOT: "
+        "${{ needs.package-evidence.outputs.package-snapshot }}"
+        in attestation_job
+    )
 
 
 def test_protected_main_pins_python_before_python_backed_verification() -> None:
