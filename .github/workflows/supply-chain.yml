@@ -14,6 +14,8 @@ concurrency:
 
 jobs:
   package-evidence:
+    outputs:
+      package-snapshot: ${{ steps.package-evidence-verification.outputs.package_snapshot }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -83,9 +85,21 @@ jobs:
             sha256sum -c SHA256SUMS
           )
       - name: Verify package evidence with the release tool
-        run: >-
-          uv run --frozen cwl-context-package-evidence-verify dist
-          > dist/package-evidence-verification.json
+        id: package-evidence-verification
+        run: |
+          uv run --frozen cwl-context-package-evidence-verify dist \
+            > dist/package-evidence-verification.json
+          package_snapshot="$(python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("dist/package-evidence-verification.json").read_text(encoding="utf-8")
+          )
+          print(json.dumps(report, sort_keys=True, separators=(",", ":")))
+          PY
+          )"
+          echo "package_snapshot=$package_snapshot" >> "$GITHUB_OUTPUT"
       - name: Upload checked-out commit package evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -123,12 +137,39 @@ jobs:
           path: evidence
       - name: Verify downloaded package evidence before attestation
         env:
+          EXPECTED_PACKAGE_SNAPSHOT: ${{ needs.package-evidence.outputs.package-snapshot }}
           PYTHONPATH: src
         run: |
           python - <<'PY'
-          from cwl_context_contracts.package_evidence_verifier import main
+          import json
+          import os
+          from pathlib import Path
 
-          raise SystemExit(main(["evidence"]))
+          from cwl_context_contracts.package_evidence_verifier import (
+              verify_package_evidence_directory,
+          )
+
+          report = verify_package_evidence_directory(Path("evidence"))
+          if not report.verified:
+              raise SystemExit(
+                  "downloaded package evidence is not internally coherent: "
+                  + ",".join(report.mismatches)
+              )
+          current_snapshot = json.dumps(
+              report.to_mapping(),
+              sort_keys=True,
+              separators=(",", ":"),
+          )
+          try:
+              expected_snapshot = json.dumps(
+                  json.loads(os.environ["EXPECTED_PACKAGE_SNAPSHOT"]),
+                  sort_keys=True,
+                  separators=(",", ":"),
+              )
+          except (KeyError, json.JSONDecodeError) as exc:
+              raise SystemExit("build package snapshot is missing or malformed") from exc
+          if current_snapshot != expected_snapshot:
+              raise SystemExit("package evidence changed since build verification")
           PY
       - name: Attest SLSA build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
@@ -153,6 +194,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/supply-chain.yml
           SPDX_PREDICATE: https://spdx.dev/Document/v3
+          EXPECTED_PACKAGE_SNAPSHOT: ${{ needs.package-evidence.outputs.package-snapshot }}
           EVIDENCE_DIR: evidence
           VERIFICATION_DIR: attestation-verification
         run: bash scripts/verify_release_attestations.sh
