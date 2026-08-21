@@ -50,12 +50,36 @@ def _candidate(
     }
 
 
+def _subject_statement_payload() -> str:
+    """Return base64 for one exact signed statement matching the test artifact."""
+    statement = {
+        "_type": "https://in-toto.io/Statement/v1",
+        "subject": [{"digest": {"sha256": _ARTIFACT_DIGEST}}],
+        "predicateType": "https://slsa.dev/provenance/v1",
+        "predicate": {},
+    }
+    serialized = json.dumps(statement, separators=(",", ":")).encode("utf-8")
+    return base64.b64encode(serialized).decode("ascii")
+
+
 def test_verifier_requires_signed_bundle_for_verified_candidate(tmp_path: Path) -> None:
     """A parsed verification result without its paired signed bundle is not evidence."""
     result = _run_verifier(tmp_path, [{"verificationResult": {"statement": {}}}])
 
     assert result.returncode != 0
     assert "verified attestation is missing its signed bundle" in result.stderr
+    assert not (tmp_path / "verified.json").exists()
+
+
+def test_verifier_requires_parsed_statement_marker_from_gh(tmp_path: Path) -> None:
+    """A bundle is admissible only when gh also reports a parsed verified statement."""
+    candidate = _candidate(payload=_subject_statement_payload())
+    candidate["verificationResult"] = {}
+
+    result = _run_verifier(tmp_path, [candidate])
+
+    assert result.returncode != 0
+    assert "verified attestation is missing its parsed statement" in result.stderr
     assert not (tmp_path / "verified.json").exists()
 
 
