@@ -10,6 +10,10 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from cwl_context_contracts.package_evidence_verifier import (
+    verify_package_evidence_directory,
+)
+
 _SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
 _SOURCE_SHA = "a" * 40
 _REPOSITORY = "ContextualWisdomLab/context-graph-contracts"
@@ -21,10 +25,12 @@ _REPLACEMENT_ARTIFACT_BYTES = b"replacement-artifact"
 _EXPECTED_SBOM: dict[str, Any] = {
     "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
     "@graph": [
+        {"type": "CreationInfo", "specVersion": "3.0.1"},
         {
             "type": "software_Package",
             "name": "cwl-context-contracts",
-        }
+            "software_packageVersion": "0.1",
+        },
     ],
 }
 
@@ -94,6 +100,18 @@ def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
     return bin_dir, log_path
 
 
+def _package_snapshot(evidence_dir: Path) -> str:
+    """Return the canonical build-job snapshot for one valid evidence bundle."""
+    report = verify_package_evidence_directory(evidence_dir)
+    if not report.verified:
+        return "{}"
+    return json.dumps(
+        report.to_mapping(),
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
 def _run_verifier(
     tmp_path: Path,
     artifact_names: tuple[str, ...],
@@ -114,6 +132,16 @@ def _run_verifier(
     if include_downloaded_sbom:
         sbom_path.write_text(
             json.dumps(_EXPECTED_SBOM),
+            encoding="utf-8",
+        )
+        evidence_files = [evidence_dir / name for name in artifact_names]
+        evidence_files.append(sbom_path)
+        checksum_lines = [
+            f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}"
+            for path in sorted(evidence_files)
+        ]
+        (evidence_dir / "SHA256SUMS").write_text(
+            "\n".join(checksum_lines) + "\n",
             encoding="utf-8",
         )
 
@@ -166,6 +194,7 @@ def _run_verifier(
             "REPOSITORY": _REPOSITORY,
             "SIGNER_WORKFLOW": _SIGNER_WORKFLOW,
             "SPDX_PREDICATE": "https://spdx.dev/Document/v3",
+            "EXPECTED_PACKAGE_SNAPSHOT": _package_snapshot(evidence_dir),
             "EVIDENCE_DIR": str(evidence_dir),
             "VERIFICATION_DIR": str(verification_dir),
         }
