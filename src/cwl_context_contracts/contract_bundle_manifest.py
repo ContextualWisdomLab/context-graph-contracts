@@ -6,7 +6,9 @@ import hashlib
 import json
 from dataclasses import dataclass
 from importlib.metadata import version
-from importlib.resources import files
+
+# Python >=3.11 is the supported runtime contract.
+from importlib.resources import files  # nosemgrep
 
 from .conformance import available_conformance_profile_names
 from .contracts import available_contract_names

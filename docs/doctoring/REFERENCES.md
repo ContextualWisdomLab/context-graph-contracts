@@ -24,7 +24,23 @@ EDM Association. (2025, June 30). *Announcing DCAM v3: Meet the new standard for
 
 EDM Association. (n.d.). *Data management - DCAM*. Retrieved August 18, 2026, from https://edmcouncil.org/frameworks/dcam/
 
-GitHub. (n.d.). *Using artifact attestations to establish provenance for builds*. GitHub Docs. Retrieved August 17, 2026, from https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations
+GitHub. (2026a). *GitHub CLI attestation verification implementation* (Commit a255baf71d13fe5947a4eb7ad521ffd412d64cee) [Source code]. GitHub. https://github.com/cli/cli/blob/a255baf71d13fe5947a4eb7ad521ffd412d64cee/pkg/cmd/attestation/verification/sigstore.go
+
+GitHub. (2026b). *GitHub CLI attestation API result model* (Commit a255baf71d13fe5947a4eb7ad521ffd412d64cee) [Source code]. GitHub. https://github.com/cli/cli/blob/a255baf71d13fe5947a4eb7ad521ffd412d64cee/pkg/cmd/attestation/api/attestation.go
+
+GitHub. (2026c). *actions/attest* (Version 4.2.2) [Computer software]. GitHub. https://github.com/actions/attest/tree/1e69f48acb82d1966a394da916b4c1698aa569d6
+
+GitHub. (2026d). *@actions/attest GitHub Actions provenance predicate implementation* (Commit 193fa46c20fde8b0ed54194bc08b841c78c0776d) [Source code]. GitHub. https://github.com/actions/toolkit/blob/193fa46c20fde8b0ed54194bc08b841c78c0776d/packages/attest/src/provenance.ts
+
+GitHub. (n.d.-a). *gh attestation verify*. GitHub CLI manual. Retrieved August 21, 2026, from https://cli.github.com/manual/gh_attestation_verify
+
+GitHub. (n.d.-b). *Using artifact attestations to establish provenance for builds*. GitHub Docs. Retrieved August 17, 2026, from https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations
+
+in-toto. (n.d.-a). *Statement layer specification* (Attestation Framework Version 1.2). Retrieved August 21, 2026, from https://github.com/in-toto/attestation/blob/main/spec/v1/statement.md
+
+in-toto. (n.d.-b). *DigestSet field type specification* (Attestation Framework Version 1.2). Retrieved August 21, 2026, from https://github.com/in-toto/attestation/blob/main/spec/v1/digest_set.md
+
+in-toto. (n.d.-c). *Predicate type: SPDX (v3)*. Retrieved August 21, 2026, from https://github.com/in-toto/attestation/blob/main/spec/predicates/spdx.md
 
 Jensen, C. S., & Snodgrass, R. T. (1996). Semantics of time-varying information. *Information Systems, 21*(4), 311–352. https://doi.org/10.1016/0306-4379(96)00016-8
 
@@ -45,6 +61,10 @@ National Institute of Standards and Technology. (2023, March 7). *Decision to re
 Peabody, B., Davis, K. R., & Campbell, B. (2024). *Universally unique identifiers (UUIDs)* (RFC 9562). RFC Editor. https://www.rfc-editor.org/rfc/rfc9562
 
 Rundgren, A., Jordan, B., & Erdtman, S. (2020). *JSON Canonicalization Scheme (JCS)* (RFC 8785). RFC Editor. https://www.rfc-editor.org/rfc/rfc8785
+
+Sigstore Project. (2026a). *sigstore-go verification result implementation* (Version 1.3.0; Commit 22d3691c7b8e0c5530fae3c05577690bfef5cd00) [Source code]. GitHub. https://github.com/sigstore/sigstore-go/blob/22d3691c7b8e0c5530fae3c05577690bfef5cd00/pkg/verify/signed_entity.go
+
+Sigstore Project. (2026b). *DSSE envelope protobuf specification* (Commit 15d97a6d6a3fc3190dd75a8fd8022102a9f8545e) [Source code]. GitHub. https://github.com/sigstore/protobuf-specs/blob/15d97a6d6a3fc3190dd75a8fd8022102a9f8545e/protos/envelope.proto
 
 SLSA Community. (2025). *SLSA specification* (Version 1.2). https://slsa.dev/spec/v1.2/
 

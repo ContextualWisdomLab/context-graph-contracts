@@ -20,6 +20,21 @@ All notable changes to this project are documented in this file.
   members and Python-only non-finite constants, requires UTF-8 metadata, and
   reports post-check artifact read failures as structured mismatches instead of
   allowing untrusted evidence I/O to escape the verification boundary.
+- Protected-main custom SPDX attestation verification now derives semantic
+  identity from the exact signed in-toto JSON in the paired verified bundle's
+  DSSE payload rather than from `verificationResult.statement`'s parsed
+  protobuf/protojson view. The signed subject must bind the snapshotted package
+  artifact and the signed predicate must exactly equal the downloaded canonical
+  SPDX 3.0.1 document under lossless decimal JSON semantics.
+- Protected-main signing now re-runs strict package-evidence admission after
+  downloading the exact-head bundle and before the first attestation action, so
+  corrupted, mixed, or download-drifted wheel/source/SPDX/checksum evidence
+  cannot be converted into newly valid signed release evidence.
+- Protected-main attestation verification now snapshots each release artifact
+  before GitHub lookup and requires both the provenance and SPDX signed DSSE
+  statements to carry that exact SHA-256 subject digest. SPDX predicate identity
+  is evaluated only inside subject-matched signed statements, preventing
+  provenance and SBOM evidence for different package bytes from being spliced.
 - Data-management framework references now require a structural lowercase
   `https://` official locator even when JSON Schema `format` is annotation-only,
   and assessment profiles/results carry an exact semantic `profile_version` so
@@ -31,6 +46,11 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- Dedicated exact-head release-package reproducibility acceptance that builds
+  wheel and source distribution from two independent clean checkouts with a
+  shared commit-derived `SOURCE_DATE_EPOCH`, rejects artifact-name or byte drift
+  and symlink/path substitution, and retains SHA-256 evidence under the exact
+  workflow commit identity.
 - Framework-neutral `data-management-framework.schema.json` for relating
   CWL-authored capability, evidence, and assessment identifiers to external
   data-management framework references while reusing canonical authority,
@@ -117,7 +137,7 @@ All notable changes to this project are documented in this file.
   same-version wheel/source/SPDX checksum set, reject malformed or escaping
   checksum names, refuse symlinked required evidence, recalculate every SHA-256
   digest, and require exactly one SPDX 3.0.1 `cwl-context-contracts` package
-  whose `packageVersion` equals the wheel/source release version without
+  whose `software_packageVersion` equals the wheel/source release version without
   promoting checksum equality to artifact provenance or release authority.
 - Composite `cwl-context-release-evidence-admit` command and
   `evaluate_release_evidence_admission()` API that combine installed semantic
@@ -127,6 +147,16 @@ All notable changes to this project are documented in this file.
   from different releases from being spliced into one positive decision while
   leaving protected-main provenance, attestation, independent review, release
   authorization, and runtime authorization to their owning gates.
+- Protected-main supply-chain admission now signs the one canonical SPDX 3.0.1
+  JSON-LD through explicit in-toto `https://spdx.dev/Document/v3` custom-predicate
+  mode, avoiding pinned `actions/attest` v4.2.2's SPDX-2 field-based automatic
+  detector; it immediately verifies wheel/source SLSA and SPDX attestations
+  against exact repository/ref/source/signer/OIDC/hosted-runner identity and
+  retains machine-readable verifier results under the exact source SHA.
+- ADR 0015 documents the protected-release attestation admission boundary,
+  including downloaded-bundle re-admission, exact signed-DSSE subject/predicate
+  identity, mutable-path rejection, and the explicit separation between
+  deterministic evidence consistency and release authority.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and

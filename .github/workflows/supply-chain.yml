@@ -14,6 +14,8 @@ concurrency:
 
 jobs:
   package-evidence:
+    outputs:
+      package-snapshot: ${{ steps.package-evidence-verification.outputs.package_snapshot }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,7 +30,67 @@ jobs:
           version: "0.11.32"
           enable-cache: false
       - run: uv lock --check
-      - run: uv build --wheel --sdist --out-dir dist
+      - name: Bind release builds to the exact checkout commit
+        id: source
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          source_sha="$(git rev-parse HEAD)"
+          if [[ "$source_sha" != "$EXPECTED_SHA" ]]; then
+            echo "package build tree does not match the workflow checkout SHA" >&2
+            exit 1
+          fi
+          source_date_epoch="$(git show -s --format=%ct HEAD)"
+          if [[ ! "$source_date_epoch" =~ ^[0-9]+$ ]]; then
+            echo "source commit timestamp is not an integer epoch" >&2
+            exit 1
+          fi
+          echo "source_date_epoch=$source_date_epoch" >> "$GITHUB_OUTPUT"
+      - name: Build release packages for package evidence
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.source.outputs.source_date_epoch }}
+        run: uv build --wheel --sdist --out-dir dist
+      - name: Checkout exact candidate for reproducibility witness
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          path: reproducibility-source
+          persist-credentials: false
+      - name: Verify witness checkout and dependency lock
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          witness_sha="$(git -C reproducibility-source rev-parse HEAD)"
+          if [[ "$witness_sha" != "$EXPECTED_SHA" ]]; then
+            echo "reproducibility witness does not match the workflow checkout SHA" >&2
+            exit 1
+          fi
+          (cd reproducibility-source && uv lock --check)
+      - name: Build independent reproducibility witness
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.source.outputs.source_date_epoch }}
+        run: |
+          (cd reproducibility-source && uv build --wheel --sdist --out-dir ../reproducibility-build)
+      - name: Bind package-evidence bytes to reproducibility proof
+        run: |
+          mkdir package-reproducibility-evidence
+          python scripts/verify_reproducible_package_builds.py dist reproducibility-build \
+            | tee package-reproducibility-evidence/verification.txt
+          (
+            cd dist
+            sha256sum *.whl *.tar.gz
+          ) > package-reproducibility-evidence/package-evidence-SHA256SUMS
+          (
+            cd reproducibility-build
+            sha256sum *.whl *.tar.gz
+          ) > package-reproducibility-evidence/witness-SHA256SUMS
+      - name: Retain package-evidence reproducibility proof
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-reproducibility-${{ github.sha }}
+          path: package-reproducibility-evidence
+          if-no-files-found: error
+          retention-days: 7
       - name: Install the built wheel into an isolated SBOM root
         id: sbom-root
         run: |
@@ -83,9 +145,21 @@ jobs:
             sha256sum -c SHA256SUMS
           )
       - name: Verify package evidence with the release tool
-        run: >-
-          uv run --frozen cwl-context-package-evidence-verify dist
-          > dist/package-evidence-verification.json
+        id: package-evidence-verification
+        run: |
+          uv run --frozen cwl-context-package-evidence-verify dist \
+            > dist/package-evidence-verification.json
+          package_snapshot="$(python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(
+              Path("dist/package-evidence-verification.json").read_text(encoding="utf-8")
+          )
+          print(json.dumps(report, sort_keys=True, separators=(",", ":")))
+          PY
+          )"
+          echo "package_snapshot=$package_snapshot" >> "$GITHUB_OUTPUT"
       - name: Upload checked-out commit package evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -110,11 +184,53 @@ jobs:
       attestations: write
       artifact-metadata: write
     steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.14"
       - name: Download exact-head package evidence
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: package-evidence-${{ github.sha }}
           path: evidence
+      - name: Verify downloaded package evidence before attestation
+        env:
+          EXPECTED_PACKAGE_SNAPSHOT: ${{ needs.package-evidence.outputs.package-snapshot }}
+          PYTHONPATH: src
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          from cwl_context_contracts.package_evidence_verifier import (
+              verify_package_evidence_directory,
+          )
+
+          report = verify_package_evidence_directory(Path("evidence"))
+          if not report.verified:
+              raise SystemExit(
+                  "downloaded package evidence is not internally coherent: "
+                  + ",".join(report.mismatches)
+              )
+          current_snapshot = json.dumps(
+              report.to_mapping(),
+              sort_keys=True,
+              separators=(",", ":"),
+          )
+          try:
+              expected_snapshot = json.dumps(
+                  json.loads(os.environ["EXPECTED_PACKAGE_SNAPSHOT"]),
+                  sort_keys=True,
+                  separators=(",", ":"),
+              )
+          except (KeyError, json.JSONDecodeError) as exc:
+              raise SystemExit("build package snapshot is missing or malformed") from exc
+          if current_snapshot != expected_snapshot:
+              raise SystemExit("package evidence changed since build verification")
+          PY
       - name: Attest SLSA build provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
@@ -127,4 +243,25 @@ jobs:
           subject-path: |
             evidence/*.whl
             evidence/*.tar.gz
-          sbom-path: evidence/cwl-context-contracts.spdx.json
+          predicate-type: https://spdx.dev/Document/v3
+          predicate-path: evidence/cwl-context-contracts.spdx.json
+      - name: Verify protected-main provenance and SBOM attestations
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.sha }}
+          SOURCE_REF: ${{ github.ref }}
+          EXPECTED_SOURCE_REF: refs/heads/main
+          REPOSITORY: ${{ github.repository }}
+          SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/supply-chain.yml
+          SPDX_PREDICATE: https://spdx.dev/Document/v3
+          EXPECTED_PACKAGE_SNAPSHOT: ${{ needs.package-evidence.outputs.package-snapshot }}
+          EVIDENCE_DIR: evidence
+          VERIFICATION_DIR: attestation-verification
+        run: bash scripts/verify_release_attestations.sh
+      - name: Retain protected-main attestation verification evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attestation-verification-${{ github.sha }}
+          path: attestation-verification/*.json
+          if-no-files-found: error
+          retention-days: 90
