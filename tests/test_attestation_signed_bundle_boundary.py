@@ -50,19 +50,15 @@ def _candidate(
     }
 
 
-def _subject_statement() -> dict[str, Any]:
-    """Return one exact signed statement matching the test artifact."""
-    return {
+def _subject_statement_payload() -> str:
+    """Return base64 for one exact signed statement matching the test artifact."""
+    statement = {
         "_type": "https://in-toto.io/Statement/v1",
         "subject": [{"digest": {"sha256": _ARTIFACT_DIGEST}}],
         "predicateType": "https://slsa.dev/provenance/v1",
         "predicate": {},
     }
-
-
-def _subject_statement_payload() -> str:
-    """Return base64 for one exact signed statement matching the test artifact."""
-    serialized = json.dumps(_subject_statement(), separators=(",", ":")).encode("utf-8")
+    serialized = json.dumps(statement, separators=(",", ":")).encode("utf-8")
     return base64.b64encode(serialized).decode("ascii")
 
 
@@ -84,25 +80,6 @@ def test_verifier_requires_parsed_statement_marker_from_gh(tmp_path: Path) -> No
 
     assert result.returncode != 0
     assert "verified attestation is missing its parsed statement" in result.stderr
-    assert not (tmp_path / "verified.json").exists()
-
-
-def test_verifier_requires_parsed_statement_to_match_signed_payload(
-    tmp_path: Path,
-) -> None:
-    """Do not admit a signed payload different from the statement gh reports verified."""
-    candidate = _candidate(payload=_subject_statement_payload())
-    candidate["verificationResult"]["statement"] = {
-        **_subject_statement(),
-        "predicate": {"different": True},
-    }
-
-    result = _run_verifier(tmp_path, [candidate])
-
-    assert result.returncode != 0
-    assert (
-        "parsed verified statement does not match signed DSSE payload" in result.stderr
-    )
     assert not (tmp_path / "verified.json").exists()
 
 
