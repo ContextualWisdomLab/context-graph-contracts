@@ -176,6 +176,33 @@ def test_post_open_path_disappearance_fails_closed(
     _assert_sbom_unsafe(tmp_path)
 
 
+def test_post_read_path_disappearance_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Losing the final path after bytes are read must invalidate that snapshot."""
+    target = _write_valid_bundle(tmp_path)
+    original_stat = Path.stat
+    nofollow_stat_count = 0
+
+    def disappear_on_post_read_stat(
+        path: Path,
+        *args: object,
+        **kwargs: object,
+    ):
+        nonlocal nofollow_stat_count
+        if path == target and kwargs.get("follow_symlinks") is False:
+            nofollow_stat_count += 1
+            if nofollow_stat_count == 3:
+                raise FileNotFoundError("evidence path disappeared after read")
+        return original_stat(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "stat", disappear_on_post_read_stat)
+
+    _assert_sbom_unsafe(tmp_path)
+    assert nofollow_stat_count == 3
+
+
 def test_post_open_regular_inode_replacement_fails_closed(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
