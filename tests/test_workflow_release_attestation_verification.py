@@ -77,7 +77,13 @@ def test_attested_package_bytes_are_in_the_reproducibility_comparison() -> None:
     upload_marker = "name: Upload checked-out commit package evidence"
     package_upload = package_job.find(upload_marker)
     source_epoch = "SOURCE_DATE_EPOCH: ${{ steps.source.outputs.source_date_epoch }}"
-    positions = (first_build, witness_checkout, witness_build, comparison, package_upload)
+    positions = (
+        first_build,
+        witness_checkout,
+        witness_build,
+        comparison,
+        package_upload,
+    )
 
     assert source_epoch in package_job
     assert min(positions) >= 0
