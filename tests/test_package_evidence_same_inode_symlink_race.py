@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
+from typing import BinaryIO
 
 import pytest
 
@@ -87,6 +89,65 @@ def test_same_inode_symlink_swap_fails_closed(
     monkeypatch.setattr(Path, "open", replace_with_symlink_to_same_inode)
 
     _assert_sbom_unsafe(tmp_path)
+
+
+def test_same_inode_content_rewrite_during_read_fails_closed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An in-place rewrite cannot leave a pre-rewrite snapshot accepted as stable."""
+    target = _write_valid_bundle(tmp_path)
+    original_inode = target.stat().st_ino
+    original_open = Path.open
+    replacement = _valid_sbom().replace(b"0.1.0", b"9.9.9")
+    mutated = False
+
+    class MutatingHandle:
+        """Delegate binary I/O while rewriting the same inode after its first read."""
+
+        def __init__(self, handle: BinaryIO) -> None:
+            self._handle = handle
+
+        def fileno(self) -> int:
+            return self._handle.fileno()
+
+        def read(self, *args: object) -> bytes:
+            nonlocal mutated
+            data = self._handle.read(*args)
+            if data and not mutated:
+                descriptor = os.open(target, os.O_WRONLY | os.O_TRUNC)
+                try:
+                    os.write(descriptor, replacement)
+                    os.fsync(descriptor)
+                finally:
+                    os.close(descriptor)
+                mutated = True
+            return data
+
+        def close(self) -> None:
+            self._handle.close()
+
+        def __enter__(self) -> MutatingHandle:
+            return self
+
+        def __exit__(self, *args: object) -> None:
+            self.close()
+
+    def mutate_after_read(
+        path: Path,
+        *args: object,
+        **kwargs: object,
+    ):
+        handle = original_open(path, *args, **kwargs)
+        if path == target:
+            return MutatingHandle(handle)
+        return handle
+
+    monkeypatch.setattr(Path, "open", mutate_after_read)
+
+    _assert_sbom_unsafe(tmp_path)
+    assert mutated
+    assert target.stat().st_ino == original_inode
 
 
 def test_post_open_path_disappearance_fails_closed(
