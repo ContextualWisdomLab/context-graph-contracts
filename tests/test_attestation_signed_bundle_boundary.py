@@ -100,7 +100,9 @@ def test_verifier_requires_parsed_statement_to_match_signed_payload(
     result = _run_verifier(tmp_path, [candidate])
 
     assert result.returncode != 0
-    assert "parsed verified statement does not match signed DSSE payload" in result.stderr
+    assert (
+        "parsed verified statement does not match signed DSSE payload" in result.stderr
+    )
     assert not (tmp_path / "verified.json").exists()
 
 
