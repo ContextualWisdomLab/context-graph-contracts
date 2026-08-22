@@ -30,6 +30,8 @@ GitHub. (2026b). *GitHub CLI attestation API result model* (Commit a255baf71d13f
 
 GitHub. (2026c). *actions/attest* (Version 4.2.2) [Computer software]. GitHub. https://github.com/actions/attest/tree/1e69f48acb82d1966a394da916b4c1698aa569d6
 
+GitHub. (2026d). *@actions/attest GitHub Actions provenance predicate implementation* (Commit 193fa46c20fde8b0ed54194bc08b841c78c0776d) [Source code]. GitHub. https://github.com/actions/toolkit/blob/193fa46c20fde8b0ed54194bc08b841c78c0776d/packages/attest/src/provenance.ts
+
 GitHub. (n.d.-a). *gh attestation verify*. GitHub CLI manual. Retrieved August 21, 2026, from https://cli.github.com/manual/gh_attestation_verify
 
 GitHub. (n.d.-b). *Using artifact attestations to establish provenance for builds*. GitHub Docs. Retrieved August 17, 2026, from https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations
