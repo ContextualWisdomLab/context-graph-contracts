@@ -21,6 +21,7 @@ _WORKFLOW_PATH = ".github/workflows/supply-chain.yml"
 _SIGNER_WORKFLOW = f"{_REPOSITORY}/{_WORKFLOW_PATH}"
 _BUILD_TYPE = "https://actions.github.io/buildtypes/workflow/v1"
 _PREDICATE_TYPE = "https://slsa.dev/provenance/v1"
+_POLICY_ERROR = "provenance predicate does not match expected GitHub Actions build"
 
 
 def _provenance_predicate() -> dict[str, Any]:
@@ -120,7 +121,9 @@ def _run_verifier(
     )
 
 
-def test_provenance_accepts_exact_pinned_actions_attest_identity(tmp_path: Path) -> None:
+def test_provenance_accepts_exact_pinned_actions_attest_identity(
+    tmp_path: Path,
+) -> None:
     """Accept the exact source/workflow identity produced by the pinned action."""
     result = _run_verifier(tmp_path, _provenance_predicate())
 
@@ -133,7 +136,7 @@ def test_provenance_rejects_missing_slsa_build_definition(tmp_path: Path) -> Non
     result = _run_verifier(tmp_path, {})
 
     assert result.returncode != 0
-    assert "provenance predicate does not match expected GitHub Actions build" in result.stderr
+    assert _POLICY_ERROR in result.stderr
     assert not (tmp_path / "verified.json").exists()
 
 
@@ -147,7 +150,7 @@ def test_provenance_rejects_wrong_workflow_ref(tmp_path: Path) -> None:
     result = _run_verifier(tmp_path, predicate)
 
     assert result.returncode != 0
-    assert "provenance predicate does not match expected GitHub Actions build" in result.stderr
+    assert _POLICY_ERROR in result.stderr
 
 
 def test_provenance_rejects_wrong_resolved_source_digest(tmp_path: Path) -> None:
@@ -160,7 +163,7 @@ def test_provenance_rejects_wrong_resolved_source_digest(tmp_path: Path) -> None
     result = _run_verifier(tmp_path, predicate)
 
     assert result.returncode != 0
-    assert "provenance predicate does not match expected GitHub Actions build" in result.stderr
+    assert _POLICY_ERROR in result.stderr
 
 
 def test_provenance_rejects_wrong_builder_identity(tmp_path: Path) -> None:
@@ -173,7 +176,7 @@ def test_provenance_rejects_wrong_builder_identity(tmp_path: Path) -> None:
     result = _run_verifier(tmp_path, predicate)
 
     assert result.returncode != 0
-    assert "provenance predicate does not match expected GitHub Actions build" in result.stderr
+    assert _POLICY_ERROR in result.stderr
 
 
 def test_provenance_rejects_unexpected_external_parameter(tmp_path: Path) -> None:
@@ -184,4 +187,4 @@ def test_provenance_rejects_unexpected_external_parameter(tmp_path: Path) -> Non
     result = _run_verifier(tmp_path, predicate)
 
     assert result.returncode != 0
-    assert "provenance predicate does not match expected GitHub Actions build" in result.stderr
+    assert _POLICY_ERROR in result.stderr
