@@ -86,6 +86,11 @@ class PackageEvidenceVerification:
         }
 
 
+def _content_identity(file_stat: os.stat_result) -> tuple[int, int, int]:
+    """Return metadata that changes when an opened evidence file is rewritten."""
+    return (file_stat.st_size, file_stat.st_mtime_ns, file_stat.st_ctime_ns)
+
+
 def _open_stable_regular_file(path: Path) -> BinaryIO:
     """Open one regular file and reject symlink or identity replacement races."""
     expected_stat = path.stat(follow_symlinks=False)
@@ -112,12 +117,35 @@ def _open_stable_regular_file(path: Path) -> BinaryIO:
     return handle
 
 
+def _require_open_file_unchanged(
+    path: Path,
+    handle: BinaryIO,
+    opened_stat: os.stat_result,
+) -> None:
+    """Reject an opened evidence file that was rewritten or replaced while read."""
+    final_opened_stat = os.fstat(handle.fileno())
+    try:
+        current_stat = path.stat(follow_symlinks=False)
+    except OSError as exc:
+        raise _UnsafeEvidenceFileError("evidence path changed during read") from exc
+    if (
+        not stat.S_ISREG(final_opened_stat.st_mode)
+        or not stat.S_ISREG(current_stat.st_mode)
+        or not os.path.samestat(opened_stat, final_opened_stat)
+        or not os.path.samestat(opened_stat, current_stat)
+        or _content_identity(final_opened_stat) != _content_identity(opened_stat)
+    ):
+        raise _UnsafeEvidenceFileError("evidence file changed during read")
+
+
 def _load_checksum_manifest(evidence_directory: Path) -> dict[str, str]:
     """Read strict bounded GNU-style SHA256SUMS from one stable regular file."""
     checksum_path = evidence_directory / _CHECKSUM_NAME
     try:
         with _open_stable_regular_file(checksum_path) as checksum_file:
+            opened_stat = os.fstat(checksum_file.fileno())
             checksum_bytes = checksum_file.read(_MAX_CHECKSUM_MANIFEST_BYTES + 1)
+            _require_open_file_unchanged(checksum_path, checksum_file, opened_stat)
     except _UnsafeEvidenceFileError as exc:
         raise PackageEvidenceInputError("checksum_manifest_unsafe") from exc
     except OSError as exc:
@@ -195,15 +223,20 @@ def _sha256_file(path: Path) -> str:
     """Hash one stable regular artifact without loading it completely into memory."""
     digest = hashlib.sha256()
     with _open_stable_regular_file(path) as handle:
+        opened_stat = os.fstat(handle.fileno())
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
+        _require_open_file_unchanged(path, handle, opened_stat)
     return digest.hexdigest()
 
 
 def _read_bounded_file(path: Path, maximum_bytes: int) -> bytes:
     """Read one stable bounded file snapshot for checksum and semantic checks."""
     with _open_stable_regular_file(path) as handle:
-        return handle.read(maximum_bytes + 1)
+        opened_stat = os.fstat(handle.fileno())
+        data = handle.read(maximum_bytes + 1)
+        _require_open_file_unchanged(path, handle, opened_stat)
+        return data
 
 
 def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
