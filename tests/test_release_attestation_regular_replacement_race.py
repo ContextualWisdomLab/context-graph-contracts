@@ -16,6 +16,10 @@ from cwl_context_contracts.package_evidence_verifier import (
 
 _SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
 _SOURCE_SHA = "a" * 40
+_REPOSITORY = "ContextualWisdomLab/context-graph-contracts"
+_SOURCE_REF = "refs/heads/main"
+_WORKFLOW_PATH = ".github/workflows/supply-chain.yml"
+_SIGNER_WORKFLOW = f"{_REPOSITORY}/{_WORKFLOW_PATH}"
 _EXPECTED_SBOM: dict[str, Any] = {
     "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
     "@graph": [
@@ -38,6 +42,33 @@ _MISMATCHED_SBOM: dict[str, Any] = {
         },
     ],
 }
+
+
+def _provenance_predicate() -> dict[str, Any]:
+    """Return the policy-relevant SLSA predicate emitted by pinned actions/attest."""
+    return {
+        "buildDefinition": {
+            "buildType": "https://actions.github.io/buildtypes/workflow/v1",
+            "externalParameters": {
+                "workflow": {
+                    "ref": _SOURCE_REF,
+                    "repository": f"https://github.com/{_REPOSITORY}",
+                    "path": _WORKFLOW_PATH,
+                }
+            },
+            "resolvedDependencies": [
+                {
+                    "uri": f"git+https://github.com/{_REPOSITORY}@{_SOURCE_REF}",
+                    "digest": {"gitCommit": _SOURCE_SHA},
+                }
+            ],
+        },
+        "runDetails": {
+            "builder": {
+                "id": f"https://github.com/{_SIGNER_WORKFLOW}@{_SOURCE_REF}"
+            }
+        },
+    }
 
 
 def _verification_result(
@@ -120,7 +151,7 @@ def test_verifier_rejects_regular_output_replacement_after_gh_writes(
     provenance_result = json.dumps(
         _verification_result(
             wheel_digest,
-            {},
+            _provenance_predicate(),
             "https://slsa.dev/provenance/v1",
         )
     )
@@ -147,13 +178,10 @@ def test_verifier_rejects_regular_output_replacement_after_gh_writes(
             "GH_FAKE_ATTACKER_RESULT": attacker_result,
             "GH_FAKE_VERIFICATION_DIR": str(verification_dir),
             "SOURCE_SHA": _SOURCE_SHA,
-            "SOURCE_REF": "refs/heads/main",
-            "EXPECTED_SOURCE_REF": "refs/heads/main",
-            "REPOSITORY": "ContextualWisdomLab/context-graph-contracts",
-            "SIGNER_WORKFLOW": (
-                "ContextualWisdomLab/context-graph-contracts/"
-                ".github/workflows/supply-chain.yml"
-            ),
+            "SOURCE_REF": _SOURCE_REF,
+            "EXPECTED_SOURCE_REF": _SOURCE_REF,
+            "REPOSITORY": _REPOSITORY,
+            "SIGNER_WORKFLOW": _SIGNER_WORKFLOW,
             "SPDX_PREDICATE": "https://spdx.dev/Document/v3",
             "EXPECTED_PACKAGE_SNAPSHOT": package_snapshot,
             "EVIDENCE_DIR": str(evidence_dir),
