@@ -115,7 +115,9 @@ def _matching_artifact_statements(
     raise ValueError("attestation subject does not match release artifact")
 
 
-def _require_matching_provenance_predicate(statements: list[dict[str, Any]]) -> None:
+def _require_matching_provenance_predicate(
+    statements: list[dict[str, Any]],
+) -> None:
     """Require signed GitHub Actions provenance to bind exact release source/workflow."""
     repository = os.environ["REPOSITORY"]
     source_ref = os.environ["EXPECTED_SOURCE_REF"]
