@@ -44,6 +44,42 @@ def test_stable_json_reader_fails_closed_without_o_nofollow(
         )
 
 
+def test_stable_json_reader_rejects_same_inode_mutation_during_read(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An in-place evidence rewrite must invalidate a descriptor-bound snapshot."""
+    evidence_path = tmp_path / "evidence.json"
+    original = b'{"name":"cwl-context-contracts"}'
+    replacement = b'{"name":"attacker-contracts!!!"}'
+    assert len(original) == len(replacement)
+    evidence_path.write_bytes(original)
+
+    module = _load_script()
+    script_os = module["os"]
+    real_read = script_os.read
+    mutated = False
+
+    def mutating_read(descriptor: int, maximum_bytes: int) -> bytes:
+        nonlocal mutated
+        data = real_read(descriptor, maximum_bytes)
+        if data and not mutated:
+            mutated = True
+            evidence_path.write_bytes(replacement)
+        return data
+
+    monkeypatch.setattr(script_os, "read", mutating_read)
+
+    with pytest.raises(ValueError, match="changed while being read"):
+        module["read_stable_regular_file"](
+            evidence_path,
+            label="downloaded SPDX evidence",
+        )
+
+    assert mutated
+    assert evidence_path.stat().st_ino == evidence_path.stat().st_ino
+
+
 def test_verification_writer_fails_closed_without_o_nofollow(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
