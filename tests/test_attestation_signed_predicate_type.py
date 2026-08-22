@@ -57,7 +57,11 @@ def _verification_result(
 ) -> str:
     """Return gh-shaped JSON carrying one exact signed DSSE statement."""
     artifact_digest = hashlib.sha256(_ARTIFACT_BYTES).hexdigest()
-    predicate = _provenance_predicate() if predicate_type == _PROVENANCE_PREDICATE else {}
+    predicate = (
+        _provenance_predicate()
+        if predicate_type == _PROVENANCE_PREDICATE
+        else {}
+    )
     statement: dict[str, Any] = {
         "_type": statement_type,
         "subject": [{"digest": {"sha256": artifact_digest}}],
