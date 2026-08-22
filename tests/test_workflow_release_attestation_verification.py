@@ -74,10 +74,13 @@ def test_attested_package_bytes_are_in_the_reproducibility_comparison() -> None:
         "python scripts/verify_reproducible_package_builds.py "
         "dist reproducibility-build"
     )
-    package_upload = package_job.find("name: Upload checked-out commit package evidence")
+    upload_marker = "name: Upload checked-out commit package evidence"
+    package_upload = package_job.find(upload_marker)
+    source_epoch = "SOURCE_DATE_EPOCH: ${{ steps.source.outputs.source_date_epoch }}"
+    positions = (first_build, witness_checkout, witness_build, comparison, package_upload)
 
-    assert "SOURCE_DATE_EPOCH: ${{ steps.source.outputs.source_date_epoch }}" in package_job
-    assert min(first_build, witness_checkout, witness_build, comparison, package_upload) >= 0
+    assert source_epoch in package_job
+    assert min(positions) >= 0
     assert first_build < witness_checkout < witness_build < comparison < package_upload
     assert "name: package-reproducibility-${{ github.sha }}" in package_job
 
