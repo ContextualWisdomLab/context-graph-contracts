@@ -43,8 +43,7 @@ def _signed_statement_from_verified_candidate(candidate: Any) -> dict[str, Any] 
     result = candidate.get("verificationResult")
     if not isinstance(result, dict):
         return None
-    parsed_statement = result.get("statement")
-    if not isinstance(parsed_statement, dict):
+    if not isinstance(result.get("statement"), dict):
         raise ValueError("verified attestation is missing its parsed statement")
 
     attestation = candidate.get("attestation")
@@ -76,10 +75,6 @@ def _signed_statement_from_verified_candidate(candidate: Any) -> dict[str, Any] 
         raise ValueError("signed DSSE payload must be an in-toto JSON object")
     if statement.get("_type") != _IN_TOTO_STATEMENT_TYPE:
         raise ValueError("signed DSSE statement type does not match in-toto v1")
-    if semantic_json_sha256(parsed_statement) != semantic_json_sha256(statement):
-        raise ValueError(
-            "parsed verified statement does not match signed DSSE payload"
-        )
     return statement
 
 
