@@ -30,7 +30,50 @@ jobs:
           version: "0.11.32"
           enable-cache: false
       - run: uv lock --check
-      - run: uv build --wheel --sdist --out-dir dist
+      - name: Bind release builds to the exact checkout commit
+        id: source
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          source_sha="$(git rev-parse HEAD)"
+          if [[ "$source_sha" != "$EXPECTED_SHA" ]]; then
+            echo "package build tree does not match the workflow checkout SHA" >&2
+            exit 1
+          fi
+          source_date_epoch="$(git show -s --format=%ct HEAD)"
+          if [[ ! "$source_date_epoch" =~ ^[0-9]+$ ]]; then
+            echo "source commit timestamp is not an integer epoch" >&2
+            exit 1
+          fi
+          echo "source_date_epoch=$source_date_epoch" >> "$GITHUB_OUTPUT"
+      - name: Build release packages for package evidence
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.source.outputs.source_date_epoch }}
+        run: uv build --wheel --sdist --out-dir dist
+      - name: Checkout exact candidate for reproducibility witness
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ github.sha }}
+          path: reproducibility-source
+          persist-credentials: false
+      - name: Verify witness checkout and dependency lock
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          witness_sha="$(git -C reproducibility-source rev-parse HEAD)"
+          if [[ "$witness_sha" != "$EXPECTED_SHA" ]]; then
+            echo "reproducibility witness does not match the workflow checkout SHA" >&2
+            exit 1
+          fi
+          (cd reproducibility-source && uv lock --check)
+      - name: Build independent reproducibility witness
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.source.outputs.source_date_epoch }}
+        run: |
+          (cd reproducibility-source && uv build --wheel --sdist --out-dir ../reproducibility-build)
+      - name: Bind package-evidence bytes to reproducibility proof
+        run: |
+          python scripts/verify_reproducible_package_builds.py dist reproducibility-build
       - name: Install the built wheel into an isolated SBOM root
         id: sbom-root
         run: |
