@@ -46,6 +46,11 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- Dedicated exact-head release-package reproducibility acceptance that builds
+  wheel and source distribution from two independent clean checkouts with a
+  shared commit-derived `SOURCE_DATE_EPOCH`, rejects artifact-name or byte drift
+  and symlink/path substitution, and retains SHA-256 evidence under the exact
+  workflow commit identity.
 - Framework-neutral `data-management-framework.schema.json` for relating
   CWL-authored capability, evidence, and assessment identifiers to external
   data-management framework references while reusing canonical authority,
