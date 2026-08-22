@@ -73,7 +73,24 @@ jobs:
           (cd reproducibility-source && uv build --wheel --sdist --out-dir ../reproducibility-build)
       - name: Bind package-evidence bytes to reproducibility proof
         run: |
-          python scripts/verify_reproducible_package_builds.py dist reproducibility-build
+          mkdir package-reproducibility-evidence
+          python scripts/verify_reproducible_package_builds.py dist reproducibility-build \
+            | tee package-reproducibility-evidence/verification.txt
+          (
+            cd dist
+            sha256sum *.whl *.tar.gz
+          ) > package-reproducibility-evidence/package-evidence-SHA256SUMS
+          (
+            cd reproducibility-build
+            sha256sum *.whl *.tar.gz
+          ) > package-reproducibility-evidence/witness-SHA256SUMS
+      - name: Retain package-evidence reproducibility proof
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: package-reproducibility-${{ github.sha }}
+          path: package-reproducibility-evidence
+          if-no-files-found: error
+          retention-days: 7
       - name: Install the built wheel into an isolated SBOM root
         id: sbom-root
         run: |
