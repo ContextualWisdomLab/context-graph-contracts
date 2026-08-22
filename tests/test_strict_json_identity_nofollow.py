@@ -54,6 +54,7 @@ def test_stable_json_reader_rejects_same_inode_mutation_during_read(
     replacement = b'{"name":"attacker-contracts!!!"}'
     assert len(original) == len(replacement)
     evidence_path.write_bytes(original)
+    original_inode = evidence_path.stat().st_ino
 
     module = _load_script()
     script_os = module["os"]
@@ -77,7 +78,7 @@ def test_stable_json_reader_rejects_same_inode_mutation_during_read(
         )
 
     assert mutated
-    assert evidence_path.stat().st_ino == evidence_path.stat().st_ino
+    assert evidence_path.stat().st_ino == original_inode
 
 
 def test_verification_writer_fails_closed_without_o_nofollow(
