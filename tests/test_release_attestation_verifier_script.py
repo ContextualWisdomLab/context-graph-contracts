@@ -36,6 +36,48 @@ _EXPECTED_SBOM: dict[str, Any] = {
 }
 
 
+def _expected_provenance() -> dict[str, Any]:
+    """Return the policy-relevant SLSA predicate emitted by pinned actions/attest."""
+    source_ref = "refs/heads/main"
+    workflow_path = ".github/workflows/supply-chain.yml"
+    return {
+        "buildDefinition": {
+            "buildType": "https://actions.github.io/buildtypes/workflow/v1",
+            "externalParameters": {
+                "workflow": {
+                    "ref": source_ref,
+                    "repository": f"https://github.com/{_REPOSITORY}",
+                    "path": workflow_path,
+                }
+            },
+            "internalParameters": {
+                "github": {
+                    "event_name": "push",
+                    "repository_id": "123",
+                    "repository_owner_id": "456",
+                    "runner_environment": "github-hosted",
+                }
+            },
+            "resolvedDependencies": [
+                {
+                    "uri": f"git+https://github.com/{_REPOSITORY}@{source_ref}",
+                    "digest": {"gitCommit": _SOURCE_SHA},
+                }
+            ],
+        },
+        "runDetails": {
+            "builder": {
+                "id": f"https://github.com/{_SIGNER_WORKFLOW}@{source_ref}"
+            },
+            "metadata": {
+                "invocationId": (
+                    f"https://github.com/{_REPOSITORY}/actions/runs/123/attempts/1"
+                )
+            },
+        },
+    }
+
+
 def _verification_result(
     artifact_digest: str,
     predicate: dict[str, Any],
@@ -159,7 +201,7 @@ def _run_verifier(
     )
     provenance_result = _verification_result(
         initial_digest,
-        {},
+        _expected_provenance(),
         "https://slsa.dev/provenance/v1",
     )
     sbom_result = _verification_result(
