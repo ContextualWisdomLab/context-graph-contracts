@@ -26,4 +26,4 @@ def test_data_management_semantics_are_packaged_as_executable_vectors() -> None:
 
     report = run_packaged_conformance()
     assert report.passed is True
-    assert report.profile_count == 5
+    assert report.profile_count == 6
