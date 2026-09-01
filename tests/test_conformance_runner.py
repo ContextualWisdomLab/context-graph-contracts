@@ -118,6 +118,70 @@ def test_runner_reports_invalid_assertion_that_reference_sdk_accepts(
     assert "unexpectedly accepted" in failure.detail
 
 
+def test_runner_reports_valid_assertion_event_that_reference_sdk_rejects(
+    monkeypatch,
+) -> None:
+    """A positive assertion-event vector rejected by the SDK is explicit drift."""
+    original_load = runner.load_conformance_profile
+
+    def load_profile(name: str):
+        profile = original_load(name)
+        if name == "context-assertion-event-semantics.v1.json":
+            vector = dict(profile["valid_vectors"][0])
+            value = dict(vector["value"])
+            value["type"] = "org.contextualwisdomlab.context_graph.other.v1"
+            vector["case_id"] = "valid_assertion_event_rejected"
+            vector["value"] = value
+            profile["valid_vectors"] = [vector]
+            profile["invalid_vectors"] = []
+        return profile
+
+    monkeypatch.setattr(runner, "load_conformance_profile", load_profile)
+
+    report = run_packaged_conformance()
+
+    failure = next(
+        item
+        for item in report.failures
+        if item.profile_name == "context-assertion-event-semantics.v1.json"
+    )
+    assert failure.case_id == "valid_assertion_event_rejected"
+    assert "unexpectedly rejected" in failure.detail
+
+
+def test_runner_reports_invalid_assertion_event_that_reference_sdk_accepts(
+    monkeypatch,
+) -> None:
+    """A negative assertion-event vector that becomes accepted is explicit drift."""
+    original_load = runner.load_conformance_profile
+
+    def load_profile(name: str):
+        profile = original_load(name)
+        if name == "context-assertion-event-semantics.v1.json":
+            valid_value = profile["valid_vectors"][0]["value"]
+            profile["valid_vectors"] = []
+            profile["invalid_vectors"] = [
+                {
+                    "case_id": "actually_valid_assertion_event",
+                    "error_pattern": "must reject",
+                    "value": valid_value,
+                }
+            ]
+        return profile
+
+    monkeypatch.setattr(runner, "load_conformance_profile", load_profile)
+
+    report = run_packaged_conformance()
+
+    failure = next(
+        item
+        for item in report.failures
+        if item.profile_name == "context-assertion-event-semantics.v1.json"
+    )
+    assert failure.case_id == "actually_valid_assertion_event"
+    assert "unexpectedly accepted" in failure.detail
+
+
 def test_runner_reports_invalid_vector_that_reference_sdk_accepts(monkeypatch) -> None:
     """A negative JSON vector that becomes accepted is a deterministic failure."""
     original_load = runner.load_conformance_profile
