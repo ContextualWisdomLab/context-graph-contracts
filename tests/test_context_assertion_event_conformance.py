@@ -17,6 +17,8 @@ def test_assertion_event_profile_is_packaged_and_executable() -> None:
     profile = load_conformance_profile(_PROFILE_NAME)
     assert profile["profile_id"] == _PROFILE_ID
     assert {vector["case_id"] for vector in profile["invalid_vectors"]} >= {
+        "missing_event_id",
+        "wrong_event_datacontenttype",
         "event_subject_differs_from_assertion_subject",
         "wrong_assertion_event_type",
         "wrong_assertion_dataschema",
