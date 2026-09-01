@@ -256,7 +256,9 @@ class ContextAssertion:
         if event.event_type != ASSERTION_EVENT_TYPE:
             raise ValueError("event type must identify a Context Assertion")
         if event.data_schema != ASSERTION_DATA_SCHEMA:
-            raise ValueError("event dataschema must identify the Context Assertion schema")
+            raise ValueError(
+                "event dataschema must identify the Context Assertion schema"
+            )
         assertion = cls.from_mapping(event.data)
         if event.subject != assertion.subject:
             raise ValueError("event subject must equal assertion subject")
