@@ -84,6 +84,7 @@ jobs:
               "cwl_context_contracts/contracts/context-fabric.asyncapi.json",
               "cwl_context_contracts/conformance/cwl-timestamp-profile.v1.json",
               "cwl_context_contracts/conformance/context-assertion-semantics.v1.json",
+              "cwl_context_contracts/conformance/context-assertion-event-semantics.v1.json",
               "cwl_context_contracts/conformance/cloudevent-semantics.v1.json",
               "cwl_context_contracts/conformance/cwl-json-interoperability.v1.json",
               "cwl_context_contracts/conformance/data-management-assessment-semantics.v1.json",
@@ -156,6 +157,7 @@ jobs:
           assert available_conformance_profile_names() == (
               "cwl-timestamp-profile.v1.json",
               "context-assertion-semantics.v1.json",
+              "context-assertion-event-semantics.v1.json",
               "cloudevent-semantics.v1.json",
               "cwl-json-interoperability.v1.json",
               "data-management-assessment-semantics.v1.json",
@@ -186,6 +188,25 @@ jobs:
               else:
                   raise AssertionError(
                       f"negative assertion vector unexpectedly parsed: {vector['case_id']}"
+                  )
+
+          assertion_event_profile = load_conformance_profile(
+              "context-assertion-event-semantics.v1.json"
+          )
+          for vector in assertion_event_profile["valid_vectors"]:
+              event = CloudEventEnvelope.from_mapping(vector["value"])
+              assertion = ContextAssertion.from_event(event)
+              assert assertion.to_mapping() == vector["value"]["data"]
+          for vector in assertion_event_profile["invalid_vectors"]:
+              event = CloudEventEnvelope.from_mapping(vector["value"])
+              try:
+                  ContextAssertion.from_event(event)
+              except ValueError as exc:
+                  assert vector["error_pattern"] in str(exc)
+              else:
+                  raise AssertionError(
+                      "negative assertion-event vector unexpectedly admitted: "
+                      f"{vector['case_id']}"
                   )
 
           event_profile = load_conformance_profile("cloudevent-semantics.v1.json")
