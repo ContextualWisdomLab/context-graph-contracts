@@ -81,6 +81,8 @@ uv sync --extra dev --locked
 uv run cwl-context-conformance
 ```
 
+The packaged semantic inventory currently covers **CWL Timestamp Profile v1**, **Context assertion semantics v1**, **Context assertion event semantics v1**, **CloudEvent semantics v1**, the **CWL JSON interoperability profile**, and **Data-management assessment semantics v1**. The assertion-event profile composes CloudEvent identity with Context Assertion data so consumers test the complete exchange boundary rather than either layer in isolation.
+
 A successful conformance run means the installed reference package agrees with its packaged semantic vectors. It does **not** prove that an artifact is trusted, independently approved, released from protected source, or authorized for a particular runtime.
 
 Python consumers can use the package APIs for schemas/contracts, `ContextAssertion`, and conformance evidence rather than copying contract JSON into private forks.
