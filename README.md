@@ -1,5 +1,7 @@
 # Context Graph Contracts
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ContextualWisdomLab/context-graph-contracts)
+
 Context Graph Contracts is the shared, versioned interoperability layer for
 ContextualWisdomLab products that exchange **context**, **lineage**,
 **architecture**, and **impact-analysis** facts.
@@ -254,5 +256,6 @@ keep their own authoritative state. They do not read one another's databases.
 
 - Architecture and identity, truth, and temporal models: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 - Accepted decisions: [`docs/adr/`](docs/adr/)
+- Documentation home: [`docs/index.md`](docs/index.md)
 - Bibliographic sources: [`docs/doctoring/REFERENCES.md`](docs/doctoring/REFERENCES.md)
 - Local development: [`CONTRIBUTING.md`](CONTRIBUTING.md)
