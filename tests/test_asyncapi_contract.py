@@ -2,9 +2,8 @@
 
 import pytest
 
-from cwl_context_contracts import available_contract_names, load_contract
 from cwl_context_contracts.assertion import ASSERTION_EVENT_TYPE
-
+from cwl_context_contracts import available_contract_names, load_contract
 
 _SCHEMA_FORMAT = "application/schema+json;version=draft-2020-12"
 _SCHEMA_ROOT = "https://schemas.contextualwisdomlab.org/context/"
@@ -31,7 +30,7 @@ def test_packaged_asyncapi_contract_is_provider_neutral() -> None:
 
 
 def test_context_assertion_message_is_a_structured_cloudevent() -> None:
-    """Assertion events wrap assertion data instead of mislabelling bare data as CE JSON."""
+    """Require assertion data inside the advertised structured CloudEvent."""
 
     document = load_contract("context-fabric.asyncapi.json")
     message = document["components"]["messages"]["ContextAssertionEvent"]
