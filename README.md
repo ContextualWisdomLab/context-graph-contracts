@@ -78,6 +78,8 @@ Material assertions can bind a source asset and digest of exact evidence bytes. 
 
 Context Assertions carry typed subject–predicate–object facts with truth status, temporal validity, provenance, and context memberships. Service notifications use CloudEvents 1.0.2 structured JSON. JSON Schema Draft 2020-12 supplies structural contracts; packaged semantic vectors cover important cross-field invariants that schema validation alone cannot safely establish.
 
+Packaged semantic conformance includes **CWL Timestamp Profile v1**, the **Context assertion** semantic profile, and the **CWL JSON interoperability profile**, alongside the shared CloudEvent profile.
+
 The AsyncAPI 3.1.0 resource is intentionally reusable contract material. It does not declare servers, channels, operations, broker addresses, or runtime topology.
 
 ## Evaluate the source contract
