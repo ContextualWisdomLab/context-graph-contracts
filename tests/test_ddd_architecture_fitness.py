@@ -32,7 +32,7 @@ _FOREIGN_PRODUCT_PACKAGES = {
 
 
 def test_canonical_ddd_documents_exist() -> None:
-    """Keep the bounded-context and language contracts in the executable baseline."""
+    """Keep bounded-context and language contracts in the executable baseline."""
 
     for relative_path in _REQUIRED_DDD_DOCUMENTS:
         path = Path(relative_path)
@@ -41,7 +41,7 @@ def test_canonical_ddd_documents_exist() -> None:
 
 
 def test_contract_package_does_not_grow_generic_domain_buckets() -> None:
-    """Reject generic directories that can silently absorb unrelated domain behavior."""
+    """Reject generic directories that can silently absorb unrelated behavior."""
 
     package_root = Path("src/cwl_context_contracts")
     offenders = sorted(
@@ -58,11 +58,16 @@ def test_contract_package_does_not_import_foreign_product_implementations() -> N
     offenders: list[str] = []
     package_root = Path("src/cwl_context_contracts")
     for source_path in sorted(package_root.rglob("*.py")):
-        tree = ast.parse(source_path.read_text(encoding="utf-8"), filename=str(source_path))
+        tree = ast.parse(
+            source_path.read_text(encoding="utf-8"),
+            filename=str(source_path),
+        )
         for node in ast.walk(tree):
             imported_roots: list[str] = []
             if isinstance(node, ast.Import):
-                imported_roots.extend(alias.name.split(".", 1)[0] for alias in node.names)
+                imported_roots.extend(
+                    alias.name.split(".", 1)[0] for alias in node.names
+                )
             elif isinstance(node, ast.ImportFrom) and node.module:
                 imported_roots.append(node.module.split(".", 1)[0])
             for imported_root in imported_roots:
@@ -72,9 +77,11 @@ def test_contract_package_does_not_import_foreign_product_implementations() -> N
 
 
 def test_baseline_records_data_management_contract_boundary() -> None:
-    """Prevent the reference DTO surface from being mistaken for a product system of record."""
+    """Keep the reference DTO surface from becoming a product system of record."""
 
-    baseline = Path("docs/product-technical-gap-baseline.md").read_text(encoding="utf-8")
+    baseline = Path("docs/product-technical-gap-baseline.md").read_text(
+        encoding="utf-8"
+    )
     assert "src/cwl_context_contracts/data_management.py" in baseline
     assert "ADR 0013" in baseline
     assert "interoperability" in baseline.lower()
