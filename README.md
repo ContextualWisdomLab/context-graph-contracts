@@ -2,260 +2,172 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ContextualWisdomLab/context-graph-contracts)
 
-Context Graph Contracts is the shared, versioned interoperability layer for
-ContextualWisdomLab products that exchange **context**, **lineage**,
-**architecture**, and **impact-analysis** facts.
+**Versioned interoperability contracts for identity, truth, time, provenance, and Context Fabric events — without a shared database or transferred domain authority.**
 
-Independent systems use these contracts to name the same objects, say how an
-assertion entered the ecosystem, and point at evidence — without sharing a
-database or surrendering domain authority.
+Context Graph Contracts gives independently owned ContextualWisdomLab products a small, provider-neutral language for exchanging context and architecture facts. Producers can say **what object they mean, who is authoritative for it, where an assertion came from, when it was valid and recorded, and which exact evidence supports it**. Consumers can validate those claims without importing the producer's application model or writing directly to its store.
 
-## What this is not
+## Why use it
 
-This repository is not a graph database, data catalog, enterprise-architecture
-application, message broker, or workflow engine. It does not store entities,
-run queries, host a UI, or own a runtime topology.
+| Integration need | Contract responsibility |
+| --- | --- |
+| Stable cross-product identity | Canonical authority and asset URIs |
+| Evidence origin | Explicit truth status: authoritative, observed, inferred, proposed, superseded, or rejected |
+| Time-aware facts | Separate real-world validity from system-recording time |
+| Provenance | Exact source/evidence references with SHA-256 byte identity where applicable |
+| Context relationships | Typed Context Assertions with bounded membership and semantic invariants |
+| Service notifications | CloudEvents 1.0.2 structured JSON with shared identity and interoperability rules |
+| Compatibility evidence | Packaged semantic vectors, manifests, admission decisions, and release-evidence verification |
 
-It publishes versioned schemas, a reference Python package, and compatibility
-rules. Owning products keep their own stores, authorization, retries, and
-audit trails.
+The goal is interoperability, not centralization. A shared contract lets two products understand one another while each product keeps its own authorization, persistence, workflow, retry, and audit authority.
+
+## Current status
+
+Context Graph Contracts is an **alpha contract stack under active development**. The candidate package metadata is currently `cwl-context-contracts` `0.1.0` for Python 3.11 or newer, with no third-party runtime dependencies.
+
+There is **no GitHub release published for this repository yet**. An open branch, pull request, source-tree version, successful conformance run, or package build is not a released integration contract. Production consumers should bind only to an immutable released artifact after the owning release process publishes one with the required package, provenance, conformance, and approval evidence.
+
+Until that happens, the source checkout and open contract stack are suitable for review, compatibility development, and pre-release integration testing — not for claiming a stable production dependency.
+
+## Product boundary
+
+Context Graph Contracts owns the **provider-neutral interoperability bounded context**: shared wire identity, authority identity, truth origin/status, bitemporal semantics, provenance, Context Assertion and CloudEvent grammar, semantic conformance vectors, and deterministic compatibility evidence.
+
+It is **not**:
+
+- a graph database or search engine;
+- a semantic catalog or data-management system of record;
+- an enterprise-architecture decision application;
+- a message broker or event bus;
+- a workflow/orchestration engine;
+- an authorization service; or
+- a shared persistence layer for ContextualWisdomLab products.
+
+A positive contract or conformance result never grants permission to mutate another product. The producing and consuming products retain their own authorization and business authority.
 
 ## Contract baseline
 
-Operators and integrators can rely on these interchange rules.
+### Identity and authority
 
-**Producer authority URI.**
-`urn:cwl:{tenant_id}:{authority}` names the system allowed to accept commands
-for an object. In a CloudEvent this value is `source`.
+A producer authority uses the URI form:
 
-**Canonical asset URI.**
-`urn:cwl:{tenant_id}:{authority}:{object_type}:{uuidv7}` is the stable identity
-of the object being discussed. In a CloudEvent this value is `subject`.
-
-**Truth status.**
-Every cross-domain assertion carries one of `authoritative`, `observed`,
-`inferred`, `proposed`, `superseded`, or `rejected`. These values describe
-origin, not confidence. Consumers must not promote `observed`, `inferred`, or
-`proposed` assertions to `authoritative`.
-
-**Bitemporal validity.**
-Real-world validity (`valid_from` / `valid_to`) stays distinct from
-system-recording time (`recorded_at` / `superseded_at`). Open intervals use
-`null` on the wire; they do not use sentinel dates.
-
-**Timestamp profile.**
-CWL Timestamp Profile v1 is an explicitly named, leap-second-free subset of
-RFC 3339 used by the temporal and event contracts. JSON Schema provides the
-structural and lexical gate; consumers must also execute the packaged semantic
-conformance vectors so impossible calendar values cannot pass merely because
-`format` is annotation-only.
-
-**Provenance.**
-A material assertion can point to a source asset and a SHA-256 digest of the
-exact evidence bytes. A digest proves byte identity, not trust or
-authorization.
-
-**Context assertion.**
-A typed subject-predicate-object assertion carries truth status, bitemporal
-validity, optional provenance, and one or more context memberships. Packaged
-semantic vectors cover cross-field rules that JSON Schema cannot express
-portably, including same-tenant references, non-self edges, and unique context
-memberships.
-
-**Service events.**
-Notifications use CloudEvents 1.0.2 structured JSON. `source` and `subject`
-share one tenant. Event IDs are UUIDv7. `dataschema` remains a core
-CloudEvents attribute. Payloads accept only finite, acyclic, bounded
-JSON-native values and interoperable integers in the exact range required by
-the CWL JSON interoperability profile.
-
-The published surface is JSON Schema Draft 2020-12 plus AsyncAPI 3.1.0
-reusable components for the shared CloudEvent and Context Assertion payloads.
-The AsyncAPI document does not define servers, channels, operations, broker
-addresses, or runtime topology.
-
-The Python reference package exposes `load_schema()`, `load_contract()`,
-`ContextAssertion`, and packaged conformance profiles and fixtures. These
-artifacts do not grant a consumer authority to mutate another product's store.
-
-## Verify an installed package
-
-Run the exact semantic vectors shipped inside the installed package before
-accepting it as a compatible Context Fabric contract implementation:
-
-```console
-$ cwl-context-conformance
-{"case_count": 31, "failures": [], "profile_count": 4, "status": "pass"}
+```text
+urn:cwl:{tenant_id}:{authority}
 ```
 
-The command exits non-zero and identifies the exact profile/case when a vector
-is accepted, rejected, or canonicalized differently from the published
-contract. Python callers can use `run_packaged_conformance()` for evidence or
-`assert_packaged_conformance()` for a fail-closed gate. This verifies the
-installed reference SDK and its packaged semantic resources; it does not grant
-runtime authority or prove another implementation conformant unless that
-implementation executes equivalent vectors itself.
+A canonical asset uses:
 
-Capture the exact semantic-resource identity alongside the conformance result:
-
-```console
-$ cwl-context-conformance-manifest
-{"algorithm":"sha256","distribution_name":"cwl-context-contracts","distribution_version":"0.1.0","manifest_format":"cwl-context-conformance-manifest/v1","profile_count":4,"profiles":[...]}
+```text
+urn:cwl:{tenant_id}:{authority}:{object_type}:{uuidv7}
 ```
 
-The manifest identifies the installed distribution name/version and hashes the
-exact bytes of every packaged semantic profile in stable profile-name order.
-Store that JSON with CI/release evidence so an operator can distinguish “the
-conformance command passed” from “this exact package version and these exact
-published vectors passed.” If either `distribution_version` or a profile digest
-differs from the version/digest approved by the consuming product, stop the
-integration and reconcile the contract release before accepting Context Fabric
-data. Python callers can use `build_packaged_conformance_manifest()` or
-`conformance_profile_sha256()` for the same evidence. SHA-256 here proves byte
-identity only; package provenance, authorization, and trust remain separate
-gates.
+In the shared CloudEvent profile, `source` identifies producer authority and `subject` identifies the object being discussed. Shared identity does not make the contract repository authoritative for the underlying object.
 
-Given a manifest captured and approved through the consuming product's release
-process, compare it with the installed package before enabling the integration:
+### Truth status
 
-```console
-$ cwl-context-conformance-verify approved-conformance-manifest.json
-{"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","mismatches":[],"next_action":"accept the installed conformance evidence","verification_format":"cwl-context-conformance-verification/v1","verified":true}
+Cross-domain assertions distinguish `authoritative`, `observed`, `inferred`, `proposed`, `superseded`, and `rejected`. These values describe the assertion's origin/governance state, not a generic confidence score. Consumers must not silently promote observed, inferred, or proposed data into authoritative truth.
+
+### Bitemporal semantics
+
+Real-world validity (`valid_from` / `valid_to`) remains distinct from system-recording time (`recorded_at` / `superseded_at`). Open intervals use `null`; sentinel dates are not part of the wire contract.
+
+### Provenance
+
+Material assertions can bind a source asset and digest of exact evidence bytes. A digest proves byte identity only. It does not prove trust, authorization, scientific validity, legal ownership, or business truth.
+
+### Context Assertions and service events
+
+Context Assertions carry typed subject–predicate–object facts with truth status, temporal validity, provenance, and context memberships. Service notifications use CloudEvents 1.0.2 structured JSON. JSON Schema Draft 2020-12 supplies structural contracts; packaged semantic vectors cover important cross-field invariants that schema validation alone cannot safely establish.
+
+The AsyncAPI 3.1.0 resource is intentionally reusable contract material. It does not declare servers, channels, operations, broker addresses, or runtime topology.
+
+## Evaluate the source contract
+
+The repository pins `uv` and its development environment. From a source checkout, run the same core path used by CI:
+
+```bash
+uv lock --check
+uv sync --frozen --extra dev --python 3.14
+uv run --frozen --extra dev --python 3.14 python -m pytest -q
+uv run --frozen --extra dev --python 3.14 cwl-context-conformance
 ```
 
-Exit `0` means the approved package version and every approved semantic-profile
-digest match the installed evidence. Exit `1` means version/profile evidence
-drifted; use the emitted mismatch identities to install the approved package or
-approve a newly reviewed exact manifest. Exit `2` means the approved manifest
-cannot be read or parsed as a JSON object. The verifier does not decide who may
-approve a manifest and does not replace signature, provenance, SBOM, or runtime
-authorization gates. Python callers can use
-`verify_packaged_conformance_manifest()` for the same deterministic decision.
+A successful conformance command means the installed reference package agrees with its packaged semantic vectors. It does **not** prove that another implementation is conformant, that an artifact is authentic, or that an integration is authorized.
 
-For deployment admission, prefer the composite command so semantic execution
-cannot accidentally be omitted when checking approved profile bytes:
+## Integration path
 
-```console
-$ cwl-context-conformance-admit approved-conformance-manifest.json
-{"admission_format":"cwl-context-conformance-admission/v1","admitted":true,"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","manifest_verification":{"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","mismatches":[],"next_action":"accept the installed conformance evidence","verification_format":"cwl-context-conformance-verification/v1","verified":true},"next_action":"verify artifact provenance and runtime authorization before enabling the integration","semantic_conformance":{"case_count":31,"failures":[],"profile_count":4,"status":"pass"}}
+A production consumer should keep the admission sequence explicit:
+
+1. select an immutable contract release approved for that consumer;
+2. run the packaged semantic conformance suite;
+3. compare the exact approved semantic-profile and complete contract-bundle identities with the installed package;
+4. verify package provenance and release evidence independently; and
+5. apply the consumer's own authorization and domain rules before enabling the integration.
+
+Never production-bind a mutable branch or infer approval from a passing parser test.
+
+### Evidence CLI
+
+The reference package exposes focused commands for consumers that need machine-checkable evidence:
+
+| Command | Purpose |
+| --- | --- |
+| `cwl-context-conformance` | Execute packaged semantic vectors |
+| `cwl-context-conformance-manifest` | Identify exact semantic-profile bytes |
+| `cwl-context-conformance-verify` | Compare an approved profile manifest with the installed package |
+| `cwl-context-conformance-admit` | Combine semantic execution with approved-profile identity |
+| `cwl-context-conformance-receipt` | Produce deterministic admission evidence |
+| `cwl-context-bundle-manifest` | Identify the complete published contract-resource set |
+| `cwl-context-bundle-verify` | Compare an approved bundle with installed resources |
+| `cwl-context-release-admit` | Combine semantic and bundle compatibility evidence |
+| `cwl-context-package-evidence-verify` | Check local package-evidence integrity before provenance verification |
+| `cwl-context-release-evidence-admit` | Compose the release-evidence admission boundary |
+
+These commands deliberately stop short of trust and authorization. Their outputs are deterministic compatibility/evidence artifacts, not signatures, source provenance, reviewer approval, deployment authorization, or domain authority.
+
+## Architecture at a glance
+
+```text
+Owning producer
+  authoritative store / policy
+           |
+           | versioned assertion or event
+           v
++--------------------------------------+
+|       Context Graph Contracts        |
+| identity · truth · time · provenance |
+| schemas · events · conformance       |
++------------------+-------------------+
+                   |
+                   | validated contract data
+                   v
+          consumer-owned ACL
+                   |
+                   v
+Owning consumer
+  store / policy / workflow / UI
 ```
 
-Admission requires both the installed semantic suite and the exact
-approved-manifest comparison to pass. A positive result is intentionally not a
-signature, provenance decision, review approval, or authorization grant; verify
-those owning gates before enabling the integration. Python callers can use
-`evaluate_packaged_conformance_admission()` for the same composition.
+Products such as `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`, `LineageWeave`, and `contextual-orchestrator` may use this grammar at their integration boundaries. They remain authoritative for their own domains and must not use these contracts as an excuse for cross-service SQL or shared application tables.
 
-Persist a compact deterministic receipt when an operator or consuming product
-needs to compare admission evidence across deployments without copying the full
-admission payload into its own private format:
+## Documentation map
 
-```console
-$ cwl-context-conformance-receipt approved-conformance-manifest.json
-{"admission_evidence_sha256":"...","admitted":true,"approved_manifest_canonical_sha256":"...","canonicalization":"RFC8785","digest_algorithm":"sha256","installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","manifest_normalization":"profile_name_ascending","next_action":"verify artifact provenance and runtime authorization before enabling the integration","receipt_format":"cwl-context-conformance-admission-receipt/v1"}
-```
+Start with the smallest document that answers the integration question:
 
-The receipt binds two deterministic identities. For the approved-manifest
-identity it first normalizes the verifier's semantically unordered `profiles`
-array by ascending `profile_name`, then applies RFC 8785 canonical JSON and
-SHA-256. The complete admission evidence mapping is independently canonicalized
-and digested with SHA-256. JSON object-member order and profile-array order
-therefore cannot make verifier-equivalent approved evidence acquire different
-receipt identities.
+- [`docs/index.md`](docs/index.md) — documentation landing and integration path.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — identity, truth, temporal, provenance, and contract architecture.
+- [`docs/CONTEXT_MAP.md`](docs/CONTEXT_MAP.md) — bounded contexts and dependency direction.
+- [`docs/UBIQUITOUS_LANGUAGE.md`](docs/UBIQUITOUS_LANGUAGE.md) — canonical domain vocabulary.
+- [`docs/adr/`](docs/adr/) — accepted architecture decisions.
+- [`docs/product-technical-gap-baseline.md`](docs/product-technical-gap-baseline.md) — current maturity, gaps, and evidence limits.
+- [`docs/doctoring/REFERENCES.md`](docs/doctoring/REFERENCES.md) — standards and bibliographic sources.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — local development and contribution procedure.
 
-The receipt input is deliberately narrower than arbitrary JSON: unknown
-manifest/profile members, non-string identity fields, non-list profiles,
-non-object profile entries, non-exact-range profile counts, and unpaired Unicode
-surrogates fail closed instead of acquiring undocumented digest semantics. A
-published canonical digest vector lets another SDK reproduce the same evidence
-identity.
+## Contributing
 
-Any change to approved version/profile evidence or to the admission result
-changes the relevant SHA-256 value. This is an audit/evidence identifier only:
-it is not a signature, provenance attestation, approval registry, trust decision,
-or authorization grant. Python callers can use
-`build_packaged_conformance_admission_receipt()`.
+Keep the Shared Kernel deliberately small. New contracts should represent genuinely shared interoperability semantics, not move a producer's business model, storage, workflow, or authorization decisions into this repository.
 
-Capture one exact identity manifest for the complete published JSON contract
-bundle when a consuming product needs to bind release evidence to more than the
-semantic profiles alone:
+Changes should update the versioned schema/event/profile, executable conformance evidence, documentation, and compatibility boundary together. Do not treat an open ContextualWisdomLab branch as a released dependency, and do not introduce commercially incompatible inbound software or assets.
 
-```console
-$ cwl-context-bundle-manifest
-{"algorithm":"sha256","distribution_name":"cwl-context-contracts","distribution_version":"0.1.0","manifest_format":"cwl-context-bundle-manifest/v1","next_action":"store this manifest with approved release evidence and verify semantic conformance, package provenance, and runtime authorization before enabling the integration","resource_count":17,"resources":[...]}
-```
+## License
 
-The bundle manifest hashes the exact packaged bytes of every explicitly
-published AsyncAPI document, JSON Schema, positive/negative fixture, and
-semantic conformance profile, then emits those identities in stable
-`resource_path` order. Store it beside release evidence when a buyer or operator
-must prove which complete contract-resource set was admitted. A changed digest
-means the corresponding resource bytes changed and must be reviewed and
-revalidated. The manifest is deliberately not a signature, trust decision,
-semantic-conformance result, provenance attestation, approval registry, or
-runtime authorization grant. Python callers can use
-`build_packaged_contract_bundle_manifest()` for the same deterministic evidence.
-
-Verify that complete approved bundle against the installed package before
-admitting the release:
-
-```console
-$ cwl-context-bundle-verify approved-contract-bundle-manifest.json
-{"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","mismatches":[],"next_action":"accept the installed contract bundle evidence","verification_format":"cwl-context-bundle-verification/v1","verified":true}
-```
-
-This comparison covers every explicitly published contract resource, not only
-semantic profiles. It still does not execute semantic vectors, establish
-artifact provenance, or grant runtime authority. Python callers can use
-`verify_packaged_contract_bundle_manifest()`.
-
-For the final installed-package compatibility decision, require both approved
-semantic evidence and the approved complete-resource bundle in one fail-closed
-command. The command emits a full nested JSON decision; this abbreviated shape
-highlights the top-level gate:
-
-```console
-$ cwl-context-release-admit approved-conformance-manifest.json approved-contract-bundle-manifest.json
-{"admission_format":"cwl-context-contract-release-admission/v1","admitted":true,"bundle_verification":{"verified":true},"conformance_admission":{"admitted":true},"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","next_action":"obtain qualifying independent approval and verify artifact provenance, protected-release evidence, and runtime authorization before enabling the integration"}
-```
-
-`cwl-context-release-admit` succeeds only when the installed semantic suite,
-approved semantic-profile identity, and approved complete published-resource
-identity all agree. It deliberately stops before trust: a positive result does
-not prove source/artifact provenance, protected-branch release eligibility,
-independent approval, signature/attestation validity, or runtime authorization.
-Those remain separate owning gates. Python callers can use
-`evaluate_packaged_contract_release_admission()` for the same deterministic
-composition.
-
-Before treating a downloaded workflow artifact as provenance input, repeat its
-local package-integrity checks with the installed verifier:
-
-```console
-$ cwl-context-package-evidence-verify package-evidence
-{"artifacts":[...],"mismatches":[],"next_action":"verify artifact attestations bind these exact package bytes to the intended protected main source commit before release","verification_format":"cwl-context-package-evidence-verification/v1","verified":true}
-```
-
-The command requires exactly one wheel, one source distribution, the canonical
-SPDX 3.0.1 SBOM, and `SHA256SUMS`; it rejects malformed or escaping checksum
-names, duplicate checksum identities, missing or symlinked required artifacts,
-digest drift, and malformed SPDX package evidence. Exit `0` proves only that
-the supplied local evidence directory is internally consistent. It does not
-authenticate `SHA256SUMS`, identify the producer, or prove the source commit.
-The next action is therefore to verify GitHub artifact attestations against the
-intended repository and protected `main` commit before release. Python callers
-can use `verify_package_evidence_directory()` for the same deterministic check.
-
-## Who consumes these contracts
-
-`semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`,
-`LineageWeave`, and `contextual-orchestrator` exchange contracts or events and
-keep their own authoritative state. They do not read one another's databases.
-
-## Further reading
-
-- Architecture and identity, truth, and temporal models: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- Accepted decisions: [`docs/adr/`](docs/adr/)
-- Documentation home: [`docs/index.md`](docs/index.md)
-- Bibliographic sources: [`docs/doctoring/REFERENCES.md`](docs/doctoring/REFERENCES.md)
-- Local development: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+Context Graph Contracts is licensed under the [Apache License 2.0](LICENSE). Third-party development and build tooling retains its own license terms and is not relicensed by this repository.
