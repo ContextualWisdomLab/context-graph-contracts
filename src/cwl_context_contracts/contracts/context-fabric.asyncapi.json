@@ -38,7 +38,7 @@
                 "required": ["type", "dataschema", "data"],
                 "properties": {
                   "type": {
-                    "const": "org.contextualwisdomlab.context.assertion.v1"
+                    "const": "org.contextualwisdomlab.context_graph.assertion.v1"
                   },
                   "dataschema": {
                     "const": "https://schemas.contextualwisdomlab.org/context/context-assertion.v1.schema.json"
