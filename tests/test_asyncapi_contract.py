@@ -3,6 +3,10 @@
 import pytest
 
 from cwl_context_contracts import available_contract_names, load_contract
+from cwl_context_contracts.assertion import ASSERTION_EVENT_TYPE
+
+_SCHEMA_FORMAT = "application/schema+json;version=draft-2020-12"
+_SCHEMA_ROOT = "https://schemas.contextualwisdomlab.org/context/"
 
 
 def test_packaged_asyncapi_contract_is_provider_neutral() -> None:
@@ -20,19 +24,37 @@ def test_packaged_asyncapi_contract_is_provider_neutral() -> None:
     message = document["components"]["messages"]["ContextGraphCloudEvent"]
     assert message["contentType"] == "application/cloudevents+json"
     assert message["payload"] == {
-        "schemaFormat": "application/schema+json;version=draft-2020-12",
-        "schema": {
-            "$ref": (
-                "https://schemas.contextualwisdomlab.org/context/"
-                "cloudevent-envelope.v1.schema.json"
-            )
-        },
+        "schemaFormat": _SCHEMA_FORMAT,
+        "schema": {"$ref": f"{_SCHEMA_ROOT}cloudevent-envelope.v1.schema.json"},
     }
-    assertion_message = document["components"]["messages"]["ContextAssertionEvent"]
-    assert assertion_message["payload"]["schema"]["$ref"] == (
-        "https://schemas.contextualwisdomlab.org/context/"
-        "context-assertion.v1.schema.json"
-    )
+
+
+def test_context_assertion_message_is_a_structured_cloudevent() -> None:
+    """Require assertion data inside the advertised structured CloudEvent."""
+
+    document = load_contract("context-fabric.asyncapi.json")
+    message = document["components"]["messages"]["ContextAssertionEvent"]
+
+    assert message["contentType"] == "application/cloudevents+json"
+    assert message["payload"]["schemaFormat"] == _SCHEMA_FORMAT
+    assert message["payload"]["schema"] == {
+        "allOf": [
+            {"$ref": f"{_SCHEMA_ROOT}cloudevent-envelope.v1.schema.json"},
+            {
+                "type": "object",
+                "required": ["type", "dataschema", "data"],
+                "properties": {
+                    "type": {"const": ASSERTION_EVENT_TYPE},
+                    "dataschema": {
+                        "const": f"{_SCHEMA_ROOT}context-assertion.v1.schema.json"
+                    },
+                    "data": {
+                        "$ref": f"{_SCHEMA_ROOT}context-assertion.v1.schema.json"
+                    },
+                },
+            },
+        ]
+    }
 
 
 def test_unknown_asyncapi_contract_is_rejected() -> None:

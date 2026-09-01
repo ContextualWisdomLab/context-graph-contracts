@@ -1,0 +1,167 @@
+{
+  "profile_id": "urn:cwl:context-contracts:context-assertion-event-semantics:v1",
+  "profile_version": 1,
+  "basis": "CWL Context Assertion v1 structured CloudEvent cross-field identity invariants",
+  "normative_requirement": "A consumer MUST require the canonical Context Assertion event type and dataschema and MUST require the CloudEvent subject to equal data.subject before admitting the payload as a Context Assertion event.",
+  "valid_vectors": [
+    {
+      "case_id": "canonical_assertion_event",
+      "value": {
+        "specversion": "1.0",
+        "id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": "urn:cwl:tenant_001:lineage_weave",
+        "type": "org.contextualwisdomlab.context_graph.assertion.v1",
+        "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+        "time": "2026-01-15T09:06:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://schemas.contextualwisdomlab.org/context/context-assertion.v1.schema.json",
+        "tenantid": "tenant_001",
+        "data": {
+          "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb701",
+          "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+          "predicate": "derived_from",
+          "object": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb703",
+          "truth_status": "observed",
+          "interval": {
+            "valid_from": "2026-01-15T09:00:00Z",
+            "recorded_at": "2026-01-15T09:05:00Z",
+            "valid_to": null,
+            "superseded_at": null
+          },
+          "provenance": {
+            "evidence_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+            "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "source_locator": "$.records[0]"
+          },
+          "memberships": [
+            {
+              "context_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+              "membership_level": 0,
+              "parent_context_ref": "urn:cwl:tenant_001:lineage_weave:workspace_record:0195d145-64e8-7f4f-8a23-a0cc784cb705"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "invalid_vectors": [
+    {
+      "case_id": "event_subject_differs_from_assertion_subject",
+      "error_pattern": "event subject must equal assertion subject",
+      "value": {
+        "specversion": "1.0",
+        "id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": "urn:cwl:tenant_001:lineage_weave",
+        "type": "org.contextualwisdomlab.context_graph.assertion.v1",
+        "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb798",
+        "time": "2026-01-15T09:06:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://schemas.contextualwisdomlab.org/context/context-assertion.v1.schema.json",
+        "tenantid": "tenant_001",
+        "data": {
+          "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb701",
+          "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+          "predicate": "derived_from",
+          "object": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb703",
+          "truth_status": "observed",
+          "interval": {
+            "valid_from": "2026-01-15T09:00:00Z",
+            "recorded_at": "2026-01-15T09:05:00Z",
+            "valid_to": null,
+            "superseded_at": null
+          },
+          "provenance": {
+            "evidence_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+            "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "source_locator": "$.records[0]"
+          },
+          "memberships": [
+            {
+              "context_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+              "membership_level": 0,
+              "parent_context_ref": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "wrong_assertion_event_type",
+      "error_pattern": "event type must identify a Context Assertion",
+      "value": {
+        "specversion": "1.0",
+        "id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": "urn:cwl:tenant_001:lineage_weave",
+        "type": "org.contextualwisdomlab.context_graph.other.v1",
+        "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+        "time": "2026-01-15T09:06:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://schemas.contextualwisdomlab.org/context/context-assertion.v1.schema.json",
+        "tenantid": "tenant_001",
+        "data": {
+          "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb701",
+          "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+          "predicate": "derived_from",
+          "object": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb703",
+          "truth_status": "observed",
+          "interval": {
+            "valid_from": "2026-01-15T09:00:00Z",
+            "recorded_at": "2026-01-15T09:05:00Z",
+            "valid_to": null,
+            "superseded_at": null
+          },
+          "provenance": {
+            "evidence_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+            "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          },
+          "memberships": [
+            {
+              "context_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+              "membership_level": 0,
+              "parent_context_ref": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "wrong_assertion_dataschema",
+      "error_pattern": "event dataschema must identify the Context Assertion schema",
+      "value": {
+        "specversion": "1.0",
+        "id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": "urn:cwl:tenant_001:lineage_weave",
+        "type": "org.contextualwisdomlab.context_graph.assertion.v1",
+        "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+        "time": "2026-01-15T09:06:00Z",
+        "datacontenttype": "application/json",
+        "dataschema": "https://schemas.contextualwisdomlab.org/context/other.v1.schema.json",
+        "tenantid": "tenant_001",
+        "data": {
+          "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb701",
+          "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+          "predicate": "derived_from",
+          "object": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb703",
+          "truth_status": "observed",
+          "interval": {
+            "valid_from": "2026-01-15T09:00:00Z",
+            "recorded_at": "2026-01-15T09:05:00Z",
+            "valid_to": null,
+            "superseded_at": null
+          },
+          "provenance": {
+            "evidence_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+            "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          },
+          "memberships": [
+            {
+              "context_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+              "membership_level": 0,
+              "parent_context_ref": null
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

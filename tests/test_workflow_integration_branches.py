@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from cwl_context_contracts import available_conformance_profile_names
+
 _WORKFLOW_PATHS = (
     Path(".github/workflows/ci.yml"),
     Path(".github/workflows/supply-chain.yml"),
@@ -51,6 +53,16 @@ def test_package_evidence_name_matches_the_default_checkout_commit() -> None:
 
     assert "name: package-evidence-${{ github.sha }}" in workflow_text
     assert "github.event.pull_request.head.sha || github.sha" not in workflow_text
+
+
+def test_package_smoke_covers_every_declared_conformance_profile() -> None:
+    """Require installed-package CI to retain and enumerate every public profile."""
+    workflow_text = _CI_PATH.read_text(encoding="utf-8")
+
+    for profile_name in available_conformance_profile_names():
+        resource_path = f'"cwl_context_contracts/conformance/{profile_name}"'
+        assert resource_path in workflow_text, profile_name
+        assert f'"{profile_name}",' in workflow_text, profile_name
 
 
 def test_protected_main_revalidates_downloaded_evidence_before_attesting() -> None:

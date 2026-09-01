@@ -249,6 +249,22 @@ class ContextAssertion:
         )
 
     @classmethod
+    def from_event(cls, event: CloudEventEnvelope) -> ContextAssertion:
+        """Admit an assertion only when CloudEvent and payload identities agree."""
+        if type(event) is not CloudEventEnvelope:
+            raise TypeError("event must be a CloudEventEnvelope")
+        if event.event_type != ASSERTION_EVENT_TYPE:
+            raise ValueError("event type must identify a Context Assertion")
+        if event.data_schema != ASSERTION_DATA_SCHEMA:
+            raise ValueError(
+                "event dataschema must identify the Context Assertion schema"
+            )
+        assertion = cls.from_mapping(event.data)
+        if event.subject != assertion.subject:
+            raise ValueError("event subject must equal assertion subject")
+        return assertion
+
+    @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> ContextAssertion:
         """Parse one coherent snapshot of a context-assertion mapping."""
         snapshot = dict(_require_mapping(value, "value").items())
