@@ -3,6 +3,7 @@
 import pytest
 
 from cwl_context_contracts import available_contract_names, load_contract
+from cwl_context_contracts.assertion import ASSERTION_EVENT_TYPE
 
 
 _SCHEMA_FORMAT = "application/schema+json;version=draft-2020-12"
@@ -44,9 +45,7 @@ def test_context_assertion_message_is_a_structured_cloudevent() -> None:
                 "type": "object",
                 "required": ["type", "dataschema", "data"],
                 "properties": {
-                    "type": {
-                        "const": "org.contextualwisdomlab.context.assertion.v1"
-                    },
+                    "type": {"const": ASSERTION_EVENT_TYPE},
                     "dataschema": {
                         "const": f"{_SCHEMA_ROOT}context-assertion.v1.schema.json"
                     },
