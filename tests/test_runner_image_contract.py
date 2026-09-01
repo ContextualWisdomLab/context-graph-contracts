@@ -1,3 +1,5 @@
+"""Regression tests for explicit hosted-runner image pinning."""
+
 from pathlib import Path
 
 
