@@ -158,6 +158,42 @@ def _run_assertion_profile(
     return len(vectors), tuple(failures)
 
 
+def _run_assertion_event_profile(
+    profile_name: str,
+    profile: dict[str, Any],
+) -> tuple[int, tuple[ConformanceFailure, ...]]:
+    """Execute Context Assertion structured-CloudEvent identity vectors."""
+    failures: list[ConformanceFailure] = []
+    case_count = 0
+
+    def admit(value: object) -> ContextAssertion:
+        event = CloudEventEnvelope.from_mapping(value)
+        return ContextAssertion.from_event(event)
+
+    for index, vector in enumerate(profile["valid_vectors"]):
+        case_count += 1
+        case_id = str(vector.get("case_id", f"valid_vectors[{index}]"))
+        failure = _expected_acceptance(
+            profile_name=profile_name,
+            case_id=case_id,
+            action=lambda vector=vector: admit(vector["value"]),
+        )
+        if failure is not None:
+            failures.append(failure)
+    for index, vector in enumerate(profile["invalid_vectors"]):
+        case_count += 1
+        case_id = str(vector.get("case_id", f"invalid_vectors[{index}]"))
+        failure = _expected_rejection(
+            profile_name=profile_name,
+            case_id=case_id,
+            error_pattern=str(vector["error_pattern"]),
+            action=lambda vector=vector: admit(vector["value"]),
+        )
+        if failure is not None:
+            failures.append(failure)
+    return case_count, tuple(failures)
+
+
 def _run_cloudevent_profile(
     profile_name: str,
     profile: dict[str, Any],
@@ -267,6 +303,7 @@ _PROFILE_RUNNERS: dict[
 ] = {
     "cwl-timestamp-profile.v1.json": _run_timestamp_profile,
     "context-assertion-semantics.v1.json": _run_assertion_profile,
+    "context-assertion-event-semantics.v1.json": _run_assertion_event_profile,
     "cloudevent-semantics.v1.json": _run_cloudevent_profile,
     "cwl-json-interoperability.v1.json": _run_json_profile,
     "data-management-assessment-semantics.v1.json": (
