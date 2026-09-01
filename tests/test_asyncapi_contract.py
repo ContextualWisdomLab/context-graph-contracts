@@ -2,8 +2,8 @@
 
 import pytest
 
-from cwl_context_contracts.assertion import ASSERTION_EVENT_TYPE
 from cwl_context_contracts import available_contract_names, load_contract
+from cwl_context_contracts.assertion import ASSERTION_EVENT_TYPE
 
 _SCHEMA_FORMAT = "application/schema+json;version=draft-2020-12"
 _SCHEMA_ROOT = "https://schemas.contextualwisdomlab.org/context/"
