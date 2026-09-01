@@ -64,6 +64,13 @@ def test_context_assertion_event_admission_round_trips_exact_assertion() -> None
     assert ContextAssertion.from_event(_event(assertion)) == assertion
 
 
+def test_context_assertion_event_rejects_non_event_input() -> None:
+    """Callers cannot bypass the typed CloudEvent boundary with an arbitrary mapping."""
+
+    with pytest.raises(TypeError, match="event must be a CloudEventEnvelope"):
+        ContextAssertion.from_event({})  # type: ignore[arg-type]
+
+
 def test_context_assertion_event_rejects_subject_data_identity_mismatch() -> None:
     """A same-tenant routing subject cannot point at a different assertion subject."""
 
