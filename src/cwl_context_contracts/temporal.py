@@ -125,7 +125,7 @@ class BitemporalInterval:
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> BitemporalInterval:
-        """Parse one coherent snapshot of a bitemporal interval mapping."""
+        """Parse one coherent snapshot, accepting legacy v1 null open ends."""
         if not isinstance(value, Mapping):
             raise TypeError("value must be a mapping")
         snapshot = dict(value.items())
@@ -142,12 +142,12 @@ class BitemporalInterval:
             ),
             valid_to=(
                 parse_cwl_timestamp(snapshot["valid_to"], "valid_to")
-                if "valid_to" in snapshot
+                if snapshot.get("valid_to") is not None
                 else None
             ),
             superseded_at=(
                 parse_cwl_timestamp(snapshot["superseded_at"], "superseded_at")
-                if "superseded_at" in snapshot
+                if snapshot.get("superseded_at") is not None
                 else None
             ),
         )
