@@ -35,7 +35,10 @@ def _snapshot() -> dict[str, object]:
                 "name": "cwl_context_contracts-0.1.0.tar.gz",
                 "sha256": "b" * 64,
             },
-            {"name": "cwl-context-contracts.spdx.json", "sha256": "c" * 64},
+            {
+                "name": "cwl-context-contracts.spdx.json",
+                "sha256": "c" * 64,
+            },
         ],
         "mismatches": [],
         "next_action": _NEXT_ACTION,
@@ -76,28 +79,55 @@ def test_snapshot_shape_and_verification_contract_fail_closed(mutator) -> None:
     [
         [
             "not-an-object",
-            {"name": "cwl_context_contracts-0.1.0.tar.gz", "sha256": "b" * 64},
-            {"name": "cwl-context-contracts.spdx.json", "sha256": "c" * 64},
+            {
+                "name": "cwl_context_contracts-0.1.0.tar.gz",
+                "sha256": "b" * 64,
+            },
+            {
+                "name": "cwl-context-contracts.spdx.json",
+                "sha256": "c" * 64,
+            },
         ],
         [
             {"name": "cwl_context_contracts-0.1.0-py3-none-any.whl"},
-            {"name": "cwl_context_contracts-0.1.0.tar.gz", "sha256": "b" * 64},
-            {"name": "cwl-context-contracts.spdx.json", "sha256": "c" * 64},
+            {
+                "name": "cwl_context_contracts-0.1.0.tar.gz",
+                "sha256": "b" * 64,
+            },
+            {
+                "name": "cwl-context-contracts.spdx.json",
+                "sha256": "c" * 64,
+            },
         ],
         [
-            {"name": "cwl_context_contracts-0.1.0-py3-none-any.whl", "sha256": "a" * 64},
-            {"name": "cwl_context_contracts-0.1.0.tar.gz", "sha256": "b" * 64},
+            {
+                "name": "cwl_context_contracts-0.1.0-py3-none-any.whl",
+                "sha256": "a" * 64,
+            },
+            {
+                "name": "cwl_context_contracts-0.1.0.tar.gz",
+                "sha256": "b" * 64,
+            },
             {"name": "other.json", "sha256": "c" * 64},
         ],
         [
-            {"name": "cwl_context_contracts-0.1.0.whl", "sha256": "a" * 64},
-            {"name": "cwl_context_contracts-0.1.0.tar.gz", "sha256": "b" * 64},
-            {"name": "cwl-context-contracts.spdx.json", "sha256": "c" * 64},
+            {
+                "name": "cwl_context_contracts-0.1.0.whl",
+                "sha256": "a" * 64,
+            },
+            {
+                "name": "cwl_context_contracts-0.1.0.tar.gz",
+                "sha256": "b" * 64,
+            },
+            {
+                "name": "cwl-context-contracts.spdx.json",
+                "sha256": "c" * 64,
+            },
         ],
     ],
 )
 def test_artifact_object_set_and_filename_contract_fail_closed(artifacts) -> None:
-    """Malformed objects, missing SBOM identity, and malformed filenames are rejected."""
+    """Reject malformed objects, missing SBOM identity, and malformed filenames."""
     snapshot = _snapshot()
     snapshot["artifacts"] = artifacts
 
