@@ -9,6 +9,10 @@ from .contracts import available_contract_names, load_contract
 from .events import CloudEventEnvelope
 from .fixtures import available_fixture_names, load_fixture
 from .identity import CanonicalAssetUri, CanonicalAuthorityUri
+from .org_membership import (
+    assert_ancestor_closure_chain,
+    assert_single_primary_membership_per_subject,
+)
 from .provenance import ProvenanceReference
 from .schemas import available_schema_names, load_schema
 from .temporal import (
@@ -35,6 +39,8 @@ __all__ = [
     "ContextMembership",
     "ProvenanceReference",
     "TruthStatus",
+    "assert_ancestor_closure_chain",
+    "assert_single_primary_membership_per_subject",
     "available_conformance_profile_names",
     "available_contract_names",
     "available_fixture_names",
