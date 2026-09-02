@@ -125,7 +125,7 @@ def test_package_snapshot_requires_exact_unique_release_artifact_set() -> None:
 
 
 def test_source_identity_is_exact_and_cannot_be_self_selected() -> None:
-    """Repository, protected ref, source SHA, and signer identity are fixed contracts."""
+    """Source repository, ref, SHA, and signer identity are fixed contracts."""
     invalid_inputs = (
         {"source_repository": "ContextualWisdomLab/other"},
         {"source_ref": "refs/heads/develop"},

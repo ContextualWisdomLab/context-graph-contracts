@@ -205,7 +205,8 @@ jobs:
           ] is True
           assert complete_release_evidence["next_action"] == (
               "verify artifact attestations bind these exact package bytes to the "
-              "intended protected main source commit, then satisfy independent review "
+              "intended protected main source commit, generate and independently verify "
+              "the attested release-source manifest, then satisfy independent review "
               "and release authorization before publication"
           )
           PY
