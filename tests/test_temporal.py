@@ -142,15 +142,17 @@ def test_interval_mapping_omits_open_ends_and_round_trips_closed_forms() -> None
 
 
 @pytest.mark.parametrize("field_name", ["valid_to", "superseded_at"])
-def test_interval_mapping_rejects_explicit_null_end_members(field_name: str) -> None:
-    """Open ends use omission; an explicit JSON null is not the canonical v1 shape."""
+def test_interval_mapping_accepts_v1_null_and_canonicalizes_to_omission(
+    field_name: str,
+) -> None:
+    """V1 accepts legacy null input but never re-emits it as canonical output."""
     payload: dict[str, object] = {
         "valid_from": "2026-01-01T00:00:00Z",
         "recorded_at": "2026-01-02T00:00:00Z",
         field_name: None,
     }
-    with pytest.raises(TypeError, match=field_name):
-        BitemporalInterval.from_mapping(payload)
+    interval = BitemporalInterval.from_mapping(payload)
+    assert field_name not in interval.to_mapping()
 
 
 def test_interval_mapping_rejects_hostile_or_incomplete_input() -> None:
