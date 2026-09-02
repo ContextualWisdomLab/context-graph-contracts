@@ -1,0 +1,82 @@
+{
+  "profile_id": "urn:cwl:context-contracts:org-hierarchy-membership-semantics:v1",
+  "profile_version": 1,
+  "basis": "ADR-0016 org_member_primary/org_member_secondary/org_member_observed ancestor-closure chain convention, layered on ADR-0006's ContextAssertion/ContextMembership",
+  "json_schema_role": "structural_and_lexical_only_for_ancestor_closure_chain_invariant",
+  "normative_requirement": "context-assertion.schema.json and context-membership.schema.json cannot distinguish ADR-0006's cross-classification memberships[] reading from ADR-0016's positional ancestor-closure reading -- both are structurally 'an array of ContextMembership objects.' A consumer of an org_member_primary/org_member_secondary/org_member_observed assertion MUST additionally run the assert_ancestor_closure_chain check (strictly descending membership_level, each entry's parent_context_ref equal to the next entry's context_ref, final entry's parent_context_ref null) before treating memberships[] as a valid ancestor chain. Draft 2020-12 structural validation alone accepts every invalid_vectors value below.",
+  "invalid_vectors": [
+    {
+      "case_id": "broken_ancestor_chain_wrong_parent_pointer",
+      "error_pattern": "unbroken ancestor chain",
+      "value": {
+        "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb811",
+        "subject": "urn:cwl:tenant_010:orgmetra:person:0195d145-64e8-7f4f-8a23-a0cc784cb802",
+        "predicate": "org_member_primary",
+        "object": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb803",
+        "truth_status": "authoritative",
+        "interval": {
+          "valid_from": "2026-01-01T00:00:00Z",
+          "recorded_at": "2026-01-01T00:05:00Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_010:orgmetra:assignment_record:0195d145-64e8-7f4f-8a23-a0cc784cb804",
+          "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "source_locator": "$.assignments[0]"
+        },
+        "memberships": [
+          {
+            "context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb803",
+            "membership_level": 2,
+            "parent_context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb809"
+          },
+          {
+            "context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb805",
+            "membership_level": 1,
+            "parent_context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb806"
+          },
+          {
+            "context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb806",
+            "membership_level": 0,
+            "parent_context_ref": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "non_descending_membership_level",
+      "error_pattern": "strictly descending",
+      "value": {
+        "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb812",
+        "subject": "urn:cwl:tenant_010:orgmetra:person:0195d145-64e8-7f4f-8a23-a0cc784cb802",
+        "predicate": "org_member_secondary",
+        "object": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb803",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-01-01T00:00:00Z",
+          "recorded_at": "2026-01-01T00:05:00Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_010:orgmetra:assignment_record:0195d145-64e8-7f4f-8a23-a0cc784cb804",
+          "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "source_locator": "$.assignments[0]"
+        },
+        "memberships": [
+          {
+            "context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb803",
+            "membership_level": 1,
+            "parent_context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb805"
+          },
+          {
+            "context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb805",
+            "membership_level": 1,
+            "parent_context_ref": null
+          }
+        ]
+      }
+    }
+  ]
+}

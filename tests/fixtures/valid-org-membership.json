@@ -1,0 +1,35 @@
+{
+  "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb801",
+  "subject": "urn:cwl:tenant_010:orgmetra:person:0195d145-64e8-7f4f-8a23-a0cc784cb802",
+  "predicate": "org_member_primary",
+  "object": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb803",
+  "truth_status": "authoritative",
+  "interval": {
+    "valid_from": "2026-01-01T00:00:00Z",
+    "recorded_at": "2026-01-01T00:05:00Z",
+    "valid_to": null,
+    "superseded_at": null
+  },
+  "provenance": {
+    "evidence_ref": "urn:cwl:tenant_010:orgmetra:assignment_record:0195d145-64e8-7f4f-8a23-a0cc784cb804",
+    "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "source_locator": "$.assignments[0]"
+  },
+  "memberships": [
+    {
+      "context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb803",
+      "membership_level": 2,
+      "parent_context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb805"
+    },
+    {
+      "context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb805",
+      "membership_level": 1,
+      "parent_context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb806"
+    },
+    {
+      "context_ref": "urn:cwl:tenant_010:orgmetra:organization_unit:0195d145-64e8-7f4f-8a23-a0cc784cb806",
+      "membership_level": 0,
+      "parent_context_ref": null
+    }
+  ]
+}

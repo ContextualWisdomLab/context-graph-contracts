@@ -21,6 +21,7 @@ _ASSERTION_PROFILE = "context-assertion-semantics.v1.json"
 _EVENT_PROFILE = "cloudevent-semantics.v1.json"
 _JSON_PROFILE = "cwl-json-interoperability.v1.json"
 _TIMESTAMP_PROFILE = "cwl-timestamp-profile.v1.json"
+_ORG_HIERARCHY_PROFILE = "org-hierarchy-membership-semantics.v1.json"
 
 
 def _schema_registry() -> Registry:
@@ -38,6 +39,7 @@ def test_conformance_profile_inventory_is_stable_and_complete() -> None:
         _ASSERTION_PROFILE,
         _EVENT_PROFILE,
         _JSON_PROFILE,
+        _ORG_HIERARCHY_PROFILE,
     )
 
 
