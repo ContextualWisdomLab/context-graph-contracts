@@ -37,6 +37,14 @@ does not extend the W3C recommendation:
 - `superseded` and `rejected` record invalidation (`prov:wasInvalidatedBy`)
   while retaining the historical assertion
 
+When a Context Assertion is carried in the shared CloudEvent envelope,
+`authoritative` is valid only when the event `source` equals the canonical
+authority that owns `data.subject`. A same-tenant producer from another
+bounded context may transport an `observed`, `inferred`, or `proposed`
+assertion with its own source identity, but it cannot label another
+bounded context's subject as authoritative truth. This keeps transport and
+observation provenance explicit without transferring decision authority.
+
 Truth status is not a confidence score and does not authorize a consumer.
 Confidence and verification evidence belong in domain-specific payloads.
 Parsers and adapters must not promote `observed`, `inferred`, or
@@ -54,4 +62,4 @@ decision. This repository only carries the resulting status on the wire.
 
 ## References
 
-Lebo, T., Sahoo, S., & McGuinness, D. (Eds.). (2013). *PROV-O: The PROV ontology*. World Wide Web Consortium. https://www.w3.org/TR/prov-o/
+Lebo, T., Sahoo, D., & McGuinness, D. (Eds.). (2013). *PROV-O: The PROV ontology*. World Wide Web Consortium. https://www.w3.org/TR/prov-o/
