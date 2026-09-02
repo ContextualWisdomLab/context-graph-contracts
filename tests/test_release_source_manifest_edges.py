@@ -56,6 +56,23 @@ def _build(snapshot: dict[str, object]) -> manifest_module.ReleaseSourceManifest
     )
 
 
+def _cli(path: Path) -> int:
+    """Invoke the manifest CLI with the one authorized source identity."""
+    return manifest_module.main(
+        [
+            str(path),
+            "--source-repository",
+            _REPOSITORY,
+            "--source-ref",
+            _SOURCE_REF,
+            "--source-sha",
+            _SOURCE_SHA,
+            "--signer-workflow",
+            _SIGNER,
+        ]
+    )
+
+
 @pytest.mark.parametrize(
     "mutator",
     [
@@ -146,25 +163,52 @@ def test_malformed_json_snapshot_is_not_treated_as_evidence(
     path = tmp_path / "package-evidence-verification.json"
     path.write_text("{", encoding="utf-8")
 
-    exit_code = manifest_module.main(
-        [
-            str(path),
-            "--source-repository",
-            _REPOSITORY,
-            "--source-ref",
-            _SOURCE_REF,
-            "--source-sha",
-            _SOURCE_SHA,
-            "--signer-workflow",
-            _SIGNER,
-        ]
-    )
+    exit_code = _cli(path)
 
     payload = json.loads(capsys.readouterr().out)
     assert exit_code == 2
     assert payload["generated"] is False
     assert payload["error"] == "package_snapshot_invalid"
     assert payload["manifest_format"] == "cwl-context-release-source-manifest/v1"
+
+
+@pytest.mark.parametrize(
+    ("payload", "expected_error"),
+    [
+        (
+            '{"verification_format":"a","verification_format":"b"}',
+            "package_snapshot_invalid",
+        ),
+        ('{"verification_format":NaN}', "package_snapshot_invalid"),
+    ],
+)
+def test_ambiguous_json_snapshot_is_rejected(
+    tmp_path: Path,
+    capsys,
+    payload: str,
+    expected_error: str,
+) -> None:
+    """Duplicate members and non-standard JSON numbers cannot enter provenance."""
+    path = tmp_path / "ambiguous.json"
+    path.write_text(payload, encoding="utf-8")
+
+    exit_code = _cli(path)
+    result = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 2
+    assert result["error"] == expected_error
+
+
+def test_package_snapshot_input_is_bounded(tmp_path: Path, capsys) -> None:
+    """Oversized release metadata fails before JSON parsing or hashing."""
+    path = tmp_path / "oversized.json"
+    path.write_bytes(b"{" + b" " * (1024 * 1024) + b"}")
+
+    exit_code = _cli(path)
+    result = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 2
+    assert result["error"] == "package_snapshot_too_large"
 
 
 def test_release_source_manifest_is_public_sdk_and_installed_cli() -> None:
