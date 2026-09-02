@@ -70,6 +70,20 @@ def _require_membership_level(value: object) -> int:
     return value
 
 
+def _require_authoritative_source_owner(
+    assertion: ContextAssertion,
+    source: CanonicalAuthorityUri,
+) -> None:
+    """Reject authoritative truth emitted by a non-owning domain authority."""
+    if (
+        assertion.truth_status is TruthStatus.AUTHORITATIVE
+        and source != assertion.subject.authority_uri
+    ):
+        raise ValueError(
+            "authoritative assertion source must own the assertion subject"
+        )
+
+
 @dataclass(frozen=True, slots=True)
 class ContextMembership:
     """One affiliation of an assertion with a named context asset.
@@ -237,6 +251,9 @@ class ContextAssertion:
         extensions: Mapping[str, str] | None = None,
     ) -> CloudEventEnvelope:
         """Wrap the assertion as a provider-neutral CloudEvents payload."""
+        if type(source) is not CanonicalAuthorityUri:
+            raise TypeError("source must be a CanonicalAuthorityUri")
+        _require_authoritative_source_owner(self, source)
         return CloudEventEnvelope(
             event_id=event_id,
             source=source,
@@ -262,6 +279,7 @@ class ContextAssertion:
         assertion = cls.from_mapping(event.data)
         if event.subject != assertion.subject:
             raise ValueError("event subject must equal assertion subject")
+        _require_authoritative_source_owner(assertion, event.source)
         return assertion
 
     @classmethod
