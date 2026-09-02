@@ -172,31 +172,56 @@ def test_malformed_json_snapshot_is_not_treated_as_evidence(
     assert payload["manifest_format"] == "cwl-context-release-source-manifest/v1"
 
 
-@pytest.mark.parametrize(
-    ("payload", "expected_error"),
-    [
-        (
-            '{"verification_format":"a","verification_format":"b"}',
-            "package_snapshot_invalid",
-        ),
-        ('{"verification_format":NaN}', "package_snapshot_invalid"),
-    ],
-)
-def test_ambiguous_json_snapshot_is_rejected(
+def test_duplicate_json_member_is_rejected_before_schema_validation(
     tmp_path: Path,
     capsys,
-    payload: str,
-    expected_error: str,
 ) -> None:
-    """Duplicate members and non-standard JSON numbers cannot enter provenance."""
-    path = tmp_path / "ambiguous.json"
+    """Duplicate members fail even when the last value would remain schema-valid."""
+    payload = json.dumps(_snapshot(), separators=(",", ":"))
+    expected_member = (
+        '"verification_format":"cwl-context-package-evidence-verification/v1"'
+    )
+    duplicate_member = f"{expected_member},{expected_member}"
+    payload = payload.replace(expected_member, duplicate_member, 1)
+    path = tmp_path / "duplicate-member.json"
     path.write_text(payload, encoding="utf-8")
 
     exit_code = _cli(path)
     result = json.loads(capsys.readouterr().out)
 
     assert exit_code == 2
-    assert result["error"] == expected_error
+    assert result["error"] == "package_snapshot_invalid"
+
+
+def test_nonstandard_json_constant_is_rejected_by_strict_loader(
+    tmp_path: Path,
+) -> None:
+    """NaN is rejected by parsing before package-snapshot schema validation."""
+    path = tmp_path / "nan.json"
+    path.write_text('{"value":NaN}', encoding="utf-8")
+
+    with pytest.raises(
+        manifest_module.ReleaseSourceManifestInputError,
+        match="package_snapshot_invalid",
+    ):
+        manifest_module._load_package_snapshot(path)
+
+
+def test_deep_json_snapshot_returns_stable_cli_error(
+    tmp_path: Path,
+    capsys,
+) -> None:
+    """Excessive JSON nesting cannot escape the stable CLI error contract."""
+    path = tmp_path / "deep.json"
+    nesting = manifest_module._MAX_JSON_DEPTH + 1
+    path.write_text("[" * nesting + "]" * nesting, encoding="utf-8")
+
+    exit_code = _cli(path)
+    result = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 2
+    assert result["generated"] is False
+    assert result["error"] == "package_snapshot_too_deep"
 
 
 def test_package_snapshot_input_is_bounded(tmp_path: Path, capsys) -> None:
