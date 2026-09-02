@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from copy import deepcopy
-import json
-from pathlib import Path
 
 import pytest
 
@@ -12,19 +10,27 @@ from cwl_context_contracts import (
     ContextAssertion,
     assert_ancestor_closure_chain,
     assert_single_primary_membership_per_subject,
+    available_fixture_names,
+    load_fixture,
 )
-
-_FIXTURE_PATH = Path(__file__).parent / "fixtures" / "valid-org-membership.json"
 
 
 def _fixture() -> dict[str, object]:
-    """Return a fresh mapping for the committed valid organization fixture."""
-    return json.loads(_FIXTURE_PATH.read_text(encoding="utf-8"))
+    """Return a fresh mapping from the installed organization fixture corpus."""
+    return load_fixture("valid-org-membership.json")
 
 
 def _assertion(value: dict[str, object]) -> ContextAssertion:
     """Parse one organization-membership assertion from a test mapping."""
     return ContextAssertion.from_mapping(value)
+
+
+def test_org_membership_fixtures_are_public_package_inventory() -> None:
+    """Installed consumers can load both advertised organization fixtures."""
+    names = available_fixture_names()
+    assert "valid-org-membership.json" in names
+    assert "invalid-org-membership.json" in names
+    assert load_fixture("invalid-org-membership.json")["predicate"] == "org_member_primary"
 
 
 def test_public_ancestor_validator_rejects_skipped_hierarchy_level() -> None:
