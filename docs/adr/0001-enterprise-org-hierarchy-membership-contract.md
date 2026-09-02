@@ -210,6 +210,18 @@ predicate vocabulary is registered:
   - `org_member_primary` — the subject's primary reporting-line membership in `object`.
   - `org_member_secondary` — a concurrent, non-primary membership (TFT / dual-hat) in
     `object`. Multiple `org_member_secondary` assertions may coexist for one subject.
+  - `org_member_observed` — **added by the SCIM/OIDC/SAML exchange section below**: an
+    externally observed membership in `object` (sourced from an inbound SCIM `Group`
+    push or an inbound SAML `AttributeStatement`) whose primary/secondary
+    classification the owning authority has not yet made. Always
+    `truth_status: "observed"` with `provenance`. A consumer MUST NOT read
+    `org_member_observed` as either primary or secondary membership for an ABAC/RBAC
+    decision; promotion to `org_member_primary` or `org_member_secondary` is a
+    separate, later reconciliation act by the owning authority (Orgmetra or an
+    equivalent admin workflow), not something an adapter infers. This keeps
+    heuristic-free primacy classification (ADR-0001's own standing constraint, echoed
+    in the Risks section below) intact even when the *source* of a membership fact is
+    a third-party directory that has no concept of "primary."
 
 No `.schema.json` file changes in this ADR. `context-assertion.schema.json` and
 `context-membership.schema.json` already accept this shape unmodified — confirmed by
@@ -384,6 +396,198 @@ None of this is implemented against PR #103 in this ADR — PR #103 is itself dr
 this ADR modifies. The above is the reconciliation record so whoever next touches
 `org_authorization.py` does not have to rediscover it.
 
+## Decision — SCIM, OIDC, and SAML exchange (this repository's scope: the canonical
+   shape; Keyverse owns the protocol adapters)
+
+An enterprise customer's IdP does not speak `ContextAssertion`/`ContextMembership`. It
+speaks SCIM (RFC 7643/7644), OIDC ID-token/UserInfo claims, or SAML
+`<AttributeStatement>` attributes — sometimes to *push* org/group data in
+(provisioning, federated login), sometimes to *receive* it back out (a relying party
+consuming a CWL-issued token). This section defines the one canonical shape those three
+protocols map to and from; it does not implement any of the three adapters. Per the
+ownership split decided above (Orgmetra = tree/membership truth, `context-graph-contracts`
+= wire contract, Keyverse = PDP), the adapters that actually speak SCIM/OIDC/SAML belong
+to **Keyverse**, since it is already the repository that terminates all three protocols
+(`README.md`: "runs a SCIM 2.0 server shim," "federates external IdPs in ... via SAML,"
+"issues OpenID Connect"). That design is
+`ContextualWisdomLab/keyverse` `docs/adr/0014-scim-oidc-saml-context-membership-exchange.md`
+— a cross-repository citation (Keyverse is a separate repository; this document does not
+modify it). This repository's job is only to confirm the canonical shape already
+carries what every adapter needs, and to register the one additional predicate the
+adapters require (`org_member_observed`, above) — same discipline as the rest of this
+ADR: extend the registered vocabulary, do not fork the schema.
+
+### Why no `.schema.json` changes are needed here either
+
+Every field a SCIM `Group`/`User` extension, an OIDC claim, or a SAML `AttributeValue`
+needs to carry is already a field on `ContextAssertion` or `ContextMembership`:
+
+| Needed by every adapter | Already carried by |
+|---|---|
+| Which org unit (`object`) | `ContextAssertion.object` (canonical asset URI) |
+| Its immediate parent | `ContextMembership.parent_context_ref` |
+| Its depth/level | `ContextMembership.membership_level` |
+| Primary vs. secondary vs. not-yet-classified | `ContextAssertion.predicate` (`org_member_primary` / `org_member_secondary` / `org_member_observed`) |
+| Effective-date range (TFT is often time-bounded) | `ContextAssertion.interval` (`valid_from`/`valid_to`) |
+| Traceability back to the source fact | `ContextAssertion.assertion_id` |
+| "Is this authoritative or just observed from a push?" | `ContextAssertion.truth_status` |
+
+An adapter therefore projects one **membership-projection record** —
+`{assertion_id, context_ref, parent_context_ref, membership_level, predicate,
+valid_from, valid_to}` — out of one `ContextAssertion` plus its matching
+`ContextMembership` entry. Each protocol serializes that same record differently
+(below); none of them needs a field this repository's schema does not already have.
+
+### RFC 7643 §4.2 (SCIM Group) — nested groups plus a custom extension, both used
+
+SCIM's core `Group` (RFC 7643 §4.2) has only `id`, `displayName`, and `members[]` — no
+level, no type, no interval, no primary/secondary. Two mechanisms exist for extending
+it and this design uses both, for different parts of the requirement:
+
+- **Nested groups** (a `Group`'s `members[]` entry with `"type": "Group"`, per RFC 7643
+  §4.2) model the *tree*: the parent org unit's `members[]` lists its child org-unit
+  Groups. This needs no extension at all — it is exactly what SCIM nested groups are
+  for, and it mirrors `ContextMembership.parent_context_ref` in reverse.
+- **A custom schema extension** (RFC 7644 §3.3) carries the fields SCIM core has no slot
+  for. Two extensions, one per resource type, because the data has two different
+  lifetimes — tree shape barely changes; a person's membership fact changes often, and
+  duplicating tree shape into every `User` resource would desynchronize the moment an
+  org unit's `membershipLevel` or parent changed:
+
+  `urn:ietf:params:scim:schemas:extension:cwl-context-membership:2.0:Group`
+  ```json
+  {
+    "contextRef": "urn:cwl:tenant_001:orgmetra:organization_unit:0195...-team-a",
+    "parentContextRef": "urn:cwl:tenant_001:orgmetra:organization_unit:0195...-part-a",
+    "membershipLevel": 5,
+    "orgUnitTypeCode": "team"
+  }
+  ```
+  (`contextRef`/`parentContextRef` are canonical asset URIs — same pattern as
+  `canonical-asset-uri.schema.json`; `membershipLevel` is `ContextMembership
+  .membership_level` unchanged, 0-15; `orgUnitTypeCode` is the *display* type label
+  this ADR's wire-contract section already said never belongs in the structural
+  contract — carried here only as SCIM metadata, never validated for ordering.)
+
+  `urn:ietf:params:scim:schemas:extension:cwl-context-membership:2.0:User`
+  ```json
+  {
+    "contextMemberships": [
+      {
+        "assertionId": "0195eb2c-...",
+        "contextRef": "urn:cwl:tenant_001:orgmetra:organization_unit:0195...-team-a",
+        "predicate": "org_member_primary",
+        "validFrom": "2026-01-01T00:00:00Z",
+        "validTo": null
+      }
+    ]
+  }
+  ```
+
+### OIDC Core 1.0 §5.1 — a non-standard, array-of-objects claim, target-state only
+
+§5.1 defines Standard Claims; this is deliberately not one of them — no OIDC Standard
+Claim represents org membership, let alone concurrent membership. OIDC Core allows
+additional claims by mutual agreement between issuer and RPs (this ecosystem's existing
+`role`/`org`/`workspace` claims already are exactly that: non-standard, private,
+issuer-RP-agreed). A single scalar claim structurally cannot hold two concurrent
+memberships, so the new claim is an array of the same membership-projection record,
+snake_case to match this repository's own field names:
+
+```json
+"cwl_context_memberships": [
+  {
+    "assertion_id": "0195eb2c-...",
+    "context_ref": "urn:cwl:tenant_001:orgmetra:organization_unit:0195...-team-a",
+    "parent_context_ref": "urn:cwl:tenant_001:orgmetra:organization_unit:0195...-part-a",
+    "membership_level": 5,
+    "predicate": "org_member_primary",
+    "valid_from": "2026-01-01T00:00:00Z",
+    "valid_to": null
+  },
+  {
+    "assertion_id": "0195eb2d-...",
+    "context_ref": "urn:cwl:tenant_001:orgmetra:organization_unit:0195...-tft-unit",
+    "parent_context_ref": "urn:cwl:tenant_001:orgmetra:organization_unit:0195...-tft-parent",
+    "membership_level": 5,
+    "predicate": "org_member_secondary",
+    "valid_from": "2026-03-01T00:00:00Z",
+    "valid_to": "2026-12-31T23:59:59Z"
+  }
+]
+```
+
+**This is target-state, not current state.** `keyverse/deploy/keycloak/realm-cwl.json`
+today has zero `"groups"` entries and its only org-shaped claims (`naruon-web`'s
+`org`/`workspace`/`role`) are `oidc-hardcoded-claim-mapper` entries returning the same
+static string for every user — confirmed by direct inspection, not assumed. Nothing
+about this section describes something already live.
+
+Only the *immediate* `context_ref`/`parent_context_ref` travel in the token, not the
+full ancestor closure `ContextAssertion.memberships[]` carries internally. An "is this
+subject under org unit X" ABAC decision stays server-side in Keyverse's PDP (the
+evaluation sketch above, extending PR #103), which already has the full closure
+available without a token round-trip; bloating every access/ID token with a 6-level
+ancestor chain per membership was considered and rejected as unnecessary token growth
+for a query the issuer can already answer more cheaply itself.
+
+### SAML V2.0 Core §2.7 — one multi-valued Attribute, one value per membership
+
+§2.7 attribute statements natively support multiple `<AttributeValue>` elements per
+`<Attribute>` — the one place among the three protocols where concurrent membership
+does not require an array-shaped workaround. `AttributeValue` is text-typed unless the
+receiving SP explicitly opts into structured `xsi:type` content, and this design does
+not assume that support, so each value is the membership-projection record serialized
+as a compact JSON string — the same fields as the OIDC claim entry, so the two egress
+paths carry identical information, one JSON-native and one JSON-as-text:
+
+```xml
+<saml2:Attribute Name="urn:cwl:claims:context_membership"
+                  NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
+                  FriendlyName="CWL Context Membership">
+  <saml2:AttributeValue xsi:type="xs:string">{"assertion_id":"0195eb2c-...","context_ref":"urn:cwl:tenant_001:orgmetra:organization_unit:0195...-team-a","parent_context_ref":"urn:cwl:tenant_001:orgmetra:organization_unit:0195...-part-a","membership_level":5,"predicate":"org_member_primary","valid_from":"2026-01-01T00:00:00Z","valid_to":null}</saml2:AttributeValue>
+  <saml2:AttributeValue xsi:type="xs:string">{"assertion_id":"0195eb2d-...","context_ref":"urn:cwl:tenant_001:orgmetra:organization_unit:0195...-tft-unit","parent_context_ref":"urn:cwl:tenant_001:orgmetra:organization_unit:0195...-tft-parent","membership_level":5,"predicate":"org_member_secondary","valid_from":"2026-03-01T00:00:00Z","valid_to":"2026-12-31T23:59:59Z"}</saml2:AttributeValue>
+</saml2:Attribute>
+```
+
+`urn:cwl:claims:context_membership` is **not** a canonical asset URI — it is a SAML
+attribute name, a different namespace than `canonical-asset-uri.schema.json`'s
+`urn:cwl:{tenant}:{authority}:{object_type}:{uuidv7}` grammar, and must never be
+validated against that schema.
+
+### Ingest is the harder direction, and is only partially solvable generically
+
+Egress (Keyverse issuing tokens/attributes/Groups derived from CWL's own
+`ContextAssertion` records) is fully specified above: the source data is already in the
+canonical shape. Ingest (a customer's SCIM push or SAML assertion arriving with **their**
+group/attribute vocabulary, not ours) is not, and this ADR says so plainly rather than
+hand-waving it:
+
+- A SCIM `Group` pushed by a generic HR/IGA tool will not carry the
+  `cwl-context-membership` extension (the customer's tool has never heard of it) — it
+  will be a bare RFC 7643 `Group` (`displayName` + `members[]`). Structural facts
+  (nesting depth, parent via back-reference) can be inferred; primary-vs-secondary
+  cannot, because SCIM core has no such concept and the customer's tool cannot supply
+  what its own model doesn't have. Every direct `User` member of such a Group becomes an
+  `org_member_observed` assertion (registered above), never a guessed
+  `org_member_primary`.
+- A SAML `<AttributeStatement>` from an external employer IdP (the existing employer-ADFS
+  federation path) carries **the customer's own** attribute vocabulary (AD group DNs,
+  ADFS claim URIs) — not `urn:cwl:claims:context_membership`, which only CWL emits. There
+  is no generic algorithm that maps arbitrary third-party attribute names to a
+  `context_ref`; that mapping is inherently per-tenant deployment configuration,
+  structurally the same kind of problem `federation.py`'s existing
+  `IdentityProviderRegistration` already solves for *which* IdP to trust — extending it
+  with a per-tenant attribute-to-org-unit mapping table is the natural next step, but is
+  a Keyverse-side design of its own and is not specified further here.
+
+Both ingest paths, once resolved to a `context_ref`, produce `truth_status: "observed"`
+`ContextAssertion`s with `provenance.evidence_ref` pointing at the SCIM request or SAML
+assertion and `provenance.sha256` over its canonicalized bytes — never `authoritative`,
+per ADR-0003's existing rule that adapters must not promote what they did not generate
+by owning-domain command. Promotion is Orgmetra's (or an equivalent admin workflow's)
+decision, not the adapter's.
+
 ## Risks
 
 - **Numbering collision.** `context-graph-contracts`'s `develop` branch currently
@@ -425,14 +629,17 @@ this ADR modifies. The above is the reconciliation record so whoever next touche
    this ADR does not touch it.
 4. Wiring naruon's `Organization`/`OrganizationGroup` tenant model (currently a fixed
    two-level tree with no self-referential nesting) to this contract.
-5. Conformance fixtures and tests in this repository for the two registered
-   predicates (`org_member_primary`, `org_member_secondary`), following the existing
-   `tests/test_schemas.py` / `tests/test_packaged_fixtures.py` pattern once this ADR
-   has had a chance to be reviewed on its own.
-6. Designing how this hierarchy and membership model is exchanged over SCIM, OIDC, and
-   SAML (owner follow-up, 2026-09-02) — a resource/claims/attribute-statement mapping
-   for a multi-root, dynamically-ordered tree plus concurrent primary/secondary
-   membership. Needs its own ADR; not attempted by the verification section above.
+5. Conformance fixtures and tests in this repository for the three registered
+   predicates (`org_member_primary`, `org_member_secondary`, `org_member_observed`),
+   following the existing `tests/test_schemas.py` / `tests/test_packaged_fixtures.py`
+   pattern once this ADR has had a chance to be reviewed on its own.
+6. Live SCIM/OIDC/SAML wiring: the "SCIM, OIDC, and SAML exchange" decision section
+   above (added 2026-09-02, following the owner's follow-up requirement flagged by the
+   verification section above) is a design, not a deployment. No Keycloak protocol
+   mapper, no `/scim/v2/Groups` endpoint, no SAML attribute-mapping config, and no
+   per-tenant ingest attribute-mapping table exist yet. That implementation work, and
+   its own review, belongs to Keyverse ADR-0014 and is explicitly out of scope for
+   this repository's ADR.
 
 None of the above is implemented in this pull request. This ADR is the design record;
 each deferred item is a separately reviewable follow-up PR in its owning repository.
@@ -442,3 +649,19 @@ each deferred item is a separately reviewable follow-up PR in its owning reposit
 National Institute of Standards and Technology. (2014). *Guide to attribute based
 access control (ABAC) definition and considerations* (NIST Special Publication
 800-162). U.S. Department of Commerce. https://doi.org/10.6028/NIST.SP.800-162
+
+Hunt, P., Grizzle, K., Wahlstroem, E., & Mortimore, C. (2015). *System for Cross-domain
+Identity Management: Core schema* (RFC 7643). Internet Engineering Task Force.
+https://doi.org/10.17487/RFC7643
+
+Hunt, P., Grizzle, K., Ansari, M., Wahlstroem, E., & Mortimore, C. (2015). *System for
+Cross-domain Identity Management: Protocol* (RFC 7644). Internet Engineering Task Force.
+https://doi.org/10.17487/RFC7644
+
+Sakimura, N., Bradley, J., Jones, M., de Medeiros, B., & Mortimore, C. (2014). *OpenID
+Connect Core 1.0 incorporating errata set 2*. OpenID Foundation.
+https://openid.net/specs/openid-connect-core-1_0.html
+
+OASIS Security Services Technical Committee. (2005). *Assertions and protocols for the
+OASIS Security Assertion Markup Language (SAML) V2.0*. OASIS Standard.
+https://docs.oasis-open.org/security/saml/v2.0/saml-core-2.0-os.pdf
