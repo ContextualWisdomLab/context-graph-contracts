@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contextualwisdomlab.org/context/provenance-reference.v1.schema.json",
+  "title": "CWL Provenance Reference",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence_ref", "sha256"],
+  "properties": {
+    "evidence_ref": {"$ref": "https://schemas.contextualwisdomlab.org/context/canonical-asset-uri.v1.schema.json"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_locator": {"type": ["string", "null"], "minLength": 1, "maxLength": 2048}
+  }
+}
