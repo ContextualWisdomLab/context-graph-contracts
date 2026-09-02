@@ -6,9 +6,7 @@
   "truth_status": "authoritative",
   "interval": {
     "valid_from": "2026-01-15T09:00:00Z",
-    "recorded_at": "2026-01-15T09:05:00Z",
-    "valid_to": null,
-    "superseded_at": null
+    "recorded_at": "2026-01-15T09:05:00Z"
   },
   "provenance": null,
   "memberships": [
