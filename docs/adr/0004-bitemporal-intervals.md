@@ -20,8 +20,14 @@ both intervals on the interchange contract.
 ## Decision
 
 Interchange contracts carry real-world validity and system-recording
-intervals. Open intervals omit the end value instead of using sentinel
-dates.
+intervals. Canonical producers omit an open interval's end value instead of
+using sentinel dates or emitting JSON null.
+
+Version-one consumers remain backward-compatible with payloads that were
+previously admitted with explicit null end members. They interpret null as an
+open end and normalize it to omission when serializing again. Rejecting that
+already-admitted v1 spelling would require a new schema identifier and major
+version under the repository compatibility rule.
 
 - `valid_from` / `valid_to` are the real-world validity window
 - `recorded_at` / `superseded_at` are the system's knowledge interval
@@ -32,14 +38,15 @@ entity was generated; `superseded_at` is when it was invalidated
 a separate window on the same assertion so consumers can reconstruct "what
 was true" independently of "what was known." Both clocks use timezone-aware
 timestamps. Exclusive ends apply: a fact is valid at `instant` when
-`valid_from <= instant` and `valid_to` is omitted or `instant < valid_to`.
+`valid_from <= instant` and `valid_to` is omitted/null-open or
+`instant < valid_to`.
 
 ## Consequences
 
 Consumers can reproduce historical knowledge cutoffs and avoid
-future-information leakage in impact or audit analysis. An omitted
-`valid_to` or `superseded_at` means the interval is still open, not that a
-placeholder date was agreed.
+future-information leakage in impact or audit analysis. Canonical emitted
+payloads use omission for an open `valid_to` or `superseded_at`; v1 input
+compatibility for explicit null does not make null a second producer form.
 
 This contract validates temporal structure only. Authorization, retention,
 and the decision to supersede a recorded assertion remain with the owning
@@ -47,4 +54,4 @@ domain service.
 
 ## References
 
-Lebo, T., Sahoo, S., & McGuinness, D. (Eds.). (2013). *PROV-O: The PROV ontology*. World Wide Web Consortium. https://www.w3.org/TR/prov-o/
+Lebo, T., Sahoo, K., & McGuinness, D. (Eds.). (2013). *PROV-O: The PROV ontology*. World Wide Web Consortium. https://www.w3.org/TR/prov-o/
