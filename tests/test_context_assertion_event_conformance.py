@@ -18,6 +18,10 @@ def test_assertion_event_profile_is_packaged_and_executable() -> None:
     assert profile["profile_id"] == _PROFILE_ID
     assert {vector["case_id"] for vector in profile["invalid_vectors"]} >= {
         "missing_event_id",
+        "missing_event_source",
+        "missing_event_subject",
+        "missing_event_time",
+        "missing_assertion_provenance",
         "wrong_event_datacontenttype",
         "event_subject_differs_from_assertion_subject",
         "wrong_assertion_event_type",
