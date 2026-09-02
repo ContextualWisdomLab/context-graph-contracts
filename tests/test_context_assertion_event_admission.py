@@ -27,6 +27,14 @@ def _assertion() -> ContextAssertion:
     return ContextAssertion.from_mapping(load_fixture("valid-assertion.json"))
 
 
+def _authoritative_assertion() -> ContextAssertion:
+    """Return the fixture as owning-domain authoritative truth."""
+
+    value = load_fixture("valid-assertion.json")
+    value["truth_status"] = "authoritative"
+    return ContextAssertion.from_mapping(value)
+
+
 def _source() -> CanonicalAuthorityUri:
     """Return the authoritative event source for the fixture tenant."""
 
@@ -36,10 +44,20 @@ def _source() -> CanonicalAuthorityUri:
     )
 
 
+def _foreign_source() -> CanonicalAuthorityUri:
+    """Return a same-tenant producer that does not own the fixture subject."""
+
+    return CanonicalAuthorityUri.build(
+        tenant_id="tenant_001",
+        authority="wardnet",
+    )
+
+
 def _event(
     assertion: ContextAssertion,
     *,
     subject: CanonicalAssetUri | None = None,
+    source: CanonicalAuthorityUri | None = None,
     event_type: str = ASSERTION_EVENT_TYPE,
     data_schema: str = ASSERTION_DATA_SCHEMA,
 ) -> CloudEventEnvelope:
@@ -47,7 +65,7 @@ def _event(
 
     return CloudEventEnvelope(
         event_id=UUID(EVENT_UUID7_TEXT),
-        source=_source(),
+        source=_source() if source is None else source,
         event_type=event_type,
         subject=assertion.subject if subject is None else subject,
         event_time=datetime(2026, 1, 15, 9, 6, tzinfo=UTC),
@@ -83,6 +101,38 @@ def test_context_assertion_event_rejects_subject_data_identity_mismatch() -> Non
     )
     with pytest.raises(ValueError, match="event subject must equal assertion subject"):
         ContextAssertion.from_event(_event(assertion, subject=other_subject))
+
+
+def test_authoritative_assertion_requires_owning_domain_event_source() -> None:
+    """A foreign producer cannot label another authority's subject as authoritative."""
+
+    assertion = _authoritative_assertion()
+    foreign_source = _foreign_source()
+
+    with pytest.raises(
+        ValueError,
+        match="authoritative assertion source must own the assertion subject",
+    ):
+        assertion.into_event(
+            event_id=UUID(EVENT_UUID7_TEXT),
+            source=foreign_source,
+            event_time=datetime(2026, 1, 15, 9, 6, tzinfo=UTC),
+        )
+
+    hostile_event = _event(assertion, source=foreign_source)
+    with pytest.raises(
+        ValueError,
+        match="authoritative assertion source must own the assertion subject",
+    ):
+        ContextAssertion.from_event(hostile_event)
+
+
+def test_observed_assertion_can_retain_foreign_observer_source() -> None:
+    """Observer identity remains explicit without promoting the observation to truth."""
+
+    assertion = _assertion()
+    event = _event(assertion, source=_foreign_source())
+    assert ContextAssertion.from_event(event) == assertion
 
 
 @pytest.mark.parametrize(
