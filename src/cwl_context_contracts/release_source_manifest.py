@@ -18,6 +18,7 @@ _PROTECTED_SOURCE_REF = "refs/heads/main"
 _SIGNER_WORKFLOW = f"{_REPOSITORY}/.github/workflows/supply-chain.yml"
 _SBOM_NAME = "cwl-context-contracts.spdx.json"
 _MAX_SNAPSHOT_BYTES = 1024 * 1024
+_MAX_JSON_DEPTH = 64
 _PACKAGE_NEXT_ACTION = (
     "verify artifact attestations bind these exact package bytes to the intended "
     "protected main source commit before release"
@@ -216,8 +217,33 @@ def _reject_nonstandard_json_constant(value: str) -> object:
     raise ValueError(f"non-standard JSON constant: {value}")
 
 
+def _enforce_json_depth(text: str) -> None:
+    """Reject structural nesting deeper than the release-input contract allows."""
+    depth = 0
+    in_string = False
+    escaped = False
+    for character in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == '"':
+                in_string = False
+            continue
+        if character == '"':
+            in_string = True
+            continue
+        if character in "[{":
+            depth += 1
+            if depth > _MAX_JSON_DEPTH:
+                raise ReleaseSourceManifestInputError("package_snapshot_too_deep")
+        elif character in "]}":
+            depth -= 1
+
+
 def _load_package_snapshot(path: Path) -> Mapping[str, object]:
-    """Load one bounded strict JSON package snapshot or report a stable error."""
+    """Load one bounded UTF-8 strict JSON snapshot or report a stable error."""
     try:
         with path.open("rb") as handle:
             snapshot_bytes = handle.read(_MAX_SNAPSHOT_BYTES + 1)
@@ -226,12 +252,17 @@ def _load_package_snapshot(path: Path) -> Mapping[str, object]:
     if len(snapshot_bytes) > _MAX_SNAPSHOT_BYTES:
         raise ReleaseSourceManifestInputError("package_snapshot_too_large")
     try:
+        snapshot_text = snapshot_bytes.decode("utf-8")
+    except UnicodeDecodeError:
+        raise ReleaseSourceManifestInputError("package_snapshot_invalid") from None
+    _enforce_json_depth(snapshot_text)
+    try:
         payload = json.loads(
-            snapshot_bytes,
+            snapshot_text,
             object_pairs_hook=_unique_json_object,
             parse_constant=_reject_nonstandard_json_constant,
         )
-    except (UnicodeError, ValueError, json.JSONDecodeError):
+    except (ValueError, json.JSONDecodeError, RecursionError):
         raise ReleaseSourceManifestInputError("package_snapshot_invalid") from None
     if not isinstance(payload, Mapping):
         raise ReleaseSourceManifestInputError("package_snapshot_invalid")
