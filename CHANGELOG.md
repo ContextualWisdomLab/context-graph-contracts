@@ -18,10 +18,12 @@ All notable changes to this project are documented in this file.
   disposition; owning products issue a new assertion or event when recording a
   new disposition. The retained `truth_status_rank()` ordinal is compatibility
   metadata only and is not an authorization or transition rule.
-- Bitemporal open intervals now use one canonical wire shape across runtime,
-  JSON Schema, and packaged fixtures: `valid_to` and `superseded_at` are omitted
-  while open. Explicit JSON `null` is rejected, matching ADR 0004 and avoiding
-  two encodings for the same temporal state.
+- Bitemporal open intervals now have one canonical producer shape across
+  runtime, JSON Schema guidance, fixtures, and documentation: `valid_to` and
+  `superseded_at` are omitted while open. Existing v1 payloads that used the
+  previously accepted explicit JSON `null` remain admissible to consumers and
+  are normalized to omission on serialization, preserving the repository's
+  backward-compatibility rule without emitting two canonical encodings.
 
 ### Added
 
