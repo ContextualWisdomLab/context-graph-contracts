@@ -41,9 +41,11 @@ foreign assertion into a different status.
 
 **Bitemporal validity.**
 Real-world validity (`valid_from` / `valid_to`) stays distinct from
-system-recording time (`recorded_at` / `superseded_at`). Open intervals omit
-the corresponding end member on the wire; explicit `null` and sentinel dates
-are not canonical v1 encodings.
+system-recording time (`recorded_at` / `superseded_at`). Canonical v1 producers
+omit an open interval's corresponding end member and never emit a sentinel
+date. V1 consumers continue to accept the previously admitted explicit `null`
+shape for backward compatibility and normalize it to omission when they
+serialize again.
 
 **Timestamp profile.**
 CWL Timestamp Profile v1 is an explicitly named, leap-second-free subset of
