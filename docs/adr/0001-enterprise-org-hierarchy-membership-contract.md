@@ -217,6 +217,103 @@ hand-tracing both schemas and the existing `fixtures/valid-assertion.json`, whic
 already contains a worked `urn:cwl:tenant_001:orgmetra:employment_group:...` membership
 example.
 
+## Verification — multi-root and direction-agnostic typing (owner follow-up, 2026-09-02)
+
+The owner's follow-up refinement to the requirement above: there can be **two holding
+companies** (no common parent); a **Regional HQ** level sits between holding company and
+affiliate/subsidiary; **Regional HQ and affiliate/subsidiary can swap positions**; and a
+**business division can sometimes own a Regional HQ** — i.e. the parent-child *direction*
+between a `regional_hq`-typed node and a `business_division`-typed node can invert between
+tenants. This was checked directly against the schemas and Orgmetra's actual validation
+code (`ContextualWisdomLab/Orgmetra`, `packages/hris-kernel`), not re-derived from the
+design above. Both properties already hold, with no schema or code change required:
+
+**(1) Multiple independent roots per tenant.** Nothing in the stack requires exactly one
+root:
+
+- `ContextMembership.parent_context_ref` (`context-membership.schema.json`) is
+  `oneOf [canonical-asset-uri, null]` — a node with no parent is just `null`; nothing caps
+  how many memberships in a tenant may have a null `parent_context_ref`.
+- Orgmetra's `OrganizationUnitVersion.parent_organization_unit_id` (`facts.py:47`) is
+  `UUID | None` with the same shape, and `validate_organization_hierarchy`
+  (`organization.py:38-69`) only walks each unit's parent chain looking for a **cycle**
+  (`current in seen`, `organization.py:61-67`); a chain that ends at `None` simply
+  terminates the walk (`organization.py:59-60`) — there is no assertion anywhere in the
+  function that exactly one, or even any particular, unit resolves to `None`. Two units
+  both having `parent_organization_unit_id = None` in the same tenant pass through
+  unchanged.
+- The persisted table (`database/migrations/0001_foundation_schema.sql:106-134`) has no
+  constraint of the shape "at most one `parent_organization_unit_id IS NULL` per
+  `tenant_record_id`" — `parent_organization_unit_id` is a bare nullable `uuid` with only a
+  not-self check (line 123-124) and tenant-scoped FK (line 120-122), never a root-count rule.
+- Verified by executing the real kernel, not just reading it: `HOLDING_A` and `HOLDING_B`
+  both given `parent_id=None` in tenant `TENANT_ALPHA`,
+  `validate_organization_hierarchy(...)` raises nothing — see
+  `Orgmetra` scratch check `multiroot_check.py` (run: `python3 multiroot_check.py`,
+  case 1, PASS).
+
+**(2) Direction-agnostic typing — no ordering constraint between type labels.** The
+wire contract and Orgmetra's kernel both structurally cannot enforce a type-ordering rule,
+because neither carries a type at the validated layer:
+
+- `ContextMembership` (`context-membership.schema.json`) has exactly three properties —
+  `context_ref`, `membership_level`, `parent_context_ref` — no `type`/`kind` field at all.
+  `membership_level` is a bare `integer` (0-15) with no enum or mapping tying a level number
+  to a type name.
+- `canonical-asset-uri.schema.json`'s pattern treats the asset-type segment of the URI
+  (e.g. `regional_hq`, `business_division`, `holding_company`) as an unconstrained
+  `[a-z][a-z0-9]+(?:_[a-z0-9]+)*` slug — structurally identical to every other segment;
+  the schema cannot distinguish "regional_hq" from "business_division" to order them even
+  if it wanted to.
+- Orgmetra's own `OrganizationUnitVersion` dataclass (`facts.py:41-49`) — the thing
+  `validate_organization_hierarchy` actually receives and checks — has no `type` field
+  either; the kernel's validation cannot see `organization_type_code` at all, so it cannot
+  condition cycle-detection or any other rule on it. `organization_type_code` exists only
+  one layer up, in the persisted table (`0001_foundation_schema.sql:111`), as a bare
+  `text NOT NULL` with no `CHECK`/enum/FK tying its value to `parent_organization_unit_id`
+  or to any other row's type.
+- Verified by executing the real kernel with the owner's exact swap scenario: tenant A has
+  `regional_hq` parenting `business_division` (holding → regional_hq → division); tenant B
+  has the same two type-labeled units with the parent edge reversed (division as the root,
+  regional_hq as its child). Both validate cleanly in the same process, using the same
+  `validate_organization_hierarchy` function — see `multiroot_check.py`, case 2, PASS. The
+  ecosystem's existing test suite (`tests/test_organization_hierarchy.py`) only exercises
+  cycle rejection and tenant/knowledge-time isolation; it has no test asserting a fixed
+  type order because the kernel has no mechanism that could enforce one.
+
+**Concrete mapping onto the owner's scenario**, entirely inside the existing contract —
+`membership_level` is per-tenant depth, not a fixed level-name table, exactly as the
+original ADR text above already argued for 파트/팀 reordering; the same mechanism covers
+Regional HQ:
+
+```
+Tenant 001 (two holding companies, Regional HQ below holding):
+  holding_company "Holding A"      membership_level 0   parent: null
+  holding_company "Holding B"      membership_level 0   parent: null   # second, independent root
+  regional_hq      "APAC HQ"       membership_level 1   parent: Holding A
+  affiliate        "KR Affiliate"  membership_level 2   parent: APAC HQ
+
+Tenant 002 (Regional HQ and affiliate swapped; a business division owns the Regional HQ):
+  holding_company  "Holding C"     membership_level 0   parent: null
+  business_division "Platform Div" membership_level 1   parent: Holding C
+  regional_hq       "EMEA HQ"      membership_level 2   parent: Platform Div   # division owns the HQ
+  affiliate         "DE Affiliate" membership_level 3   parent: EMEA HQ
+```
+
+No `org_member_primary`/`org_member_secondary` predicate, schema field, or Orgmetra
+validation rule changes between these two tenants — only the per-tenant
+`organization_unit_version.organization_type_code` values and which `context_ref` a given
+`parent_context_ref` points at change. This is the same "depth-integer, not a level-name
+table" design already decided above, extended with the owner's own examples as evidence it
+holds for Regional HQ and multi-root, not just 파트/팀.
+
+**Not covered here — deferred, not silently dropped.** The owner's follow-up also requires
+this hierarchy to be "exchangeable via SCIM, OIDC, and SAML." That is a separate,
+substantial design question (SCIM resource/schema mapping, an OIDC claims shape, a SAML
+attribute-statement shape, and how each represents a multi-root, dynamically-ordered tree
+plus concurrent primary/secondary membership) that this verification pass does not
+attempt — it needs its own ADR. Flagged so it is not mistaken for out-of-scope-because-solved.
+
 ## Decision — ABAC/RBAC evaluation sketch (Keyverse-side, follow-up work)
 
 A policy scoped to org unit `X` must answer "any subject with a membership (primary
@@ -332,6 +429,10 @@ this ADR modifies. The above is the reconciliation record so whoever next touche
    predicates (`org_member_primary`, `org_member_secondary`), following the existing
    `tests/test_schemas.py` / `tests/test_packaged_fixtures.py` pattern once this ADR
    has had a chance to be reviewed on its own.
+6. Designing how this hierarchy and membership model is exchanged over SCIM, OIDC, and
+   SAML (owner follow-up, 2026-09-02) — a resource/claims/attribute-statement mapping
+   for a multi-root, dynamically-ordered tree plus concurrent primary/secondary
+   membership. Needs its own ADR; not attempted by the verification section above.
 
 None of the above is implemented in this pull request. This ADR is the design record;
 each deferred item is a separately reviewable follow-up PR in its owning repository.
