@@ -198,8 +198,8 @@ jobs:
               assertion = ContextAssertion.from_event(event)
               assert assertion.to_mapping() == vector["value"]["data"]
           for vector in assertion_event_profile["invalid_vectors"]:
-              event = CloudEventEnvelope.from_mapping(vector["value"])
               try:
+                  event = CloudEventEnvelope.from_mapping(vector["value"])
                   ContextAssertion.from_event(event)
               except ValueError as exc:
                   assert vector["error_pattern"] in str(exc)
