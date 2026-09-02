@@ -17,6 +17,7 @@ _REPOSITORY = "ContextualWisdomLab/context-graph-contracts"
 _PROTECTED_SOURCE_REF = "refs/heads/main"
 _SIGNER_WORKFLOW = f"{_REPOSITORY}/.github/workflows/supply-chain.yml"
 _SBOM_NAME = "cwl-context-contracts.spdx.json"
+_MAX_SNAPSHOT_BYTES = 1024 * 1024
 _PACKAGE_NEXT_ACTION = (
     "verify artifact attestations bind these exact package bytes to the intended "
     "protected main source commit before release"
@@ -26,11 +27,14 @@ _NEXT_ACTION = (
     "repository, protected ref, source SHA, and signer workflow before treating "
     "its source fields as release provenance"
 )
-_INPUT_ACTION = "provide one verified package-evidence snapshot and exact source identity"
+_INPUT_ACTION = (
+    "provide one verified package-evidence snapshot and exact source identity"
+)
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _SOURCE_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 _WHEEL_PATTERN = re.compile(
-    r"^cwl_context_contracts-([0-9]+\.[0-9]+\.[0-9]+)-[^-]+-[^-]+-[^-]+\.whl$"
+    r"^cwl_context_contracts-([0-9]+\.[0-9]+\.[0-9]+)-"
+    r"[^-]+-[^-]+-[^-]+\.whl$"
 )
 _SDIST_PATTERN = re.compile(
     r"^cwl_context_contracts-([0-9]+\.[0-9]+\.[0-9]+)\.tar\.gz$"
@@ -197,13 +201,37 @@ def build_release_source_manifest(
     )
 
 
+def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+    """Build a JSON object while rejecting ambiguous duplicate member names."""
+    result: dict[str, object] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON object member: {key}")
+        result[key] = value
+    return result
+
+
+def _reject_nonstandard_json_constant(value: str) -> object:
+    """Reject Python JSON extensions such as NaN and Infinity."""
+    raise ValueError(f"non-standard JSON constant: {value}")
+
+
 def _load_package_snapshot(path: Path) -> Mapping[str, object]:
-    """Load one JSON-object package snapshot or report a stable input error."""
+    """Load one bounded strict JSON package snapshot or report a stable error."""
     try:
-        payload = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError):
+        with path.open("rb") as handle:
+            snapshot_bytes = handle.read(_MAX_SNAPSHOT_BYTES + 1)
+    except OSError:
         raise ReleaseSourceManifestInputError("package_snapshot_unreadable") from None
-    except json.JSONDecodeError:
+    if len(snapshot_bytes) > _MAX_SNAPSHOT_BYTES:
+        raise ReleaseSourceManifestInputError("package_snapshot_too_large")
+    try:
+        payload = json.loads(
+            snapshot_bytes,
+            object_pairs_hook=_unique_json_object,
+            parse_constant=_reject_nonstandard_json_constant,
+        )
+    except (UnicodeError, ValueError, json.JSONDecodeError):
         raise ReleaseSourceManifestInputError("package_snapshot_invalid") from None
     if not isinstance(payload, Mapping):
         raise ReleaseSourceManifestInputError("package_snapshot_invalid")
