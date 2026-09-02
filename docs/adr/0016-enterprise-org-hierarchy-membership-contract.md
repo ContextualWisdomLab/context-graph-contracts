@@ -30,7 +30,8 @@ executable conformance evidence added in this repair (`tests/test_org_hierarchy_
    run today, tested against both a valid chain and a shuffled
    cross-classification-shaped array. **Remaining gap:** a schema-level
    discriminator still needs a decision on PR #4's own schema, after it lands.
-2. **Bitemporal/replay semantics** — `test_replay_reconstructs_past_belief_via_was_known_at`
+2. **Bitemporal/replay semantics** —
+   `test_replay_reconstructs_past_belief_via_was_known_at_not_is_valid_at`
    exercises `is_valid_at` vs. `was_known_at` as the two real, separate
    dimensions (no `.covers()` method exists on `BitemporalInterval`, confirmed
    by `test_bitemporal_interval_has_no_covers_method`), and
