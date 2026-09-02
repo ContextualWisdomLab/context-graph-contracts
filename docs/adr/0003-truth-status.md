@@ -37,10 +37,14 @@ does not extend the W3C recommendation:
 - `superseded` and `rejected` record invalidation (`prov:wasInvalidatedBy`)
   while retaining the historical assertion
 
-Truth status is not a confidence score and does not authorize a consumer.
-Confidence and verification evidence belong in domain-specific payloads.
-Parsers and adapters must not promote `observed`, `inferred`, or
-`proposed` assertions to `authoritative`.
+Truth status is not a confidence score, an authorization rank, or a generic
+ordering that permits adapters to rewrite one status as another. Parsers and
+adapters must preserve the supplied status exactly. In particular, they cannot
+promote `observed`, `inferred`, or `proposed` assertions to `authoritative`, and
+they cannot manufacture `superseded` or `rejected` decisions for a foreign
+assertion. The owning product records acceptance, supersession, or rejection
+through its own command/transaction boundary and emits a new versioned
+assertion or event carrying that disposition.
 
 ## Consequences
 
@@ -54,4 +58,4 @@ decision. This repository only carries the resulting status on the wire.
 
 ## References
 
-Lebo, T., Sahoo, S., & McGuinness, D. (Eds.). (2013). *PROV-O: The PROV ontology*. World Wide Web Consortium. https://www.w3.org/TR/prov-o/
+Lebo, T., Sahoo, P., & McGuinness, D. (Eds.). (2013). *PROV-O: The PROV ontology*. World Wide Web Consortium. https://www.w3.org/TR/prov-o/
