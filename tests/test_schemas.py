@@ -53,8 +53,10 @@ def test_positive_and_negative_fixtures() -> None:
 
 
 @pytest.mark.parametrize("field_name", ["valid_to", "superseded_at"])
-def test_bitemporal_schema_rejects_explicit_null_open_end(field_name: str) -> None:
-    """Canonical v1 open intervals omit end members rather than encoding null."""
+def test_bitemporal_schema_accepts_v1_null_for_backward_compatibility(
+    field_name: str,
+) -> None:
+    """V1 accepts legacy null while omission remains the canonical producer shape."""
 
     validator = Draft202012Validator(
         load_schema("bitemporal-interval.schema.json"),
@@ -65,8 +67,8 @@ def test_bitemporal_schema_rejects_explicit_null_open_end(field_name: str) -> No
         "recorded_at": "2026-01-15T09:05:00Z",
     }
     assert list(validator.iter_errors(open_interval)) == []
-    hostile = {**open_interval, field_name: None}
-    assert list(validator.iter_errors(hostile))
+    legacy = {**open_interval, field_name: None}
+    assert list(validator.iter_errors(legacy)) == []
 
 
 @pytest.mark.parametrize(
