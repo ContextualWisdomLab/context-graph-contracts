@@ -33,8 +33,11 @@ of the object being discussed. In a CloudEvent this value is `subject`.
 **Truth status.**
 Every cross-domain assertion carries one of `authoritative`, `observed`,
 `inferred`, `proposed`, `superseded`, or `rejected`. These values describe
-origin, not confidence. Consumers must not promote `observed`, `inferred`, or
-`proposed` assertions to `authoritative`.
+origin or a recorded disposition, not confidence or a trust ordering. Parsers
+and adapters must retain the supplied status exactly. An owning product records
+acceptance, supersession, or rejection by issuing the corresponding assertion
+or event under its own authority; a consumer projection does not rewrite a
+foreign assertion into a different status.
 
 **Bitemporal validity.**
 Real-world validity (`valid_from` / `valid_to`) stays distinct from
