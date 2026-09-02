@@ -52,6 +52,23 @@ def test_positive_and_negative_fixtures() -> None:
     assert list(assertion_validator.iter_errors(invalid_assertion))
 
 
+@pytest.mark.parametrize("field_name", ["valid_to", "superseded_at"])
+def test_bitemporal_schema_rejects_explicit_null_open_end(field_name: str) -> None:
+    """Canonical v1 open intervals omit end members rather than encoding null."""
+
+    validator = Draft202012Validator(
+        load_schema("bitemporal-interval.schema.json"),
+        format_checker=RFC3339_FORMAT_CHECKER,
+    )
+    open_interval = {
+        "valid_from": "2026-01-15T09:00:00Z",
+        "recorded_at": "2026-01-15T09:05:00Z",
+    }
+    assert list(validator.iter_errors(open_interval)) == []
+    hostile = {**open_interval, field_name: None}
+    assert list(validator.iter_errors(hostile))
+
+
 @pytest.mark.parametrize(
     ("schema_name", "valid_value", "invalid_value"),
     [
