@@ -1,7 +1,60 @@
-# ADR 0001: Represent enterprise org hierarchy and concurrent membership as Context Assertions, not a new schema family
+# ADR 0016: Represent enterprise org hierarchy and concurrent membership as Context Assertions, not a new schema family
 
-- Status: Accepted
+- Status: Proposed
 - Date: 2026-09-02
+
+## Repair notes (2026-09-02)
+
+This ADR was originally filed as ADR-0001 against a bare `develop` and merged
+into PR #23, then closed unmerged (evidence-gated review found the four gaps
+below). Per the org's repair-not-close policy, PR #23 was reopened rather than
+left closed: this ADR is downgraded from `Accepted` to `Proposed`, renumbered
+`0001` → `0016` (the canonical stack rooted at PR #4 already claims `0001`
+through `0015` — see the resolved "Numbering collision" risk below), and
+restacked onto PR #4's branch (`cursor/bc-4f046e35-b316-42ad-8818-0da37e4eb8b4-4b61`),
+the PR that actually defines the `ContextAssertion` / `ContextMembership`
+types this ADR reuses. Four defects raised at close are addressed below with
+executable conformance evidence added in this repair (`tests/test_org_hierarchy_membership.py`,
+`src/cwl_context_contracts/conformance/org-hierarchy-membership-semantics.v1.json`,
+`tests/fixtures/{valid,invalid}-org-membership.json`):
+
+1. **Wire interpretation ambiguity** (`memberships[]` as cross-classification
+   vs. ancestor-closure) — the JSON Schema genuinely cannot discriminate this
+   (proven by `test_schema_alone_cannot_discriminate_membership_interpretation`);
+   fixing that structurally means adding a discriminator field to
+   `context-membership.schema.json`, which is owned by still-unmerged PR #4 and
+   out of this ADR's own "no schema changes" decision — editing it from here
+   would be an unreviewed edit to a file this ADR does not own. What this
+   repair *does* ship: a predicate-conditioned Python-level chain-integrity
+   check (`assert_ancestor_closure_chain`) that any `org_member_*` consumer can
+   run today, tested against both a valid chain and a shuffled
+   cross-classification-shaped array. **Remaining gap:** a schema-level
+   discriminator still needs a decision on PR #4's own schema, after it lands.
+2. **Bitemporal/replay semantics** — `test_replay_reconstructs_past_belief_via_was_known_at`
+   exercises `is_valid_at` vs. `was_known_at` as the two real, separate
+   dimensions (no `.covers()` method exists on `BitemporalInterval`, confirmed
+   by `test_bitemporal_interval_has_no_covers_method`), and
+   `test_correcting_a_reparented_ancestor_requires_a_new_assertion` proves
+   `ContextAssertion` is frozen, so the only correction path really is
+   superseding the whole assertion — exactly what the original Risks section
+   asserted, now backed by a test instead of prose.
+3. **Primary-membership cardinality** — `assert_single_primary_membership_per_subject`
+   is a real, executable guard rejecting two overlapping-interval
+   `org_member_primary` assertions for one subject; tested against both an
+   overlap and a legitimate non-overlapping supersession.
+4. **Reproducibility** — Deferred item 5 (conformance fixtures/tests) is no
+   longer deferred: `tests/fixtures/valid-org-membership.json` /
+   `invalid-org-membership.json`, a packaged
+   `org-hierarchy-membership-semantics.v1.json` conformance profile following
+   the existing `context-assertion-semantics.v1.json` pattern, and the
+   multi-root / reversed-direction cases from the Verification section below
+   are now committed pytest tests (`test_two_independent_tenant_roots_both_validate`,
+   `test_reversed_regional_hq_business_division_direction_validates`) rather
+   than a one-off scratch script.
+
+Still genuinely blocked: this PR cannot merge to `develop` before PR #4 does
+(develop is bare — zero ADR files, zero package code, confirmed at repair
+time), and the base-branch retarget below tracks that.
 
 ## Context
 
@@ -219,7 +272,7 @@ predicate vocabulary is registered:
     decision; promotion to `org_member_primary` or `org_member_secondary` is a
     separate, later reconciliation act by the owning authority (Orgmetra or an
     equivalent admin workflow), not something an adapter infers. This keeps
-    heuristic-free primacy classification (ADR-0001's own standing constraint, echoed
+    heuristic-free primacy classification (ADR-0016's own standing constraint, echoed
     in the Risks section below) intact even when the *source* of a membership fact is
     a third-party directory that has no concept of "primary."
 
@@ -590,13 +643,16 @@ decision, not the adapter's.
 
 ## Risks
 
-- **Numbering collision.** `context-graph-contracts`'s `develop` branch currently
-  contains only a placeholder `README.md`; several open, unmerged draft PRs (e.g.
-  #4, #14, #20, #21) each independently define `docs/adr/0001` through `0015` for
-  unrelated topics (CloudEvent envelopes, conformance evidence, DDD fitness
-  baseline). This ADR is filed as `0001` against the current, bare `develop` and will
-  need renumbering by whichever PR merges second — a normal, expected consequence of
-  concurrent agent work in this ecosystem, not a defect in this decision.
+- **Numbering collision — resolved by repair.** `context-graph-contracts`'s `develop`
+  branch still contains only a placeholder `README.md`; the canonical chain rooted at
+  PR #4 (open, non-draft, foundation for `ContextAssertion`/`ContextMembership`) and
+  its 13 chained draft PRs through #21 already claim `docs/adr/0001` through `0015`
+  for unrelated topics (CloudEvent envelopes, conformance evidence, DDD fitness
+  baseline). This ADR was originally filed as `0001` against bare `develop`; the
+  2026-09-02 repair renumbered it to `0016` — the first number the canonical stack
+  does not already claim — and restacked it onto PR #4's branch directly, so any
+  future PR on that stack sees this file already occupying `0016` instead of
+  colliding blind.
 - **Predicate vocabulary is not schema-enforced.** `predicate` is validated only by a
   generic lowercase-snake pattern, not a closed enum, so nothing currently stops a
   producer from emitting `org_member_primary` with a typo or an unregistered synonym.
