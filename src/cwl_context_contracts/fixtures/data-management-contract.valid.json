@@ -1,0 +1,45 @@
+{
+  "contract_version": "1.0.0",
+  "framework_reference": {
+    "framework_code": "dama_dmbok2r",
+    "framework_version": "2024",
+    "publisher_name": "DAMA International",
+    "official_reference_uri": "https://dama.org/dama-dmbok-revision/",
+    "license_classification": "public_reference"
+  },
+  "capability_definition": {
+    "capability_code": "data_governance_alignment",
+    "capability_name": "Data governance alignment",
+    "definition_text": "Relate buyer-owned governance outcomes to external framework references without copying licensed framework content.",
+    "source_authority_uri": "urn:cwl:tenant_001:ea_core",
+    "truth_status": "proposed",
+    "provenance": {
+      "evidence_ref": "urn:cwl:tenant_001:ea_core:architecture_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "source_locator": "https://dama.org/dama-dmbok-revision/"
+    },
+    "external_framework_ref": "knowledge_area:data_governance"
+  },
+  "assessment_profile": {
+    "profile_code": "baseline_data_management",
+    "profile_version": "1.0.0",
+    "scoring_dimension_codes": [
+      "engagement",
+      "process",
+      "evidence"
+    ],
+    "evidence_requirements": [
+      {
+        "evidence_code": "governance_policy",
+        "evidence_type": "policy",
+        "authority_uri": "urn:cwl:tenant_001:data_context",
+        "truth_status": "observed",
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:data_context:architecture_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "source_locator": "https://dama.org/dama-dmbok-revision/"
+        }
+      }
+    ]
+  }
+}

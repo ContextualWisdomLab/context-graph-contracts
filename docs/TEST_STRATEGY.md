@@ -7,6 +7,27 @@
 - JSON Schema tests validate all schemas against Draft 2020-12.
 - Positive and negative fixtures are packaged as executable conformance
   evidence.
+- Data-management framework tests require publisher reference metadata to remain
+  portable when a Draft 2020-12 implementation treats `format` as annotation:
+  official framework locations must match the structural lowercase `https://`
+  assertion, while missing-scheme, `http:`, `javascript:`, and `data:` references
+  fail closed. This syntax gate does not authorize dereferencing; products that
+  fetch an external reference retain their own SSRF/network-policy boundary.
+- Data-management assessment tests separate structural schema acceptance from
+  cross-field semantics. `validate_data_management_assessment_semantics()`
+  requires the result ID to use the assessment object kind and declared owning
+  authority, keeps primary/supersession references inside one tenant, requires
+  provenance evidence to remain both tenant-local and under the assessment
+  result's owning authority, rejects duplicate dimension codes, and requires the
+  evidence knowledge cutoff not to follow system recording time. Supersession
+  must reference a different assessment result under the same tenant and owning
+  authority; prior evidence is never rewritten and one authority cannot
+  supersede another authority's assessment history. The negative corpus includes
+  same-tenant foreign-authority provenance so tenant equality cannot substitute
+  for source-authority ownership. These invariants are also published in
+  `data-management-assessment-semantics.v1.json`, so non-Python consumers can
+  execute the same valid and invalid vectors instead of treating the reference
+  SDK implementation as the contract.
 - Timestamp tests deliberately run Draft 2020-12 without a format checker to
   prove that default `format` annotation cannot establish semantic validity,
   then execute the packaged provider-neutral CWL Timestamp Profile v1 vectors

@@ -1,0 +1,174 @@
+{
+  "profile_id": "urn:cwl:context-contracts:data-management-assessment-semantics:v1",
+  "profile_version": 1,
+  "basis": "CWL provider-neutral data-management assessment cross-field semantics",
+  "json_schema_role": "structural_and_lexical_only_for_cross_field_invariants",
+  "normative_requirement": "A consumer MUST accept every valid_vectors value and reject every invalid_vectors value before treating a data-management assessment as semantically conformant. Structural JSON Schema validation alone is insufficient for tenant, authority, temporal, and per-dimension identity invariants.",
+  "valid_vectors": [
+    {
+      "case_id": "same_authority_assessment",
+      "value": {
+        "contract_version": "1.0.0",
+        "assessment_result_id": "urn:cwl:tenant_001:data_context:data_management_assessment:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "framework_code": "dama_dmbok2r",
+        "framework_version": "2024",
+        "profile_code": "baseline_data_management",
+        "profile_version": "1.0.0",
+        "tenant_authority_uri": "urn:cwl:tenant_001:data_context",
+        "subject_ref": "urn:cwl:tenant_001:ea_core:business_capability:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "knowledge_cutoff_at": "2026-08-18T00:00:00Z",
+        "recorded_at": "2026-08-18T00:00:01Z",
+        "overall_score_basis_points": 7600,
+        "dimension_scores": [
+          {
+            "dimension_code": "engagement",
+            "score_basis_points": 8000
+          },
+          {
+            "dimension_code": "evidence",
+            "score_basis_points": 7200
+          }
+        ],
+        "readiness": "evidence_gap",
+        "missing_evidence_codes": ["control_evidence"],
+        "truth_status": "observed",
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:data_context:assessment_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+          "source_locator": "https://example.com/evidence/assessment-001"
+        }
+      }
+    }
+  ],
+  "invalid_vectors": [
+    {
+      "case_id": "cross_authority_supersession",
+      "error_pattern": "same owning authority",
+      "value": {
+        "contract_version": "1.0.0",
+        "assessment_result_id": "urn:cwl:tenant_001:data_context:data_management_assessment:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "framework_code": "dama_dmbok2r",
+        "framework_version": "2024",
+        "profile_code": "baseline_data_management",
+        "profile_version": "1.0.0",
+        "tenant_authority_uri": "urn:cwl:tenant_001:data_context",
+        "subject_ref": "urn:cwl:tenant_001:ea_core:business_capability:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "knowledge_cutoff_at": "2026-08-18T00:00:00Z",
+        "recorded_at": "2026-08-18T00:00:01Z",
+        "overall_score_basis_points": 7600,
+        "dimension_scores": [{"dimension_code": "evidence", "score_basis_points": 7200}],
+        "readiness": "evidence_gap",
+        "missing_evidence_codes": ["control_evidence"],
+        "truth_status": "observed",
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:data_context:assessment_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        "supersedes_result_ref": "urn:cwl:tenant_001:ea_core:data_management_assessment:0195d145-64e9-7f4f-8a23-a0cc784cb712"
+      }
+    },
+    {
+      "case_id": "cross_tenant_subject",
+      "error_pattern": "subject must belong",
+      "value": {
+        "contract_version": "1.0.0",
+        "assessment_result_id": "urn:cwl:tenant_001:data_context:data_management_assessment:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "framework_code": "dama_dmbok2r",
+        "framework_version": "2024",
+        "profile_code": "baseline_data_management",
+        "profile_version": "1.0.0",
+        "tenant_authority_uri": "urn:cwl:tenant_001:data_context",
+        "subject_ref": "urn:cwl:tenant_002:ea_core:business_capability:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "knowledge_cutoff_at": "2026-08-18T00:00:00Z",
+        "recorded_at": "2026-08-18T00:00:01Z",
+        "overall_score_basis_points": 7600,
+        "dimension_scores": [{"dimension_code": "evidence", "score_basis_points": 7200}],
+        "readiness": "evidence_gap",
+        "missing_evidence_codes": ["control_evidence"],
+        "truth_status": "observed",
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:data_context:assessment_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "case_id": "same_tenant_foreign_provenance_authority",
+      "error_pattern": "provenance must remain under the assessment result authority",
+      "value": {
+        "contract_version": "1.0.0",
+        "assessment_result_id": "urn:cwl:tenant_001:data_context:data_management_assessment:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "framework_code": "dama_dmbok2r",
+        "framework_version": "2024",
+        "profile_code": "baseline_data_management",
+        "profile_version": "1.0.0",
+        "tenant_authority_uri": "urn:cwl:tenant_001:data_context",
+        "subject_ref": "urn:cwl:tenant_001:ea_core:business_capability:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "knowledge_cutoff_at": "2026-08-18T00:00:00Z",
+        "recorded_at": "2026-08-18T00:00:01Z",
+        "overall_score_basis_points": 7600,
+        "dimension_scores": [{"dimension_code": "evidence", "score_basis_points": 7200}],
+        "readiness": "evidence_gap",
+        "missing_evidence_codes": ["control_evidence"],
+        "truth_status": "observed",
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:ea_core:assessment_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "case_id": "duplicate_dimension_code",
+      "error_pattern": "dimension_code values must be unique",
+      "value": {
+        "contract_version": "1.0.0",
+        "assessment_result_id": "urn:cwl:tenant_001:data_context:data_management_assessment:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "framework_code": "dama_dmbok2r",
+        "framework_version": "2024",
+        "profile_code": "baseline_data_management",
+        "profile_version": "1.0.0",
+        "tenant_authority_uri": "urn:cwl:tenant_001:data_context",
+        "subject_ref": "urn:cwl:tenant_001:ea_core:business_capability:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "knowledge_cutoff_at": "2026-08-18T00:00:00Z",
+        "recorded_at": "2026-08-18T00:00:01Z",
+        "overall_score_basis_points": 7600,
+        "dimension_scores": [
+          {"dimension_code": "evidence", "score_basis_points": 7200},
+          {"dimension_code": "evidence", "score_basis_points": 7100}
+        ],
+        "readiness": "evidence_gap",
+        "missing_evidence_codes": ["control_evidence"],
+        "truth_status": "observed",
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:data_context:assessment_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "case_id": "future_knowledge_cutoff",
+      "error_pattern": "knowledge_cutoff_at",
+      "value": {
+        "contract_version": "1.0.0",
+        "assessment_result_id": "urn:cwl:tenant_001:data_context:data_management_assessment:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "framework_code": "dama_dmbok2r",
+        "framework_version": "2024",
+        "profile_code": "baseline_data_management",
+        "profile_version": "1.0.0",
+        "tenant_authority_uri": "urn:cwl:tenant_001:data_context",
+        "subject_ref": "urn:cwl:tenant_001:ea_core:business_capability:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "knowledge_cutoff_at": "2026-08-18T00:00:02Z",
+        "recorded_at": "2026-08-18T00:00:01Z",
+        "overall_score_basis_points": 7600,
+        "dimension_scores": [{"dimension_code": "evidence", "score_basis_points": 7200}],
+        "readiness": "evidence_gap",
+        "missing_evidence_codes": ["control_evidence"],
+        "truth_status": "observed",
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:data_context:assessment_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+          "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      }
+    }
+  ]
+}

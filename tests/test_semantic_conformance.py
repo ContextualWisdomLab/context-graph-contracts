@@ -18,6 +18,7 @@ from cwl_context_contracts import (
 from tests.conftest import EVENT_UUID7_TEXT
 
 _ASSERTION_PROFILE = "context-assertion-semantics.v1.json"
+_DATA_MANAGEMENT_PROFILE = "data-management-assessment-semantics.v1.json"
 _EVENT_PROFILE = "cloudevent-semantics.v1.json"
 _JSON_PROFILE = "cwl-json-interoperability.v1.json"
 _TIMESTAMP_PROFILE = "cwl-timestamp-profile.v1.json"
@@ -38,6 +39,7 @@ def test_conformance_profile_inventory_is_stable_and_complete() -> None:
         _ASSERTION_PROFILE,
         _EVENT_PROFILE,
         _JSON_PROFILE,
+        _DATA_MANAGEMENT_PROFILE,
     )
 
 

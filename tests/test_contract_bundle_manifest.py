@@ -27,6 +27,13 @@ _RESOURCE_GROUPS = (
         available_conformance_profile_names,
     ),
 )
+_DATA_MANAGEMENT_RESOURCES = {
+    "schemas/data-management-framework.schema.json",
+    "schemas/data-management-assessment.schema.json",
+    "fixtures/data-management-contract.valid.json",
+    "fixtures/data-management-assessment.valid.json",
+    "conformance/data-management-assessment-semantics.v1.json",
+}
 
 
 def _expected_resource_bytes() -> dict[str, bytes]:
@@ -48,7 +55,8 @@ def test_bundle_manifest_binds_every_packaged_contract_resource() -> None:
 
     assert manifest.distribution_name == _DISTRIBUTION_NAME
     assert manifest.distribution_version == version(_DISTRIBUTION_NAME)
-    assert manifest.resource_count == len(expected) == 17
+    assert manifest.resource_count == len(expected)
+    assert _DATA_MANAGEMENT_RESOURCES <= set(expected)
     assert [item.resource_path for item in manifest.resources] == sorted(expected)
     for item in manifest.resources:
         assert item.sha256 == hashlib.sha256(expected[item.resource_path]).hexdigest()
@@ -60,7 +68,10 @@ def test_bundle_manifest_mapping_is_deterministic_and_actionable() -> None:
 
     assert mapping["manifest_format"] == "cwl-context-bundle-manifest/v1"
     assert mapping["algorithm"] == "sha256"
-    assert mapping["resource_count"] == 17
+    assert mapping["resource_count"] == len(mapping["resources"])
+    assert _DATA_MANAGEMENT_RESOURCES <= {
+        item["resource_path"] for item in mapping["resources"]
+    }
     assert mapping["next_action"] == (
         "store this manifest with approved release evidence and verify semantic "
         "conformance, package provenance, and runtime authorization before enabling "

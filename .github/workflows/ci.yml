@@ -86,6 +86,7 @@ jobs:
               "cwl_context_contracts/conformance/context-assertion-semantics.v1.json",
               "cwl_context_contracts/conformance/cloudevent-semantics.v1.json",
               "cwl_context_contracts/conformance/cwl-json-interoperability.v1.json",
+              "cwl_context_contracts/conformance/data-management-assessment-semantics.v1.json",
               "cwl_context_contracts/schemas/canonical-authority-uri.schema.json",
               "cwl_context_contracts/schemas/canonical-asset-uri.schema.json",
               "cwl_context_contracts/schemas/truth-status.schema.json",
@@ -94,10 +95,14 @@ jobs:
               "cwl_context_contracts/schemas/cloudevent-envelope.schema.json",
               "cwl_context_contracts/schemas/context-membership.schema.json",
               "cwl_context_contracts/schemas/context-assertion.schema.json",
+              "cwl_context_contracts/schemas/data-management-framework.schema.json",
+              "cwl_context_contracts/schemas/data-management-assessment.schema.json",
               "cwl_context_contracts/fixtures/valid-event.json",
               "cwl_context_contracts/fixtures/invalid-event.json",
               "cwl_context_contracts/fixtures/valid-assertion.json",
               "cwl_context_contracts/fixtures/invalid-assertion.json",
+              "cwl_context_contracts/fixtures/data-management-contract.valid.json",
+              "cwl_context_contracts/fixtures/data-management-assessment.valid.json",
           }
 
           with zipfile.ZipFile(wheel_path) as wheel_file:
@@ -132,6 +137,7 @@ jobs:
               load_fixture,
               load_schema,
               parse_cwl_timestamp,
+              validate_data_management_assessment_semantics,
           )
 
           assert TruthStatus.OBSERVED.value == "observed"
@@ -152,6 +158,7 @@ jobs:
               "context-assertion-semantics.v1.json",
               "cloudevent-semantics.v1.json",
               "cwl-json-interoperability.v1.json",
+              "data-management-assessment-semantics.v1.json",
           )
           timestamp_profile = load_conformance_profile(
               "cwl-timestamp-profile.v1.json"
@@ -196,11 +203,29 @@ jobs:
                   vector["value"]
               )
 
+          assessment_profile = load_conformance_profile(
+              "data-management-assessment-semantics.v1.json"
+          )
+          for vector in assessment_profile["valid_vectors"]:
+              validate_data_management_assessment_semantics(vector["value"])
+          for vector in assessment_profile["invalid_vectors"]:
+              try:
+                  validate_data_management_assessment_semantics(vector["value"])
+              except ValueError as exc:
+                  assert vector["error_pattern"] in str(exc)
+              else:
+                  raise AssertionError(
+                      "negative assessment vector unexpectedly validated: "
+                      f"{vector['case_id']}"
+                  )
+
           assert available_fixture_names() == (
               "valid-event.json",
               "invalid-event.json",
               "valid-assertion.json",
               "invalid-assertion.json",
+              "data-management-contract.valid.json",
+              "data-management-assessment.valid.json",
           )
           valid_event = load_fixture("valid-event.json")
           invalid_event = load_fixture("invalid-event.json")
