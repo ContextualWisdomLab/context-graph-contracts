@@ -6,10 +6,24 @@ from .conformance import (
     conformance_profile_sha256,
     load_conformance_profile,
 )
+from .conformance_admission import (
+    ConformanceAdmissionReport,
+    evaluate_packaged_conformance_admission,
+)
+from .conformance_admission_receipt import (
+    ConformanceAdmissionReceipt,
+    build_packaged_conformance_admission_receipt,
+)
 from .conformance_manifest import (
     ConformanceEvidenceManifest,
     ConformanceProfileEvidence,
     build_packaged_conformance_manifest,
+)
+from .conformance_manifest_verifier import (
+    ApprovedManifestInputError,
+    ConformanceManifestVerification,
+    load_approved_conformance_manifest,
+    verify_packaged_conformance_manifest,
 )
 from .conformance_runner import (
     ConformanceError,
@@ -40,13 +54,17 @@ from .truth import (
 )
 
 __all__ = [
+    "ApprovedManifestInputError",
     "BitemporalInterval",
     "CanonicalAssetUri",
     "CanonicalAuthorityUri",
     "CloudEventEnvelope",
+    "ConformanceAdmissionReceipt",
+    "ConformanceAdmissionReport",
     "ConformanceError",
     "ConformanceEvidenceManifest",
     "ConformanceFailure",
+    "ConformanceManifestVerification",
     "ConformanceProfileEvidence",
     "ConformanceReport",
     "ContextAssertion",
@@ -58,10 +76,13 @@ __all__ = [
     "available_contract_names",
     "available_fixture_names",
     "available_schema_names",
+    "build_packaged_conformance_admission_receipt",
     "build_packaged_conformance_manifest",
     "conformance_profile_sha256",
+    "evaluate_packaged_conformance_admission",
     "format_cwl_timestamp",
     "format_rfc3339_timestamp",
+    "load_approved_conformance_manifest",
     "load_conformance_profile",
     "load_contract",
     "load_fixture",
@@ -73,6 +94,7 @@ __all__ = [
     "requires_provenance",
     "run_packaged_conformance",
     "truth_status_rank",
+    "verify_packaged_conformance_manifest",
 ]
 
 __version__ = "0.1.0"

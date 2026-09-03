@@ -119,6 +119,67 @@ data. Python callers can use `build_packaged_conformance_manifest()` or
 identity only; package provenance, authorization, and trust remain separate
 gates.
 
+Given a manifest captured and approved through the consuming product's release
+process, compare it with the installed package before enabling the integration:
+
+```console
+$ cwl-context-conformance-verify approved-conformance-manifest.json
+{"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","mismatches":[],"next_action":"accept the installed conformance evidence","verification_format":"cwl-context-conformance-verification/v1","verified":true}
+```
+
+Exit `0` means the approved package version and every approved semantic-profile
+digest match the installed evidence. Exit `1` means version/profile evidence
+drifted; use the emitted mismatch identities to install the approved package or
+approve a newly reviewed exact manifest. Exit `2` means the approved manifest
+cannot be read or parsed as a JSON object. The verifier does not decide who may
+approve a manifest and does not replace signature, provenance, SBOM, or runtime
+authorization gates. Python callers can use
+`verify_packaged_conformance_manifest()` for the same deterministic decision.
+
+For deployment admission, prefer the composite command so semantic execution
+cannot accidentally be omitted when checking approved profile bytes:
+
+```console
+$ cwl-context-conformance-admit approved-conformance-manifest.json
+{"admission_format":"cwl-context-conformance-admission/v1","admitted":true,"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","manifest_verification":{"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","mismatches":[],"next_action":"accept the installed conformance evidence","verification_format":"cwl-context-conformance-verification/v1","verified":true},"next_action":"verify artifact provenance and runtime authorization before enabling the integration","semantic_conformance":{"case_count":31,"failures":[],"profile_count":4,"status":"pass"}}
+```
+
+Admission requires both the installed semantic suite and the exact
+approved-manifest comparison to pass. A positive result is intentionally not a
+signature, provenance decision, review approval, or authorization grant; verify
+those owning gates before enabling the integration. Python callers can use
+`evaluate_packaged_conformance_admission()` for the same composition.
+
+Persist a compact deterministic receipt when an operator or consuming product
+needs to compare admission evidence across deployments without copying the full
+admission payload into its own private format:
+
+```console
+$ cwl-context-conformance-receipt approved-conformance-manifest.json
+{"admission_evidence_sha256":"...","admitted":true,"approved_manifest_canonical_sha256":"...","canonicalization":"RFC8785","digest_algorithm":"sha256","installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","manifest_normalization":"profile_name_ascending","next_action":"verify artifact provenance and runtime authorization before enabling the integration","receipt_format":"cwl-context-conformance-admission-receipt/v1"}
+```
+
+The receipt binds two deterministic identities. For the approved-manifest
+identity it first normalizes the verifier's semantically unordered `profiles`
+array by ascending `profile_name`, then applies RFC 8785 canonical JSON and
+SHA-256. The complete admission evidence mapping is independently canonicalized
+and digested with SHA-256. JSON object-member order and profile-array order
+therefore cannot make verifier-equivalent approved evidence acquire different
+receipt identities.
+
+The receipt input is deliberately narrower than arbitrary JSON: unknown
+manifest/profile members, non-string identity fields, non-list profiles,
+non-object profile entries, non-exact-range profile counts, and unpaired Unicode
+surrogates fail closed instead of acquiring undocumented digest semantics. A
+published canonical digest vector lets another SDK reproduce the same evidence
+identity.
+
+Any change to approved version/profile evidence or to the admission result
+changes the relevant SHA-256 value. This is an audit/evidence identifier only:
+it is not a signature, provenance attestation, approval registry, trust decision,
+or authorization grant. Python callers can use
+`build_packaged_conformance_admission_receipt()`.
+
 ## Who consumes these contracts
 
 `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`,

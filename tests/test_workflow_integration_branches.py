@@ -8,6 +8,7 @@ from pathlib import Path
 _WORKFLOW_PATHS = (
     Path(".github/workflows/ci.yml"),
     Path(".github/workflows/supply-chain.yml"),
+    Path(".github/workflows/receipt-package-smoke.yml"),
 )
 _PUSH_BRANCHES_PATTERN = re.compile(
     r"(?m)^  push:\n    branches: \[([^\]]+)\]$"

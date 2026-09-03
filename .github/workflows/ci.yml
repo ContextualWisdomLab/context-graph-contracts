@@ -251,3 +251,40 @@ jobs:
           else:
               raise AssertionError("negative assertion fixture unexpectedly parsed")
           PY
+      - name: Smoke-test installed conformance evidence commands
+        run: |
+          set -euo pipefail
+          .package-smoke/bin/cwl-context-conformance > /tmp/conformance-report.json
+          .package-smoke/bin/cwl-context-conformance-manifest > /tmp/approved-manifest.json
+          .package-smoke/bin/cwl-context-conformance-verify \
+            /tmp/approved-manifest.json > /tmp/verification-report.json
+          .package-smoke/bin/cwl-context-conformance-admit \
+            /tmp/approved-manifest.json > /tmp/admission-report.json
+          .package-smoke/bin/python - <<'PY'
+          import json
+          from pathlib import Path
+
+          conformance = json.loads(
+              Path("/tmp/conformance-report.json").read_text(encoding="utf-8")
+          )
+          verification = json.loads(
+              Path("/tmp/verification-report.json").read_text(encoding="utf-8")
+          )
+          admission = json.loads(
+              Path("/tmp/admission-report.json").read_text(encoding="utf-8")
+          )
+          assert conformance["status"] == "pass"
+          assert conformance["failures"] == []
+          assert verification["verified"] is True
+          assert verification["mismatches"] == []
+          assert verification["next_action"] == (
+              "accept the installed conformance evidence"
+          )
+          assert admission["admitted"] is True
+          assert admission["semantic_conformance"]["status"] == "pass"
+          assert admission["manifest_verification"]["verified"] is True
+          assert admission["next_action"] == (
+              "verify artifact provenance and runtime authorization before enabling "
+              "the integration"
+          )
+          PY

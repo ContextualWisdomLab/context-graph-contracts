@@ -24,6 +24,9 @@ All notable changes to this project are documented in this file.
   previously accepted explicit JSON `null` remain admissible to consumers and
   are normalized to omission on serialization, preserving the repository's
   backward-compatibility rule without emitting two canonical encodings.
+- Approved conformance-manifest verification now reads at most 1 MiB plus one
+  sentinel byte before UTF-8/JSON parsing and fails closed with
+  `approved_manifest_too_large` for oversized untrusted input.
 
 ### Added
 
@@ -56,6 +59,23 @@ All notable changes to this project are documented in this file.
   and `conformance_profile_sha256()`, binding release evidence to the installed
   `cwl-context-contracts` distribution version and the exact packaged bytes of
   every published conformance profile.
+- Fail-closed `cwl-context-conformance-verify` command and
+  `verify_packaged_conformance_manifest()` API that compare an independently
+  approved manifest with the installed package, identify exact version/profile
+  drift, and return an operator next action without inventing manifest-approval
+  authority.
+- Composite `cwl-context-conformance-admit` command and
+  `evaluate_packaged_conformance_admission()` API that require both installed
+  semantic conformance and an exact approved-manifest match while explicitly
+  leaving artifact provenance, review policy, and runtime authorization to
+  their owning gates.
+- Deterministic `cwl-context-conformance-receipt` command and
+  `build_packaged_conformance_admission_receipt()` API that normalize profile
+  evidence by ascending `profile_name`, apply RFC 8785 canonicalization, bind
+  approved-manifest semantics and complete admission evidence to separate
+  SHA-256 identities, reject ambiguous/non-JCS-safe manifest shapes, and
+  smoke-test the installed wheel without creating signature, trust, approval,
+  provenance, or runtime authority.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
