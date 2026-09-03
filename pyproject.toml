@@ -24,6 +24,7 @@ classifiers = [
 
 [project.scripts]
 cwl-context-conformance = "cwl_context_contracts.conformance_runner:main"
+cwl-context-conformance-manifest = "cwl_context_contracts.conformance_manifest:main"
 
 [project.optional-dependencies]
 dev = [
