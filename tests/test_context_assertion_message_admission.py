@@ -5,6 +5,7 @@ import pytest
 from cwl_context_contracts import (
     CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
     ContextAssertion,
+    ContextAssertionAdmission,
     admit_context_assertion_message,
     load_conformance_profile,
     load_contract,
@@ -30,8 +31,9 @@ def test_admission_media_type_matches_asyncapi_message_contract() -> None:
     assert advertised == CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE
 
     admitted = admit_context_assertion_message(advertised, _canonical_event())
-    assert isinstance(admitted, ContextAssertion)
-    assert admitted.truth_status.value == "observed"
+    assert isinstance(admitted, ContextAssertionAdmission)
+    assert isinstance(admitted.assertion, ContextAssertion)
+    assert admitted.assertion.truth_status.value == "observed"
 
 
 @pytest.mark.parametrize(
@@ -48,8 +50,8 @@ def test_admission_accepts_standard_structured_json_media_type_variants(
 
     admitted = admit_context_assertion_message(media_type, _canonical_event())
 
-    assert isinstance(admitted, ContextAssertion)
-    assert admitted.truth_status.value == "observed"
+    assert isinstance(admitted, ContextAssertionAdmission)
+    assert admitted.assertion.truth_status.value == "observed"
 
 
 @pytest.mark.parametrize(
@@ -95,3 +97,36 @@ def test_admission_retains_envelope_identity_for_projection_receipts() -> None:
     assert admitted.profile_id == "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
     assert admitted.profile_version == 1
     assert admitted.admission_version == 1
+
+
+def test_admission_receipt_rejects_forged_types_and_mismatched_assertion() -> None:
+    """Do not let callers forge a receipt around unrelated event or assertion state."""
+
+    admitted = admit_context_assertion_message(
+        CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
+        _canonical_event(),
+    )
+
+    with pytest.raises(TypeError, match="envelope must be a CloudEventEnvelope"):
+        ContextAssertionAdmission(  # type: ignore[arg-type]
+            envelope={},
+            assertion=admitted.assertion,
+        )
+
+    with pytest.raises(TypeError, match="assertion must be a ContextAssertion"):
+        ContextAssertionAdmission(  # type: ignore[arg-type]
+            envelope=admitted.envelope,
+            assertion={},
+        )
+
+    mismatched_mapping = admitted.assertion.to_mapping()
+    mismatched_mapping["predicate"] = "depends_on"
+    mismatched_assertion = ContextAssertion.from_mapping(mismatched_mapping)
+    with pytest.raises(
+        ValueError,
+        match="assertion must match the admitted CloudEvent envelope",
+    ):
+        ContextAssertionAdmission(
+            envelope=admitted.envelope,
+            assertion=mismatched_assertion,
+        )
