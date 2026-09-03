@@ -2,7 +2,7 @@
 
 ## Evidence model
 
-The repository separates product-data provenance from software-build provenance. Context assertions use the provider-neutral provenance contract described by ADR 0005 and W3C PROV references. Released package provenance is separate supply-chain evidence proving which repository/workflow/commit produced a wheel or source distribution. Semantic conformance evidence is a third, narrower layer: it records whether the installed contract behavior passes the published vectors and which exact package version/profile bytes were tested. Complete contract-resource identity is another narrow evidence layer: it binds the installed distribution version to the exact packaged AsyncAPI, JSON Schema, fixture, and semantic-profile bytes and can be compared with independently approved complete-bundle evidence. None of these layers substitutes for another.
+The repository separates product-data provenance from software-build provenance. Context assertions use the provider-neutral provenance contract described by ADR 0005 and W3C PROV references. Released package provenance is separate supply-chain evidence proving which repository/workflow/commit produced a wheel or source distribution. Semantic conformance evidence is a third, narrower layer: it records whether the installed contract behavior passes the published vectors and which exact package version/profile bytes were tested. Complete contract-resource identity is another narrow evidence layer: it binds the installed distribution version to the exact packaged AsyncAPI, JSON Schema, fixture, and semantic-profile bytes and can be compared with independently approved complete-bundle evidence. The full release-admission decision composes the semantic and complete-resource gates without converting either digest identity into provenance or trust. None of these layers substitutes for another.
 
 The `supply-chain` workflow is the executable baseline:
 
@@ -25,6 +25,7 @@ A buyer or downstream build should verify bytes, producer identity, and semantic
 5. Install the verified package and run `cwl-context-conformance`; cryptographic provenance does not prove semantic correctness or consumer compatibility by itself.
 6. Capture `cwl-context-conformance-manifest` from that installed package and compare it with the independently approved manifest for the intended release using `cwl-context-conformance-verify`. A successful comparison proves the approved distribution version and semantic-profile bytes are installed; it does not prove who approved the manifest, who built the package, or whether the consumer is authorized to mutate any store.
 7. Capture `cwl-context-bundle-manifest`, retain it with the accepted release evidence, and compare it with the independently approved complete-resource manifest using `cwl-context-bundle-verify`. Exit `0` proves exact distribution/resource identity equality only; any package, missing/unexpected resource, or digest mismatch requires resource-level review and compatibility revalidation rather than silent admission.
+8. Run `cwl-context-release-admit <approved-conformance-manifest> <approved-contract-bundle-manifest>` so the installed semantic suite, approved semantic-profile identity, and approved complete-resource identity must all pass in one deterministic decision. A positive decision still requires the protected-release, provenance, independent-review, attestation, and runtime-authorization gates above and below it.
 
 ## Trust boundaries
 
@@ -32,10 +33,11 @@ A buyer or downstream build should verify bytes, producer identity, and semantic
 - A checksum without trusted provenance can detect byte changes but cannot prove who produced the bytes.
 - A conformance-profile or contract-resource SHA-256 digest proves byte identity only; it is not a signature or organizational approval.
 - A matching approved conformance manifest or complete contract-bundle verification does not replace artifact provenance, independent review, semantic execution, or runtime authorization.
+- A successful full release-admission decision composes deterministic compatibility evidence only; it does not create protected-release eligibility, approval authority, artifact provenance, signature validity, or runtime authorization.
 - An attestation without semantic conformance does not prove the contracts behave as the buyer expects.
 - An SBOM describes software composition; it is not a vulnerability-free or certification claim.
 - This repository does not claim SLSA level, SOC 2, CSAP, or other certification merely because it emits provenance evidence.
 
 ## Retention and reproducibility
 
-For each published version retain or link the exact source commit, immutable tag, reviewed dependency lock, release artifacts, SHA-256 digests, SPDX SBOM, provenance/SBOM attestations, installed conformance report, exact conformance manifest, approved-manifest verification result, complete contract-bundle manifest, approved complete-bundle verification result, CI/security/review gate evidence, and release notes. Rebuilding should start from the exact source commit and lock; if rebuilt bytes differ, record that difference rather than substituting new bytes under the original version.
+For each published version retain or link the exact source commit, immutable tag, reviewed dependency lock, release artifacts, SHA-256 digests, SPDX SBOM, provenance/SBOM attestations, installed conformance report, exact conformance manifest, approved-manifest verification result, complete contract-bundle manifest, approved complete-bundle verification result, full release-admission result, CI/security/review gate evidence, and release notes. Rebuilding should start from the exact source commit and lock; if rebuilt bytes differ, record that difference rather than substituting new bytes under the original version.
