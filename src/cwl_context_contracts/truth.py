@@ -45,7 +45,7 @@ def parse_truth_status(value: object) -> TruthStatus:
 
 
 def truth_status_rank(status: TruthStatus) -> int:
-    """Return the interchange trust rank used to refuse status promotion."""
+    """Return the stable legacy ordinal, never an authorization or transition rule."""
     parsed = parse_truth_status(status)
     return _TRUTH_RANKS[parsed]
 
@@ -60,8 +60,9 @@ def refuse_truth_promotion(
     source: TruthStatus,
     target: TruthStatus,
 ) -> TruthStatus:
-    """Return ``target`` only when it does not raise interchange trust."""
+    """Return ``target`` only when an adapter preserves the supplied status exactly."""
+    parsed_source = parse_truth_status(source)
     parsed_target = parse_truth_status(target)
-    if truth_status_rank(parsed_target) > truth_status_rank(source):
-        raise ValueError("parsers and adapters cannot promote truth status")
+    if parsed_target is not parsed_source:
+        raise ValueError("parsers and adapters must retain truth status")
     return parsed_target

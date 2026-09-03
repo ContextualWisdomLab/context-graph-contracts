@@ -102,13 +102,13 @@ def test_invalid_assertion_fixture_keeps_inferred_lineage_non_authoritative() ->
         ContextAssertion.from_mapping(load_fixture("invalid-assertion.json"))
 
 
-def test_inferred_lineage_edge_cannot_be_promoted() -> None:
-    """LineageWeave inferred edges stay inferred at the contract boundary."""
+def test_inferred_lineage_edge_cannot_be_rewritten_by_adapter() -> None:
+    """LineageWeave inferred edges retain their exact status at this boundary."""
     assertion = _assertion(truth_status=TruthStatus.INFERRED, provenance=None)
     assert assertion.retain_truth_status(TruthStatus.INFERRED) is TruthStatus.INFERRED
-    with pytest.raises(ValueError, match="cannot promote"):
+    with pytest.raises(ValueError, match="retain truth status"):
         assertion.retain_truth_status(TruthStatus.AUTHORITATIVE)
-    with pytest.raises(ValueError, match="cannot promote"):
+    with pytest.raises(ValueError, match="retain truth status"):
         assertion.retain_truth_status(TruthStatus.OBSERVED)
 
 
@@ -128,7 +128,7 @@ def test_proposed_ea_relationship_remains_proposed() -> None:
         ),
     )
     assert assertion.truth_status is TruthStatus.PROPOSED
-    with pytest.raises(ValueError, match="cannot promote"):
+    with pytest.raises(ValueError, match="retain truth status"):
         assertion.retain_truth_status(TruthStatus.AUTHORITATIVE)
 
 
