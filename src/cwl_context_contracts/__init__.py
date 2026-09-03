@@ -32,6 +32,11 @@ from .conformance_runner import (
     assert_packaged_conformance,
     run_packaged_conformance,
 )
+from .contract_bundle_manifest import (
+    ContractBundleManifest,
+    ContractResourceEvidence,
+    build_packaged_contract_bundle_manifest,
+)
 from .contracts import available_contract_names, load_contract
 from .events import CloudEventEnvelope
 from .fixtures import available_fixture_names, load_fixture
@@ -69,6 +74,8 @@ __all__ = [
     "ConformanceReport",
     "ContextAssertion",
     "ContextMembership",
+    "ContractBundleManifest",
+    "ContractResourceEvidence",
     "ProvenanceReference",
     "TruthStatus",
     "assert_packaged_conformance",
@@ -78,6 +85,7 @@ __all__ = [
     "available_schema_names",
     "build_packaged_conformance_admission_receipt",
     "build_packaged_conformance_manifest",
+    "build_packaged_contract_bundle_manifest",
     "conformance_profile_sha256",
     "evaluate_packaged_conformance_admission",
     "format_cwl_timestamp",

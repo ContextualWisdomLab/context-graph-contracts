@@ -76,6 +76,13 @@ All notable changes to this project are documented in this file.
   SHA-256 identities, reject ambiguous/non-JCS-safe manifest shapes, and
   smoke-test the installed wheel without creating signature, trust, approval,
   provenance, or runtime authority.
+- Deterministic `cwl-context-bundle-manifest` command and
+  `build_packaged_contract_bundle_manifest()` API that bind the installed
+  distribution version to SHA-256 identities for every explicitly published
+  AsyncAPI document, JSON Schema, conformance fixture, and semantic profile in
+  stable resource-path order; installed-wheel smoke verifies the command while
+  leaving semantic conformance, package provenance, and runtime authorization
+  as separate owning gates.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and
