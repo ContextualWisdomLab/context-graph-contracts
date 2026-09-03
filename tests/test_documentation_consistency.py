@@ -31,6 +31,30 @@ def test_customer_readme_names_current_semantic_conformance_profiles() -> None:
     assert "CWL JSON interoperability profile" in readme
 
 
+def test_truth_docs_preserve_origin_and_owner_only_dispositions() -> None:
+    """Keep all six statuses explicit without turning them into adapter authority."""
+    statuses = (
+        "authoritative",
+        "observed",
+        "inferred",
+        "proposed",
+        "superseded",
+        "rejected",
+    )
+    documents = {
+        "README.md": "retain the supplied status exactly",
+        "AGENTS.md": "retain the supplied truth status exactly",
+        "docs/ARCHITECTURE.md": "owning product",
+        "docs/adr/0003-truth-status.md": "preserve the supplied status exactly",
+    }
+
+    for path_name, required_phrase in documents.items():
+        text = Path(path_name).read_text(encoding="utf-8").lower()
+        for status in statuses:
+            assert status in text, f"{path_name} must document {status}"
+        assert required_phrase in text, f"{path_name} must document {required_phrase}"
+
+
 def test_threat_model_preserves_contract_only_security_boundary() -> None:
     """Keep security threats explicit without inventing runtime authority."""
     threat_model = Path("docs/THREAT_MODEL.md").read_text(encoding="utf-8")

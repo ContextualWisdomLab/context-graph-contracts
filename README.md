@@ -33,13 +33,19 @@ of the object being discussed. In a CloudEvent this value is `subject`.
 **Truth status.**
 Every cross-domain assertion carries one of `authoritative`, `observed`,
 `inferred`, `proposed`, `superseded`, or `rejected`. These values describe
-origin, not confidence. Consumers must not promote `observed`, `inferred`, or
-`proposed` assertions to `authoritative`.
+origin or a recorded disposition, not confidence or a trust ordering. Parsers
+and adapters must retain the supplied status exactly. An owning product records
+acceptance, supersession, or rejection by issuing the corresponding assertion
+or event under its own authority; a consumer projection does not rewrite a
+foreign assertion into a different status.
 
 **Bitemporal validity.**
 Real-world validity (`valid_from` / `valid_to`) stays distinct from
-system-recording time (`recorded_at` / `superseded_at`). Open intervals use
-`null` on the wire; they do not use sentinel dates.
+system-recording time (`recorded_at` / `superseded_at`). Canonical v1 producers
+omit an open interval's corresponding end member and never emit a sentinel
+date. V1 consumers continue to accept the previously admitted explicit `null`
+shape for backward compatibility and normalize it to omission when they
+serialize again.
 
 **Timestamp profile.**
 CWL Timestamp Profile v1 is an explicitly named, leap-second-free subset of
@@ -173,58 +179,6 @@ changes the relevant SHA-256 value. This is an audit/evidence identifier only:
 it is not a signature, provenance attestation, approval registry, trust decision,
 or authorization grant. Python callers can use
 `build_packaged_conformance_admission_receipt()`.
-
-Capture one exact identity manifest for the complete published JSON contract
-bundle when a consuming product needs to bind release evidence to more than the
-semantic profiles alone:
-
-```console
-$ cwl-context-bundle-manifest
-{"algorithm":"sha256","distribution_name":"cwl-context-contracts","distribution_version":"0.1.0","manifest_format":"cwl-context-bundle-manifest/v1","next_action":"store this manifest with approved release evidence and verify semantic conformance, package provenance, and runtime authorization before enabling the integration","resource_count":17,"resources":[...]}
-```
-
-The bundle manifest hashes the exact packaged bytes of every explicitly
-published AsyncAPI document, JSON Schema, positive/negative fixture, and
-semantic conformance profile, then emits those identities in stable
-`resource_path` order. Store it beside release evidence when a buyer or operator
-must prove which complete contract-resource set was admitted. A changed digest
-means the corresponding resource bytes changed and must be reviewed and
-revalidated. The manifest is deliberately not a signature, trust decision,
-semantic-conformance result, provenance attestation, approval registry, or
-runtime authorization grant. Python callers can use
-`build_packaged_contract_bundle_manifest()` for the same deterministic evidence.
-
-Verify that complete approved bundle against the installed package before
-admitting the release:
-
-```console
-$ cwl-context-bundle-verify approved-contract-bundle-manifest.json
-{"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","mismatches":[],"next_action":"accept the installed contract bundle evidence","verification_format":"cwl-context-bundle-verification/v1","verified":true}
-```
-
-This comparison covers every explicitly published contract resource, not only
-semantic profiles. It still does not execute semantic vectors, establish
-artifact provenance, or grant runtime authority. Python callers can use
-`verify_packaged_contract_bundle_manifest()`.
-
-For the final installed-package compatibility decision, require both approved
-semantic evidence and the approved complete-resource bundle in one fail-closed
-command. The command emits a full nested JSON decision; this abbreviated shape
-highlights the top-level gate:
-
-```console
-$ cwl-context-release-admit approved-conformance-manifest.json approved-contract-bundle-manifest.json
-{"admission_format":"cwl-context-contract-release-admission/v1","admitted":true,"bundle_verification":{"verified":true},"conformance_admission":{"admitted":true},"installed_distribution_name":"cwl-context-contracts","installed_distribution_version":"0.1.0","next_action":"obtain qualifying independent approval and verify artifact provenance, protected-release evidence, and runtime authorization before enabling the integration"}
-```
-
-`cwl-context-release-admit` succeeds only when the installed semantic suite,
-approved semantic-profile identity, and approved complete published-resource
-identity all agree. It deliberately stops before trust: a positive result does
-not prove source/artifact provenance, protected-branch release eligibility,
-independent approval, signature/attestation validity, or runtime authorization.
-Those remain separate owning gates. Python callers can use
-`evaluate_packaged_contract_release_admission()` for the same deterministic
-composition.
 
 ## Who consumes these contracts
 

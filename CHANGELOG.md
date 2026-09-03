@@ -12,6 +12,18 @@ All notable changes to this project are documented in this file.
   references for the standards this product already claims.
 - UUIDv7 wire identities now fail closed on non-canonical text rather than
   silently normalizing spellings that the published JSON Schemas reject.
+- Parser and adapter truth guards now preserve the supplied truth status
+  exactly. A consumer can no longer reinterpret an observed, inferred,
+  proposed, superseded, or rejected assertion as a different origin or owner
+  disposition; owning products issue a new assertion or event when recording a
+  new disposition. The retained `truth_status_rank()` ordinal is compatibility
+  metadata only and is not an authorization or transition rule.
+- Bitemporal open intervals now have one canonical producer shape across
+  runtime, JSON Schema guidance, fixtures, and documentation: `valid_to` and
+  `superseded_at` are omitted while open. Existing v1 payloads that used the
+  previously accepted explicit JSON `null` remain admissible to consumers and
+  are normalized to omission on serialization, preserving the repository's
+  backward-compatibility rule without emitting two canonical encodings.
 - Approved conformance-manifest verification now reads at most 1 MiB plus one
   sentinel byte before UTF-8/JSON parsing and fails closed with
   `approved_manifest_too_large` for oversized untrusted input.
@@ -43,8 +55,8 @@ All notable changes to this project are documented in this file.
   vectors delivered to consumers.
 - Canonical tenant-scoped producer authority URI contract.
 - Canonical UUIDv7-backed CWL asset URI contract.
-- Truth-status vocabulary separating authoritative, observed, inferred, and
-  proposed assertions.
+- Truth-status vocabulary separating authoritative, observed, inferred,
+  proposed, superseded, and rejected assertions.
 - Bitemporal interval and provenance-reference contracts.
 - CloudEvents 1.0.2 structured-event reference implementation with UUIDv7
   event identity, producer-authority `source`, asset `subject`, and optional
@@ -105,7 +117,7 @@ All notable changes to this project are documented in this file.
   `evaluate_packaged_contract_release_admission()` API that require executable
   semantic conformance, exact approved semantic-profile identity, and exact
   approved complete-resource identity together while leaving protected-release
-  policy, artifact provenance, independent approval, and runtime authorization
+  policy, artifact provenance, live review policy, and runtime authorization
   as separate owning gates.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
