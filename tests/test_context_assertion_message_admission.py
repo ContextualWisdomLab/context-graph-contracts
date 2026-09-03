@@ -79,3 +79,19 @@ def test_admission_rejects_non_string_media_type() -> None:
 
     with pytest.raises(TypeError, match="Context Assertion media type must be a string"):
         admit_context_assertion_message(1, _canonical_event())  # type: ignore[arg-type]
+
+
+def test_admission_retains_envelope_identity_for_projection_receipts() -> None:
+    """Keep the admitted event identity alongside its validated assertion."""
+
+    value = _canonical_event()
+    admitted = admit_context_assertion_message(
+        CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
+        value,
+    )
+
+    assert admitted.envelope.to_mapping() == value
+    assert admitted.assertion.truth_status.value == "observed"
+    assert admitted.profile_id == "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
+    assert admitted.profile_version == 1
+    assert admitted.admission_version == 1
