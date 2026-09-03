@@ -83,6 +83,12 @@ All notable changes to this project are documented in this file.
   stable resource-path order; installed-wheel smoke verifies the command while
   leaving semantic conformance, package provenance, and runtime authorization
   as separate owning gates.
+- Fail-closed `cwl-context-bundle-verify` command and
+  `verify_packaged_contract_bundle_manifest()` API that rebuild the installed
+  complete resource manifest and compare it with independently approved
+  distribution/resource evidence, reporting exact missing, unexpected, and
+  digest-different resource paths while reusing the bounded strict approved-JSON
+  input boundary; installed-wheel smoke executes the verifier end to end.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
   non-promotable truth status, bitemporal validity, optional provenance, and

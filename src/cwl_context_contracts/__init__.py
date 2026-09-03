@@ -37,6 +37,10 @@ from .contract_bundle_manifest import (
     ContractResourceEvidence,
     build_packaged_contract_bundle_manifest,
 )
+from .contract_bundle_manifest_verifier import (
+    ContractBundleManifestVerification,
+    verify_packaged_contract_bundle_manifest,
+)
 from .contracts import available_contract_names, load_contract
 from .events import CloudEventEnvelope
 from .fixtures import available_fixture_names, load_fixture
@@ -75,6 +79,7 @@ __all__ = [
     "ContextAssertion",
     "ContextMembership",
     "ContractBundleManifest",
+    "ContractBundleManifestVerification",
     "ContractResourceEvidence",
     "ProvenanceReference",
     "TruthStatus",
@@ -103,6 +108,7 @@ __all__ = [
     "run_packaged_conformance",
     "truth_status_rank",
     "verify_packaged_conformance_manifest",
+    "verify_packaged_contract_bundle_manifest",
 ]
 
 __version__ = "0.1.0"
