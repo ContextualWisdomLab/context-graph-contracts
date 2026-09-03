@@ -6,6 +6,11 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+- Context Assertion structured-message admission now recognizes the
+  case-insensitive `application/cloudevents+json` media type and the UTF-8
+  `charset` form used by the CloudEvents HTTP structured binding while still
+  rejecting mismatched media types, unsupported/duplicate parameters, and CRLF
+  injection attempts before envelope admission.
 - README is now a customer and operator page; local test commands live in
   `CONTRIBUTING.md`.
 - ADRs 0001–0005 now include Context, Decision, Consequences, and APA 7th
