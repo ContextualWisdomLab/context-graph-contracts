@@ -13,6 +13,7 @@ def test_packaged_asyncapi_contract_is_provider_neutral() -> None:
 
     assert document["asyncapi"] == "3.1.0"
     assert document["id"] == "urn:cwl:shared:context_graph_contracts"
+    assert document["defaultContentType"] == "application/cloudevents+json"
     assert "servers" not in document
     assert "channels" not in document
     assert "operations" not in document
@@ -28,11 +29,37 @@ def test_packaged_asyncapi_contract_is_provider_neutral() -> None:
             )
         },
     }
+
+
+def test_context_assertion_message_is_the_structured_cloudevent_wire_shape() -> None:
+    """AsyncAPI describes the full event emitted by ``ContextAssertion.into_event``."""
+    document = load_contract("context-fabric.asyncapi.json")
     assertion_message = document["components"]["messages"]["ContextAssertionEvent"]
-    assert assertion_message["payload"]["schema"]["$ref"] == (
+
+    assert assertion_message["contentType"] == "application/cloudevents+json"
+    assert assertion_message["payload"]["schemaFormat"] == (
+        "application/schema+json;version=draft-2020-12"
+    )
+    envelope_ref = (
+        "https://schemas.contextualwisdomlab.org/context/"
+        "cloudevent-envelope.v1.schema.json"
+    )
+    assertion_ref = (
         "https://schemas.contextualwisdomlab.org/context/"
         "context-assertion.v1.schema.json"
     )
+    schema = assertion_message["payload"]["schema"]
+    assert schema["allOf"][0] == {"$ref": envelope_ref}
+    assertion_overlay = schema["allOf"][1]
+    assert assertion_overlay["type"] == "object"
+    assert assertion_overlay["required"] == ["type", "dataschema", "data"]
+    assert assertion_overlay["properties"] == {
+        "type": {
+            "const": "org.contextualwisdomlab.context_graph.assertion.v1",
+        },
+        "dataschema": {"const": assertion_ref},
+        "data": {"$ref": assertion_ref},
+    }
 
 
 def test_unknown_asyncapi_contract_is_rejected() -> None:

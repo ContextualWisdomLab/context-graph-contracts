@@ -6,9 +6,7 @@
   "truth_status": "observed",
   "interval": {
     "valid_from": "2026-01-15T09:00:00Z",
-    "recorded_at": "2026-01-15T09:05:00Z",
-    "valid_to": null,
-    "superseded_at": null
+    "recorded_at": "2026-01-15T09:05:00Z"
   },
   "provenance": {
     "evidence_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",

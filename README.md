@@ -33,13 +33,19 @@ of the object being discussed. In a CloudEvent this value is `subject`.
 **Truth status.**
 Every cross-domain assertion carries one of `authoritative`, `observed`,
 `inferred`, `proposed`, `superseded`, or `rejected`. These values describe
-origin, not confidence. Consumers must not promote `observed`, `inferred`, or
-`proposed` assertions to `authoritative`.
+origin or a recorded disposition, not confidence or a trust ordering. Parsers
+and adapters must retain the supplied status exactly. An owning product records
+acceptance, supersession, or rejection by issuing the corresponding assertion
+or event under its own authority; a consumer projection does not rewrite a
+foreign assertion into a different status.
 
 **Bitemporal validity.**
 Real-world validity (`valid_from` / `valid_to`) stays distinct from
-system-recording time (`recorded_at` / `superseded_at`). Open intervals use
-`null` on the wire; they do not use sentinel dates.
+system-recording time (`recorded_at` / `superseded_at`). Canonical v1 producers
+omit an open interval's corresponding end member and never emit a sentinel
+date. V1 consumers continue to accept the previously admitted explicit `null`
+shape for backward compatibility and normalize it to omission when they
+serialize again.
 
 **Timestamp profile.**
 CWL Timestamp Profile v1 is an explicitly named, leap-second-free subset of
