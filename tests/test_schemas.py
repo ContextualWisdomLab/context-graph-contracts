@@ -52,6 +52,25 @@ def test_positive_and_negative_fixtures() -> None:
     assert list(assertion_validator.iter_errors(invalid_assertion))
 
 
+@pytest.mark.parametrize("field_name", ["valid_to", "superseded_at"])
+def test_bitemporal_schema_accepts_v1_null_for_backward_compatibility(
+    field_name: str,
+) -> None:
+    """V1 accepts legacy null while omission remains the canonical producer shape."""
+
+    validator = Draft202012Validator(
+        load_schema("bitemporal-interval.schema.json"),
+        format_checker=RFC3339_FORMAT_CHECKER,
+    )
+    open_interval = {
+        "valid_from": "2026-01-15T09:00:00Z",
+        "recorded_at": "2026-01-15T09:05:00Z",
+    }
+    assert list(validator.iter_errors(open_interval)) == []
+    legacy = {**open_interval, field_name: None}
+    assert list(validator.iter_errors(legacy)) == []
+
+
 @pytest.mark.parametrize(
     ("schema_name", "valid_value", "invalid_value"),
     [

@@ -108,26 +108,24 @@ class BitemporalInterval:
             self.superseded_at is None or instant < self.superseded_at
         )
 
-    def to_mapping(self) -> dict[str, str | None]:
-        """Serialize both time dimensions to CWL timestamp wire fields."""
-        return {
+    def to_mapping(self) -> dict[str, str]:
+        """Serialize both time dimensions, omitting open interval end members."""
+        value = {
             "valid_from": format_cwl_timestamp(self.valid_from, "valid_from"),
             "recorded_at": format_cwl_timestamp(self.recorded_at, "recorded_at"),
-            "valid_to": (
-                None
-                if self.valid_to is None
-                else format_cwl_timestamp(self.valid_to, "valid_to")
-            ),
-            "superseded_at": (
-                None
-                if self.superseded_at is None
-                else format_cwl_timestamp(self.superseded_at, "superseded_at")
-            ),
         }
+        if self.valid_to is not None:
+            value["valid_to"] = format_cwl_timestamp(self.valid_to, "valid_to")
+        if self.superseded_at is not None:
+            value["superseded_at"] = format_cwl_timestamp(
+                self.superseded_at,
+                "superseded_at",
+            )
+        return value
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> BitemporalInterval:
-        """Parse one coherent snapshot of a bitemporal interval mapping."""
+        """Parse one coherent snapshot, accepting legacy v1 null open ends."""
         if not isinstance(value, Mapping):
             raise TypeError("value must be a mapping")
         snapshot = dict(value.items())
@@ -136,8 +134,6 @@ class BitemporalInterval:
             raise ValueError(f"unknown interval fields: {sorted(unknown)!r}")
         if "valid_from" not in snapshot or "recorded_at" not in snapshot:
             raise ValueError("interval requires valid_from and recorded_at")
-        raw_valid_to = snapshot.get("valid_to")
-        raw_superseded_at = snapshot.get("superseded_at")
         return cls(
             valid_from=parse_cwl_timestamp(snapshot["valid_from"], "valid_from"),
             recorded_at=parse_cwl_timestamp(
@@ -145,13 +141,13 @@ class BitemporalInterval:
                 "recorded_at",
             ),
             valid_to=(
-                None
-                if raw_valid_to is None
-                else parse_cwl_timestamp(raw_valid_to, "valid_to")
+                parse_cwl_timestamp(snapshot["valid_to"], "valid_to")
+                if snapshot.get("valid_to") is not None
+                else None
             ),
             superseded_at=(
-                None
-                if raw_superseded_at is None
-                else parse_cwl_timestamp(raw_superseded_at, "superseded_at")
+                parse_cwl_timestamp(snapshot["superseded_at"], "superseded_at")
+                if snapshot.get("superseded_at") is not None
+                else None
             ),
         )

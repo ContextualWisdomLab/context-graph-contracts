@@ -33,9 +33,20 @@ producer context used for CloudEvents deduplication.
 
 ## Truth model
 
-`authoritative`, `observed`, `inferred`, and `proposed` are not confidence
-levels. They describe how an assertion entered the ecosystem. Confidence and
-verification evidence belong in domain-specific payloads.
+`authoritative`, `observed`, `inferred`, `proposed`, `superseded`, and
+`rejected` are not confidence levels or a trust ordering. They record assertion
+origin or an owning-domain disposition: authoritative truth was accepted by the
+subject-owning domain, observed truth was deterministically measured, inferred
+truth was analytically derived, proposed truth awaits owner review, and
+superseded/rejected retain historical owner decisions without erasing the prior
+assertion.
+
+A parser or consumer adapter preserves the supplied status exactly. It cannot
+turn a foreign observation or proposal into an authoritative fact, and it also
+cannot manufacture a supersession or rejection. The owning product records a
+new disposition through its own command/transaction boundary and emits the
+resulting versioned assertion or event; projections retain that source authority
+and provenance.
 
 ## Temporal model
 
@@ -73,8 +84,10 @@ payload, not a row in a shared graph database.
 
 Consumers should:
 
-1. Parse the assertion and keep the supplied truth status.
-2. Project the edge into their own store under their own identity.
+1. Parse the assertion and retain the supplied truth status and source
+   authority.
+2. Project the edge into their own store under their own identity without
+   rewriting foreign origin or disposition.
 3. Use every listed membership when interpreting the fact. A single group
    membership is never a complete social or organizational description.
 

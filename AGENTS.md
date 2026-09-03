@@ -6,8 +6,13 @@
  catalog, graph database, or enterprise-architecture system of record.
 - Typed context assertions are interchange facts. They are not rows in a shared
  graph store and they must carry at least one context membership.
-- Never promote `observed`, `inferred`, or `proposed` assertions to
- `authoritative` inside a parser or adapter.
+- `authoritative`, `observed`, `inferred`, `proposed`, `superseded`, and
+  `rejected` describe assertion origin or an owning-domain disposition; they are
+  not confidence or authorization ranks.
+- Parsers and adapters must retain the supplied truth status exactly. Only the
+  owning product may issue a new assertion or event that records acceptance,
+  supersession, or rejection; a consumer projection must not rewrite foreign
+  truth status.
 - Contract changes are backward-compatible by default. Breaking changes require
   a new schema identifier and a major version.
 
