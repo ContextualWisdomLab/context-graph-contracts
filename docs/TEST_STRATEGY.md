@@ -4,6 +4,11 @@
 - Structured-event tests cover tenant mismatches, type confusion, non-finite
   numbers, non-string JSON keys, Python-only values, cycles, and excessive
   nesting.
+- Context Assertion transport-admission tests bind the executable consumer
+  boundary to the AsyncAPI JSON structured-event media type, accept the
+  case-insensitive CloudEvents media type and its UTF-8 `charset` form used by
+  the HTTP structured binding, and reject wrong charsets, duplicate/unknown
+  parameters, mismatched media types, CRLF injection, and non-string values.
 - JSON Schema tests validate all schemas against Draft 2020-12.
 - Positive and negative fixtures are packaged as executable conformance
   evidence.
