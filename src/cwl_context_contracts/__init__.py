@@ -32,6 +32,10 @@ from .conformance_runner import (
     assert_packaged_conformance,
     run_packaged_conformance,
 )
+from .context_assertion_admission import (
+    CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
+    admit_context_assertion_message,
+)
 from .contract_bundle_manifest import (
     ContractBundleManifest,
     ContractResourceEvidence,
@@ -80,6 +84,7 @@ from .truth import (
 __all__ = [
     "ApprovedManifestInputError",
     "BitemporalInterval",
+    "CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE",
     "CanonicalAssetUri",
     "CanonicalAuthorityUri",
     "CloudEventEnvelope",
@@ -103,6 +108,7 @@ __all__ = [
     "ProvenanceReference",
     "ReleaseEvidenceAdmissionReport",
     "TruthStatus",
+    "admit_context_assertion_message",
     "assert_packaged_conformance",
     "available_conformance_profile_names",
     "available_contract_names",
