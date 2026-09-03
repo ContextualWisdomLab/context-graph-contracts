@@ -34,14 +34,44 @@ def test_admission_media_type_matches_asyncapi_message_contract() -> None:
     assert admitted.truth_status.value == "observed"
 
 
-def test_admission_rejects_non_advertised_structured_media_type() -> None:
-    """A correct event body is still rejected under the wrong outer media type."""
+@pytest.mark.parametrize(
+    "media_type",
+    [
+        "application/cloudevents+json; charset=utf-8",
+        'Application/CloudEvents+JSON; Charset="UTF-8"',
+    ],
+)
+def test_admission_accepts_standard_structured_json_media_type_variants(
+    media_type: str,
+) -> None:
+    """Honor CloudEvents HTTP structured-mode media type parameter semantics."""
+
+    admitted = admit_context_assertion_message(media_type, _canonical_event())
+
+    assert isinstance(admitted, ContextAssertion)
+    assert admitted.truth_status.value == "observed"
+
+
+@pytest.mark.parametrize(
+    "media_type",
+    [
+        "application/json",
+        "application/cloudevents+json; charset=iso-8859-1",
+        "application/cloudevents+json; charset=utf-8; charset=utf-8",
+        "application/cloudevents+json; profile=unexpected",
+        "application/cloudevents+json\r\nX-CWL-Bypass: true",
+    ],
+)
+def test_admission_rejects_non_advertised_structured_media_type(
+    media_type: str,
+) -> None:
+    """Reject mismatched, ambiguous, or hostile outer structured media types."""
 
     with pytest.raises(
         ValueError,
         match="Context Assertion media type must be application/cloudevents\\+json",
     ):
-        admit_context_assertion_message("application/json", _canonical_event())
+        admit_context_assertion_message(media_type, _canonical_event())
 
 
 def test_admission_rejects_non_string_media_type() -> None:
