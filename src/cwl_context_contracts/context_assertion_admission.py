@@ -17,8 +17,8 @@ _CONTEXT_ASSERTION_EVENT_PROFILE_ID = (
 _CONTEXT_ASSERTION_EVENT_PROFILE_VERSION = 1
 _CONTEXT_ASSERTION_ADMISSION_VERSION = 1
 _STRUCTURED_MEDIA_TYPE_PATTERN = re.compile(
-    r'^\s*application/cloudevents\+json\s*'
-    r'(?:;\s*charset\s*=\s*(?:"utf-8"|utf-8)\s*)?$',
+    r'^[ \t]*application/cloudevents\+json[ \t]*'
+    r'(?:;[ \t]*charset[ \t]*=[ \t]*(?:"utf-8"|utf-8)[ \t]*)?$',
     re.IGNORECASE | re.ASCII,
 )
 
