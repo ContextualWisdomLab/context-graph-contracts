@@ -62,6 +62,10 @@ def test_admission_accepts_standard_structured_json_media_type_variants(
         "application/cloudevents+json; charset=utf-8; charset=utf-8",
         "application/cloudevents+json; profile=unexpected",
         "application/cloudevents+json\r\nX-CWL-Bypass: true",
+        "\r\napplication/cloudevents+json",
+        "application/cloudevents+json\r\n",
+        "\vapplication/cloudevents+json",
+        "application/cloudevents+json\f",
     ],
 )
 def test_admission_rejects_non_advertised_structured_media_type(
