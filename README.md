@@ -33,13 +33,19 @@ of the object being discussed. In a CloudEvent this value is `subject`.
 **Truth status.**
 Every cross-domain assertion carries one of `authoritative`, `observed`,
 `inferred`, `proposed`, `superseded`, or `rejected`. These values describe
-origin, not confidence. Consumers must not promote `observed`, `inferred`, or
-`proposed` assertions to `authoritative`.
+origin or a recorded disposition, not confidence or a trust ordering. Parsers
+and adapters must retain the supplied status exactly. An owning product records
+acceptance, supersession, or rejection by issuing the corresponding assertion
+or event under its own authority; a consumer projection does not rewrite a
+foreign assertion into a different status.
 
 **Bitemporal validity.**
 Real-world validity (`valid_from` / `valid_to`) stays distinct from
-system-recording time (`recorded_at` / `superseded_at`). Open intervals use
-`null` on the wire; they do not use sentinel dates.
+system-recording time (`recorded_at` / `superseded_at`). Canonical v1 producers
+omit an open interval's corresponding end member and never emit a sentinel
+date. V1 consumers continue to accept the previously admitted explicit `null`
+shape for backward compatibility and normalize it to omission when they
+serialize again.
 
 **Timestamp profile.**
 CWL Timestamp Profile v1 is an explicitly named, leap-second-free subset of
@@ -173,26 +179,6 @@ changes the relevant SHA-256 value. This is an audit/evidence identifier only:
 it is not a signature, provenance attestation, approval registry, trust decision,
 or authorization grant. Python callers can use
 `build_packaged_conformance_admission_receipt()`.
-
-Capture one exact identity manifest for the complete published JSON contract
-bundle when a consuming product needs to bind release evidence to more than the
-semantic profiles alone:
-
-```console
-$ cwl-context-bundle-manifest
-{"algorithm":"sha256","distribution_name":"cwl-context-contracts","distribution_version":"0.1.0","manifest_format":"cwl-context-bundle-manifest/v1","next_action":"store this manifest with approved release evidence and verify semantic conformance, package provenance, and runtime authorization before enabling the integration","resource_count":17,"resources":[...]}
-```
-
-The bundle manifest hashes the exact packaged bytes of every explicitly
-published AsyncAPI document, JSON Schema, positive/negative fixture, and
-semantic conformance profile, then emits those identities in stable
-`resource_path` order. Store it beside release evidence when a buyer or operator
-must prove which complete contract-resource set was admitted. A changed digest
-means the corresponding resource bytes changed and must be reviewed and
-revalidated. The manifest is deliberately not a signature, trust decision,
-semantic-conformance result, provenance attestation, approval registry, or
-runtime authorization grant. Python callers can use
-`build_packaged_contract_bundle_manifest()` for the same deterministic evidence.
 
 ## Who consumes these contracts
 

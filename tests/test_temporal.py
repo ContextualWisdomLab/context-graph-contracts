@@ -119,8 +119,8 @@ def test_query_rejects_non_datetime_instant(query_name: str) -> None:
         query("2026-01-01T00:00:00Z")
 
 
-def test_interval_mapping_round_trips_open_and_closed_forms() -> None:
-    """Wire mappings keep omitted ends as null and closed ends as RFC 3339."""
+def test_interval_mapping_omits_open_ends_and_round_trips_closed_forms() -> None:
+    """Canonical open intervals omit end members instead of emitting JSON null."""
     open_interval = BitemporalInterval(
         datetime(2026, 1, 1, tzinfo=UTC),
         datetime(2026, 1, 2, tzinfo=UTC),
@@ -131,10 +131,28 @@ def test_interval_mapping_round_trips_open_and_closed_forms() -> None:
         datetime(2026, 2, 1, tzinfo=UTC),
         datetime(2026, 2, 2, tzinfo=UTC),
     )
+    assert open_interval.to_mapping() == {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "recorded_at": "2026-01-02T00:00:00Z",
+    }
     assert BitemporalInterval.from_mapping(open_interval.to_mapping()) == open_interval
     assert BitemporalInterval.from_mapping(closed_interval.to_mapping()) == (
         closed_interval
     )
+
+
+@pytest.mark.parametrize("field_name", ["valid_to", "superseded_at"])
+def test_interval_mapping_accepts_v1_null_and_canonicalizes_to_omission(
+    field_name: str,
+) -> None:
+    """V1 accepts legacy null input but never re-emits it as canonical output."""
+    payload: dict[str, object] = {
+        "valid_from": "2026-01-01T00:00:00Z",
+        "recorded_at": "2026-01-02T00:00:00Z",
+        field_name: None,
+    }
+    interval = BitemporalInterval.from_mapping(payload)
+    assert field_name not in interval.to_mapping()
 
 
 def test_interval_mapping_rejects_hostile_or_incomplete_input() -> None:
