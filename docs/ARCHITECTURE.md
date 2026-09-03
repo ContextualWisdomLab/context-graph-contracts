@@ -108,23 +108,35 @@ envelope with Context Assertion data; the enclosed CloudEvent
 The envelope preserves and validates the canonical CloudEvents identity fields
 `specversion`, `id`, `source`, `type`, `subject`, and `time`. A Context Assertion
 event additionally requires the versioned `dataschema` for the Context
-Assertion schema. Admission rejects an event when its `type`, `dataschema`, or
-enclosed data media type does not match the advertised contract, when required
-envelope identity is absent, or when the CloudEvent `subject` differs from
-`data.subject`.
+Assertion schema. Envelope admission rejects an event when its `type`,
+`dataschema`, or enclosed data media type does not match the contract, when
+required envelope identity is absent, or when the CloudEvent `subject` differs
+from `data.subject`.
+
+The outer transport media type is a separate admission invariant. The reference
+SDK entry point `admit_context_assertion_message` requires the exact
+`application/cloudevents+json` media type advertised by `ContextAssertionEvent`
+before parsing the shared CloudEvent envelope. A correct JSON body presented as
+`application/json` is therefore not admitted as the structured Context Assertion
+message. This prevents callers from collapsing the outer structured-event media
+type and the enclosed assertion `datacontenttype` into one field.
 
 The Context Assertion data retains `truth_status`, the `valid_from`/`valid_to`
 and `recorded_at`/`superseded_at` bitemporal fields, memberships, and provenance.
 The packaged `context-assertion-event-semantics:v1` profile contains positive
-and hostile vectors for this complete boundary, including missing event
-identity, missing required provenance, wrong media type, wrong event type,
-wrong `dataschema`, subject mismatch, foreign-authority rejection for
-authoritative truth, and foreign-observer preservation for observed truth.
+and hostile vectors for the envelope/data boundary, including missing event
+identity, missing required provenance, wrong enclosed data media type, wrong
+event type, wrong `dataschema`, subject mismatch, foreign-authority rejection
+for authoritative truth, and foreign-observer preservation for observed truth.
+The SDK admission tests additionally bind that profile's canonical structured
+event to the AsyncAPI-advertised outer media type and reject an outer media-type
+mismatch.
 
 Consumers should admit this event as a single contract boundary:
 
-1. Parse the complete structured CloudEvent rather than accepting bare assertion
-   data as an equivalent message.
+1. Verify the outer structured-event media type and parse the complete
+   CloudEvent rather than accepting bare assertion data as an equivalent
+   message.
 2. Enforce the versioned event `type`, Context Assertion `dataschema`, media-type
    split, subject identity, authority rule, truth, time, and provenance
    invariants through the packaged schema/reference SDK/conformance profile.
@@ -145,8 +157,9 @@ package, SBOM/provenance, and reproducibility evidence.
 
 A consumer may claim Context Assertion projection compatibility only for the
 contract/profile version it actually admitted. A future incompatible event,
-schema, or semantic-profile revision requires a versioned compatibility path;
-consumers must fail closed rather than silently interpreting it as v1.
+schema, media-type, or semantic-profile revision requires a versioned
+compatibility path; consumers must fail closed rather than silently interpreting
+it as v1.
 
 `semantic-data-portal`, `enterprise-architecture-core`, LineageWeave, Orgmetra,
 and `contextual-orchestrator` remain independently deployable. They share these
