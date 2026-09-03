@@ -34,6 +34,7 @@ from .conformance_runner import (
 )
 from .context_assertion_admission import (
     CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
+    ContextAssertionAdmission,
     admit_context_assertion_message,
 )
 from .contract_bundle_manifest import (
@@ -97,6 +98,7 @@ __all__ = [
     "ConformanceProfileEvidence",
     "ConformanceReport",
     "ContextAssertion",
+    "ContextAssertionAdmission",
     "ContextMembership",
     "ContractBundleManifest",
     "ContractBundleManifestVerification",
