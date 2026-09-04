@@ -35,6 +35,30 @@ def test_repository_workflows_run_on_git_flow_integration_branches() -> None:
         assert _push_branches(workflow_path) == expected_branches
 
 
+def test_pull_request_workflows_isolate_current_reviewable_heads() -> None:
+    """Run only current Ready heads without cancelling integration evidence."""
+    lifecycle = (
+        "types: [opened, synchronize, reopened, ready_for_review, converted_to_draft, closed]"
+    )
+    group = (
+        "group: ${{ github.workflow }}-${{ github.repository }}-"
+        "${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}"
+    )
+    cancel = "cancel-in-progress: ${{ github.event_name == 'pull_request' }}"
+    admission = (
+        "if: ${{ github.event_name != 'pull_request' || "
+        "(github.event.action != 'closed' && github.event.pull_request.draft == false) }}"
+    )
+
+    expected_admission_counts = {"ci.yml": 2, "supply-chain.yml": 1}
+    for workflow_path in _WORKFLOW_PATHS:
+        workflow_text = workflow_path.read_text(encoding="utf-8")
+        assert lifecycle in workflow_text
+        assert group in workflow_text
+        assert cancel in workflow_text
+        assert workflow_text.count(admission) == expected_admission_counts[workflow_path.name]
+
+
 def test_dependency_lock_name_matches_the_default_checkout_commit() -> None:
     """Do not label merge-candidate dependency bytes with the PR source-head SHA."""
     workflow_text = _CI_PATH.read_text(encoding="utf-8")
