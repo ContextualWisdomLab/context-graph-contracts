@@ -15,6 +15,8 @@ _REQUIRED_INSTALLED_SDK_MARKERS = (
     "admission.profile_id",
     "admission.profile_version",
     "admission.admission_version",
+    "oversized_media_type",
+    '(" " * 257)',
 )
 
 
