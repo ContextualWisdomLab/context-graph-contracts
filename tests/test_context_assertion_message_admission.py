@@ -54,6 +54,18 @@ def test_admission_accepts_standard_structured_json_media_type_variants(
     assert admitted.assertion.truth_status.value == "observed"
 
 
+def test_admission_rejects_oversized_structured_media_type() -> None:
+    """Bound caller-controlled transport metadata before regular-expression admission."""
+
+    oversized = CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE + (" " * 257)
+
+    with pytest.raises(
+        ValueError,
+        match="Context Assertion media type must not exceed 256 characters",
+    ):
+        admit_context_assertion_message(oversized, _canonical_event())
+
+
 @pytest.mark.parametrize(
     "media_type",
     [
