@@ -34,6 +34,50 @@ jobs:
       - run: >-
           uv pip install --python .receipt-smoke/bin/python
           --no-index --find-links dist cwl-context-contracts
+      - name: Exercise Context Assertion admission SDK from installed wheel
+        run: |
+          .receipt-smoke/bin/python - <<'PY'
+          from cwl_context_contracts import (
+              CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
+              ContextAssertionAdmission,
+              admit_context_assertion_message,
+              load_conformance_profile,
+          )
+
+          profile = load_conformance_profile(
+              "context-assertion-event-semantics.v1.json"
+          )
+          event_mapping = profile["valid_vectors"][0]["value"]
+          admission = admit_context_assertion_message(
+              CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
+              event_mapping,
+          )
+          assert type(admission) is ContextAssertionAdmission
+          assert admission.envelope.to_mapping() == event_mapping
+          assert admission.assertion.to_mapping() == event_mapping["data"]
+          assert admission.profile_id == (
+              "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
+          )
+          assert admission.profile_version == 1
+          assert admission.admission_version == 1
+
+          hostile_media_types = (
+              "\r\napplication/cloudevents+json",
+              "application/cloudevents+json\r\n",
+              "\vapplication/cloudevents+json",
+              "application/cloudevents+json\f",
+          )
+          for media_type in hostile_media_types:
+              try:
+                  admit_context_assertion_message(media_type, event_mapping)
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError(
+                      "hostile structured media type unexpectedly admitted: "
+                      f"{media_type!r}"
+                  )
+          PY
       - name: Exercise release evidence from installed wheel
         run: |
           set -euo pipefail
