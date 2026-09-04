@@ -5,6 +5,13 @@ from .conformance import (
     available_conformance_profile_names,
     load_conformance_profile,
 )
+from .conformance_runner import (
+    ConformanceError,
+    ConformanceFailure,
+    ConformanceReport,
+    assert_packaged_conformance,
+    run_packaged_conformance,
+)
 from .contracts import available_contract_names, load_contract
 from .events import CloudEventEnvelope
 from .fixtures import available_fixture_names, load_fixture
@@ -31,10 +38,14 @@ __all__ = [
     "CanonicalAssetUri",
     "CanonicalAuthorityUri",
     "CloudEventEnvelope",
+    "ConformanceError",
+    "ConformanceFailure",
+    "ConformanceReport",
     "ContextAssertion",
     "ContextMembership",
     "ProvenanceReference",
     "TruthStatus",
+    "assert_packaged_conformance",
     "available_conformance_profile_names",
     "available_contract_names",
     "available_fixture_names",
@@ -50,6 +61,7 @@ __all__ = [
     "parse_truth_status",
     "refuse_truth_promotion",
     "requires_provenance",
+    "run_packaged_conformance",
     "truth_status_rank",
 ]
 
