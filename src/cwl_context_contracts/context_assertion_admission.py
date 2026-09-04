@@ -16,6 +16,7 @@ _CONTEXT_ASSERTION_EVENT_PROFILE_ID = (
 )
 _CONTEXT_ASSERTION_EVENT_PROFILE_VERSION = 1
 _CONTEXT_ASSERTION_ADMISSION_VERSION = 1
+_MAX_STRUCTURED_MEDIA_TYPE_LENGTH = 256
 _STRUCTURED_MEDIA_TYPE_PATTERN = re.compile(
     r'^[ \t]*application/cloudevents\+json[ \t]*'
     r'(?:;[ \t]*charset[ \t]*=[ \t]*(?:"utf-8"|utf-8)[ \t]*)?$',
@@ -61,6 +62,10 @@ def admit_context_assertion_message(
 
     if not isinstance(media_type, str):
         raise TypeError("Context Assertion media type must be a string")
+    if len(media_type) > _MAX_STRUCTURED_MEDIA_TYPE_LENGTH:
+        raise ValueError(
+            "Context Assertion media type must not exceed 256 characters"
+        )
     if not _is_context_assertion_structured_media_type(media_type):
         raise ValueError(
             "Context Assertion media type must be application/cloudevents+json"
