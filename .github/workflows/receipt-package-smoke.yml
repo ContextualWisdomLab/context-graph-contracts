@@ -77,6 +77,16 @@ jobs:
                       "hostile structured media type unexpectedly admitted: "
                       f"{media_type!r}"
                   )
+
+          oversized_media_type = CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE + (" " * 257)
+          try:
+              admit_context_assertion_message(oversized_media_type, event_mapping)
+          except ValueError as error:
+              assert str(error) == (
+                  "Context Assertion media type must not exceed 256 characters"
+              )
+          else:
+              raise AssertionError("oversized structured media type unexpectedly admitted")
           PY
       - name: Exercise release evidence from installed wheel
         run: |
