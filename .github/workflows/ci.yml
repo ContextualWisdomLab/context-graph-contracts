@@ -1,0 +1,256 @@
+name: ci
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft, closed]
+  push:
+    branches: [develop, main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.repository }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    if: ${{ github.event_name != 'pull_request' || (github.event.action != 'closed' && github.event.pull_request.draft == false) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.32"
+          enable-cache: false
+      - run: uv lock --check
+      - run: uv sync --frozen --extra dev --python "${{ matrix.python-version }}"
+      - run: >-
+          uv run --frozen --extra dev --python "${{ matrix.python-version }}"
+          python -m compileall -q src
+      - run: >-
+          uv run --frozen --extra dev --python "${{ matrix.python-version }}"
+          python -m ruff check . --output-format=github
+      - run: >-
+          uv run --frozen --extra dev --python "${{ matrix.python-version }}"
+          python -m coverage run -m pytest -q
+      - run: >-
+          uv run --frozen --extra dev --python "${{ matrix.python-version }}"
+          python -m coverage report
+
+  package:
+    if: ${{ github.event_name != 'pull_request' || (github.event.action != 'closed' && github.event.pull_request.draft == false) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.14"
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.32"
+          enable-cache: false
+      - run: uv lock --check
+      - name: Capture dependency lock for checked-out commit
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: uv-lock-${{ github.sha }}
+          path: uv.lock
+          if-no-files-found: error
+          retention-days: 1
+      - run: uv sync --frozen --extra dev --python 3.14
+      - run: uv build --wheel --sdist --out-dir dist
+      - name: Inspect wheel and source distribution contract resources
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import tarfile
+          import zipfile
+
+          wheel_path = next(Path("dist").glob("*.whl"))
+          sdist_path = next(Path("dist").glob("*.tar.gz"))
+          required_suffixes = {
+              "cwl_context_contracts/py.typed",
+              "cwl_context_contracts/contracts/context-fabric.asyncapi.json",
+              "cwl_context_contracts/conformance/cwl-timestamp-profile.v1.json",
+              "cwl_context_contracts/conformance/context-assertion-semantics.v1.json",
+              "cwl_context_contracts/conformance/cloudevent-semantics.v1.json",
+              "cwl_context_contracts/conformance/cwl-json-interoperability.v1.json",
+              "cwl_context_contracts/schemas/canonical-authority-uri.schema.json",
+              "cwl_context_contracts/schemas/canonical-asset-uri.schema.json",
+              "cwl_context_contracts/schemas/truth-status.schema.json",
+              "cwl_context_contracts/schemas/bitemporal-interval.schema.json",
+              "cwl_context_contracts/schemas/provenance-reference.schema.json",
+              "cwl_context_contracts/schemas/cloudevent-envelope.schema.json",
+              "cwl_context_contracts/schemas/context-membership.schema.json",
+              "cwl_context_contracts/schemas/context-assertion.schema.json",
+              "cwl_context_contracts/fixtures/valid-event.json",
+              "cwl_context_contracts/fixtures/invalid-event.json",
+              "cwl_context_contracts/fixtures/valid-assertion.json",
+              "cwl_context_contracts/fixtures/invalid-assertion.json",
+          }
+
+          with zipfile.ZipFile(wheel_path) as wheel_file:
+              wheel_names = set(wheel_file.namelist())
+          for suffix in required_suffixes:
+              assert any(name.endswith(suffix) for name in wheel_names), suffix
+          assert any(name.endswith("/licenses/LICENSE") for name in wheel_names)
+
+          with tarfile.open(sdist_path, "r:gz") as sdist_file:
+              sdist_names = set(sdist_file.getnames())
+          for suffix in required_suffixes:
+              assert any(name.endswith(suffix) for name in sdist_names), suffix
+          assert any(name.endswith("/LICENSE") for name in sdist_names)
+          PY
+      - run: uv venv .package-smoke --python 3.14
+      - run: >-
+          uv pip install --python .package-smoke/bin/python
+          --no-index --find-links dist cwl-context-contracts
+      - name: Smoke-test installed contracts, schemas, and conformance fixtures
+        run: |
+          .package-smoke/bin/python - <<'PY'
+          from cwl_context_contracts import (
+              CloudEventEnvelope,
+              ContextAssertion,
+              TruthStatus,
+              available_conformance_profile_names,
+              available_contract_names,
+              available_fixture_names,
+              available_schema_names,
+              load_conformance_profile,
+              load_contract,
+              load_fixture,
+              load_schema,
+              parse_cwl_timestamp,
+          )
+
+          assert TruthStatus.OBSERVED.value == "observed"
+          for schema_name in available_schema_names():
+              schema = load_schema(schema_name)
+              assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+              assert schema["$id"].startswith("https://schemas.contextualwisdomlab.org/")
+
+          assert available_contract_names() == ("context-fabric.asyncapi.json",)
+          asyncapi = load_contract("context-fabric.asyncapi.json")
+          assert asyncapi["asyncapi"] == "3.1.0"
+          assert "servers" not in asyncapi
+          assert "channels" not in asyncapi
+          assert "operations" not in asyncapi
+
+          assert available_conformance_profile_names() == (
+              "cwl-timestamp-profile.v1.json",
+              "context-assertion-semantics.v1.json",
+              "cloudevent-semantics.v1.json",
+              "cwl-json-interoperability.v1.json",
+          )
+          timestamp_profile = load_conformance_profile(
+              "cwl-timestamp-profile.v1.json"
+          )
+          for timestamp_value in timestamp_profile["valid_values"]:
+              parse_cwl_timestamp(timestamp_value)
+          for timestamp_value in timestamp_profile["invalid_values"]:
+              try:
+                  parse_cwl_timestamp(timestamp_value)
+              except ValueError:
+                  pass
+              else:
+                  raise AssertionError(
+                      f"negative timestamp vector unexpectedly parsed: {timestamp_value}"
+                  )
+
+          assertion_profile = load_conformance_profile(
+              "context-assertion-semantics.v1.json"
+          )
+          for vector in assertion_profile["invalid_vectors"]:
+              try:
+                  ContextAssertion.from_mapping(vector["value"])
+              except ValueError as exc:
+                  assert vector["error_pattern"] in str(exc)
+              else:
+                  raise AssertionError(
+                      f"negative assertion vector unexpectedly parsed: {vector['case_id']}"
+                  )
+
+          event_profile = load_conformance_profile("cloudevent-semantics.v1.json")
+          for vector in event_profile["invalid_vectors"]:
+              try:
+                  CloudEventEnvelope.from_mapping(vector["value"])
+              except ValueError as exc:
+                  assert vector["error_pattern"] in str(exc)
+              else:
+                  raise AssertionError(
+                      f"negative event vector unexpectedly parsed: {vector['case_id']}"
+                  )
+          for vector in event_profile["valid_vectors"]:
+              assert CloudEventEnvelope.from_mapping(vector["value"]).to_mapping() == (
+                  vector["value"]
+              )
+
+          assert available_fixture_names() == (
+              "valid-event.json",
+              "invalid-event.json",
+              "valid-assertion.json",
+              "invalid-assertion.json",
+          )
+          valid_event = load_fixture("valid-event.json")
+          invalid_event = load_fixture("invalid-event.json")
+          assert CloudEventEnvelope.from_mapping(valid_event).to_mapping() == valid_event
+          try:
+              CloudEventEnvelope.from_mapping(invalid_event)
+          except ValueError as exc:
+              assert "UUIDv7" in str(exc) or "RFC 9562" in str(exc)
+          else:
+              raise AssertionError("negative conformance fixture unexpectedly parsed")
+
+          json_profile = load_conformance_profile(
+              "cwl-json-interoperability.v1.json"
+          )
+          for integer_value in json_profile["valid_integer_values"]:
+              event_mapping = {
+                  **valid_event,
+                  "data": {"nested": [{"count": integer_value}]},
+              }
+              assert (
+                  CloudEventEnvelope.from_mapping(event_mapping)
+                  .to_mapping()["data"]["nested"][0]["count"]
+                  == integer_value
+              )
+          for integer_value in json_profile["invalid_integer_values"]:
+              event_mapping = {
+                  **valid_event,
+                  "data": {"nested": [{"count": integer_value}]},
+              }
+              try:
+                  CloudEventEnvelope.from_mapping(event_mapping)
+              except ValueError as exc:
+                  assert "exact interoperable range" in str(exc)
+              else:
+                  raise AssertionError(
+                      f"out-of-range integer unexpectedly parsed: {integer_value}"
+                  )
+
+          valid_assertion = load_fixture("valid-assertion.json")
+          invalid_assertion = load_fixture("invalid-assertion.json")
+          assert ContextAssertion.from_mapping(valid_assertion).to_mapping() == (
+              valid_assertion
+          )
+          try:
+              ContextAssertion.from_mapping(invalid_assertion)
+          except ValueError as exc:
+              assert "provenance" in str(exc)
+          else:
+              raise AssertionError("negative assertion fixture unexpectedly parsed")
+          PY
