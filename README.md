@@ -64,7 +64,7 @@ Real-world validity stays separate from system-recording time. Open intervals ar
 
 ### Provenance
 
-Assertions can bind to exact source evidence and SHA-256 digests. A digest proves byte identity only; trust, authorization, review, and provenance admission remain separate gates.
+Every Context Assertion carries a typed provenance reference to the evidence or activity lineage behind its current truth disposition. The reference may bind exact source evidence with a SHA-256 digest; a digest proves byte identity only, while trust, authorization, review, and provenance admission remain separate gates.
 
 ### Events
 
