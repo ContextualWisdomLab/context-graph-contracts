@@ -26,8 +26,9 @@ _ADMISSION_FORMAT = "cwl-context-complete-release-evidence-admission/v1"
 _DISTRIBUTION_PREFIX = "cwl_context_contracts-"
 _READY_ACTION = (
     "verify artifact attestations bind these exact package bytes to the intended "
-    "protected main source commit, then satisfy independent review and release "
-    "authorization before publication"
+    "protected main source commit, generate and independently verify the "
+    "attested release-source manifest, then satisfy independent review and "
+    "release authorization before publication"
 )
 _INPUT_ACTION = (
     "provide readable package evidence and approved conformance and complete-bundle "

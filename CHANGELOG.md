@@ -46,6 +46,13 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- Source-bound release provenance through
+  `cwl-context-release-source-manifest`, which strictly binds one verified
+  wheel/source/SPDX package snapshot to protected `main`, the exact source SHA,
+  repository and signer workflow, then requires the manifest itself to be
+  attested and independently verified before its source fields are treated as
+  release provenance. Duplicate/non-standard/oversized JSON fails closed, and
+  the manifest remains evidence rather than application or domain authority.
 - Dedicated exact-head release-package reproducibility acceptance that builds
   wheel and source distribution from two independent clean checkouts with a
   shared commit-derived `SOURCE_DATE_EPOCH`, rejects artifact-name or byte drift

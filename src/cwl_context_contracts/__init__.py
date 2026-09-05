@@ -61,6 +61,12 @@ from .release_evidence_admission import (
     ReleaseEvidenceAdmissionReport,
     evaluate_release_evidence_admission,
 )
+from .release_source_manifest import (
+    ReleaseSourceArtifact,
+    ReleaseSourceManifest,
+    ReleaseSourceManifestInputError,
+    build_release_source_manifest,
+)
 from .schemas import available_schema_names, load_schema
 from .temporal import (
     BitemporalInterval,
@@ -102,6 +108,9 @@ __all__ = [
     "PackageEvidenceVerification",
     "ProvenanceReference",
     "ReleaseEvidenceAdmissionReport",
+    "ReleaseSourceArtifact",
+    "ReleaseSourceManifest",
+    "ReleaseSourceManifestInputError",
     "TruthStatus",
     "assert_packaged_conformance",
     "available_conformance_profile_names",
@@ -111,6 +120,7 @@ __all__ = [
     "build_packaged_conformance_admission_receipt",
     "build_packaged_conformance_manifest",
     "build_packaged_contract_bundle_manifest",
+    "build_release_source_manifest",
     "conformance_profile_sha256",
     "evaluate_packaged_conformance_admission",
     "evaluate_packaged_contract_release_admission",
