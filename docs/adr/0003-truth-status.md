@@ -37,6 +37,16 @@ does not extend the W3C recommendation:
 - `superseded` and `rejected` record invalidation (`prov:wasInvalidatedBy`)
   while retaining the historical assertion
 
+Every Context Assertion carries a typed provenance reference regardless of
+truth status. This is not a confidence requirement: it preserves the evidence
+or activity lineage that explains how the particular disposition entered the
+interchange record. Inferred assertions therefore cannot lose derivation
+evidence, proposed assertions retain the evidence behind the proposal, and
+superseded or rejected assertions retain the evidence associated with the
+historical disposition. A later acceptance, rejection, or supersession is a new
+versioned assertion/event with its own provenance; consumers do not rewrite the
+original assertion in place.
+
 When a Context Assertion is carried in the shared CloudEvent envelope,
 `authoritative` is valid only when the event `source` equals the canonical
 authority that owns `data.subject`. A same-tenant producer from another
@@ -54,12 +64,14 @@ Parsers and adapters must not promote `observed`, `inferred`, or
 
 LineageWeave and LLM outputs cannot silently enter authoritative audit
 views. Consumers must reject unknown truth-status values rather than map
-them to a more trusted status.
+them to a more trusted status, and must reject a Context Assertion whose
+provenance reference is absent regardless of disposition.
 
 Owning products remain responsible for the workflow that accepts a
 `proposed` assertion or records a later `superseded` or `rejected`
-decision. This repository only carries the resulting status on the wire.
+decision. This repository only carries the resulting status and its provenance
+on the wire.
 
 ## References
 
-Lebo, T., Sahoo, S., & McGuinness, D. (Eds.). (2013). *PROV-O: The PROV ontology*. World Wide Web Consortium. https://www.w3.org/TR/prov-o/
+Lebo, T., Sahoo, D. H., & McGuinness, D. (Eds.). (2013). *PROV-O: The PROV ontology*. World Wide Web Consortium. https://www.w3.org/TR/prov-o/
