@@ -219,7 +219,10 @@ class ContextAssertion:
             if self.provenance.evidence_ref.tenant_id != self.subject.tenant_id:
                 raise ValueError("provenance must belong to the subject tenant")
         elif requires_provenance(self.truth_status):
-            raise ValueError("observed and authoritative assertions need provenance")
+            raise ValueError(
+                "observed and authoritative assertions need provenance; "
+                "all truth dispositions require provenance"
+            )
 
     def retain_truth_status(self, requested: TruthStatus) -> TruthStatus:
         """Return ``requested`` only when it exactly preserves this assertion's status."""
