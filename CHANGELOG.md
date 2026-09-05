@@ -6,6 +6,9 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+- Context Assertions now require a non-null typed provenance reference for all
+  six truth dispositions, so inferred, proposed, superseded, and rejected
+  assertions cannot lose the evidence or activity lineage behind their state.
 - Context Assertion structured-message admission now recognizes the
   case-insensitive `application/cloudevents+json` media type and the UTF-8
   `charset` form used by the CloudEvents HTTP structured binding while still
@@ -164,7 +167,7 @@ All notable changes to this project are documented in this file.
   deterministic evidence consistency and release authority.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
-  non-promotable truth status, bitemporal validity, optional provenance, and
+  non-promotable truth status, bitemporal validity, required provenance, and
   multilevel context memberships.
 - Wire mappings for bitemporal intervals and provenance references.
 - CWL Timestamp Profile v1 parse/format helpers, with pre-release RFC3339-named
