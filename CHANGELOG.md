@@ -6,6 +6,7 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+- PR #20 runner-image contract regression now satisfies the repository Ruff module/import contract; predecessor exact-head Python 3.11–3.14 lanes failed deterministically at `I001` because `tests/test_runner_image_contract.py` contained one excess blank line after its import. The repair removes only that formatting defect without changing the runner-policy assertion or weakening CI.
 - README is now a customer and operator page; local test commands live in
   `CONTRIBUTING.md`.
 - ADRs 0001–0005 now include Context, Decision, Consequences, and APA 7th
