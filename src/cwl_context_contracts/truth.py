@@ -25,10 +25,10 @@ _TRUTH_RANKS = {
 _PROVENANCE_REQUIRED = {
     TruthStatus.AUTHORITATIVE: True,
     TruthStatus.OBSERVED: True,
-    TruthStatus.INFERRED: False,
-    TruthStatus.PROPOSED: False,
-    TruthStatus.SUPERSEDED: False,
-    TruthStatus.REJECTED: False,
+    TruthStatus.INFERRED: True,
+    TruthStatus.PROPOSED: True,
+    TruthStatus.SUPERSEDED: True,
+    TruthStatus.REJECTED: True,
 }
 
 
