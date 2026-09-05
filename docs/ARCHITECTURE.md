@@ -66,15 +66,21 @@ The shared provenance reference identifies exact source evidence and may carry
 its SHA-256 byte identity and source locator. A digest establishes byte identity,
 not trust, authorization, certification, or ownership.
 
-The schema and reference SDK enforce that authoritative and observed assertions require provenance. Other truth states serialize the `provenance` field as an
-explicit value or `null`; a consumer must not invent missing provenance or use a
-locally generated digest to claim foreign authority.
+The schema and typed reference SDK require a non-null provenance reference for
+every Context Assertion, including `inferred`, `proposed`, `superseded`, and
+`rejected` dispositions. The reference records the evidence or activity lineage
+behind the disposition; it does not elevate that disposition or its producer to
+another bounded context's authority. A later acceptance, rejection, or
+supersession is represented as a new versioned assertion/event with its own
+provenance rather than by erasing the earlier lineage. Consumers must reject
+missing provenance and must not synthesize a local digest to claim foreign
+authority.
 
 ## Context Assertion model
 
 A Context Assertion is the smallest graph fact this repository validates. It is
 a subject-predicate-object statement with one of the six truth states, a
-bitemporal interval, provenance semantics, and one or more context memberships.
+bitemporal interval, required provenance, and one or more context memberships.
 The object is an interchange payload, not a row in a shared graph database.
 
 ```text
