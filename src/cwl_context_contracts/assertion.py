@@ -152,8 +152,8 @@ class ContextAssertion:
     """A typed, time-bounded, multi-affiliated statement about two assets.
 
     The object is an interchange fact, not a graph-store record. Parsers and
-    adapters must retain the supplied truth status; they cannot promote
-    observed, inferred, or proposed statements to authoritative.
+    adapters must retain the supplied truth status exactly; only the owning
+    bounded context may emit a new assertion to change that disposition.
     """
 
     assertion_id: UUID
@@ -166,7 +166,7 @@ class ContextAssertion:
     provenance: ProvenanceReference | None = None
 
     def __post_init__(self) -> None:
-        """Validate identity, affiliation, time, and non-promotion invariants."""
+        """Validate identity, affiliation, time, provenance, and tenant invariants."""
         object.__setattr__(
             self,
             "assertion_id",
@@ -222,7 +222,7 @@ class ContextAssertion:
             raise ValueError("observed and authoritative assertions need provenance")
 
     def retain_truth_status(self, requested: TruthStatus) -> TruthStatus:
-        """Return ``requested`` only when it does not promote this assertion."""
+        """Return ``requested`` only when it exactly preserves this assertion's status."""
         return refuse_truth_promotion(self.truth_status, requested)
 
     def to_mapping(self) -> dict[str, Any]:
