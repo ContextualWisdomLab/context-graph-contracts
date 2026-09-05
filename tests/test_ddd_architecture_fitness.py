@@ -100,11 +100,12 @@ def test_baseline_keeps_solo_review_deadlock_in_central_governance() -> None:
     assert "non-author human reviewer permission provisioning" not in baseline
 
 
-def test_baseline_does_not_claim_protected_main_is_unprotected() -> None:
-    """Keep the accepted main migration prose consistent with protected main."""
+def test_baseline_routes_default_branch_repair_to_central_governance() -> None:
+    """Keep mutable branch state out of architecture policy while naming its owner."""
 
     baseline = Path("docs/product-technical-gap-baseline.md").read_text(
         encoding="utf-8"
     )
-    assert "main` is currently unprotected" not in baseline
+    assert "ContextualWisdomLab/.github#1137" in baseline
     assert "default_branch=develop" in baseline
+    assert "~DEFAULT_BRANCH" in baseline
