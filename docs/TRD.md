@@ -24,8 +24,8 @@ reproduced from the committed `uv.lock`.
   rejected before serialization.
 - Context assertions use UUIDv7 identity, canonical asset URIs for subject and
   object, a lower-snake predicate, a six-value truth status, a bitemporal
-  interval, one to sixteen unique memberships, and provenance whenever the
-  status is `observed` or `authoritative`.
+  interval, one to sixteen unique memberships, and a non-null typed provenance
+  reference for every truth disposition.
 - Parsers expose `refuse_truth_promotion()` so adapters cannot raise trust.
 - Membership `membership_level` is an integer 0-15; `bool` is rejected.
 - Timestamp-bearing contracts use CWL Timestamp Profile v1, whose syntax is
