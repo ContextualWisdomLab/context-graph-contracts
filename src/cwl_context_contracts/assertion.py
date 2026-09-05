@@ -214,7 +214,10 @@ class ContextAssertion:
             seen_contexts.add(context_key)
         object.__setattr__(self, "memberships", frozen_memberships)
         if self.provenance is None and requires_provenance(self.truth_status):
-            raise ValueError("all truth dispositions require provenance")
+            raise ValueError(
+                "observed and authoritative assertions need provenance; "
+                "all truth dispositions require provenance"
+            )
         if type(self.provenance) is not ProvenanceReference:
             raise TypeError("provenance must be a ProvenanceReference")
         if self.provenance.evidence_ref.tenant_id != self.subject.tenant_id:
