@@ -4,7 +4,7 @@
   "title": "CWL Context Assertion",
   "type": "object",
   "additionalProperties": false,
-  "required": ["assertion_id", "subject", "predicate", "object", "truth_status", "interval", "memberships"],
+  "required": ["assertion_id", "subject", "predicate", "object", "truth_status", "interval", "provenance", "memberships"],
   "properties": {
     "assertion_id": {
       "type": "string",
@@ -20,33 +20,12 @@
     "object": {"$ref": "https://schemas.contextualwisdomlab.org/context/canonical-asset-uri.v1.schema.json"},
     "truth_status": {"$ref": "https://schemas.contextualwisdomlab.org/context/truth-status.v1.schema.json"},
     "interval": {"$ref": "https://schemas.contextualwisdomlab.org/context/bitemporal-interval.v1.schema.json"},
-    "provenance": {
-      "oneOf": [
-        {"$ref": "https://schemas.contextualwisdomlab.org/context/provenance-reference.v1.schema.json"},
-        {"type": "null"}
-      ]
-    },
+    "provenance": {"$ref": "https://schemas.contextualwisdomlab.org/context/provenance-reference.v1.schema.json"},
     "memberships": {
       "type": "array",
       "minItems": 1,
       "maxItems": 16,
       "items": {"$ref": "https://schemas.contextualwisdomlab.org/context/context-membership.v1.schema.json"}
     }
-  },
-  "allOf": [
-    {
-      "if": {
-        "properties": {
-          "truth_status": {"enum": ["authoritative", "observed"]}
-        },
-        "required": ["truth_status"]
-      },
-      "then": {
-        "required": ["provenance"],
-        "properties": {
-          "provenance": {"$ref": "https://schemas.contextualwisdomlab.org/context/provenance-reference.v1.schema.json"}
-        }
-      }
-    }
-  ]
+  }
 }
