@@ -83,12 +83,17 @@ def _require_owner_controlled_source(
 ) -> None:
     """Keep authoritative, superseded, and rejected dispositions owner-controlled."""
     if (
-        assertion.truth_status in _OWNER_CONTROLLED_TRUTH_STATUSES
-        and source != assertion.subject.authority_uri
+        assertion.truth_status not in _OWNER_CONTROLLED_TRUTH_STATUSES
+        or source == assertion.subject.authority_uri
     ):
+        return
+    if assertion.truth_status is TruthStatus.AUTHORITATIVE:
         raise ValueError(
-            "owner-controlled assertion source must own the assertion subject"
+            "authoritative assertion source must own the assertion subject"
         )
+    raise ValueError(
+        "owner-controlled assertion source must own the assertion subject"
+    )
 
 
 @dataclass(frozen=True, slots=True)
