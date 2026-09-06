@@ -27,12 +27,18 @@ def _assertion() -> ContextAssertion:
     return ContextAssertion.from_mapping(load_fixture("valid-assertion.json"))
 
 
+def _assertion_with_truth_status(truth_status: str) -> ContextAssertion:
+    """Return the fixture with one explicit producer-supplied truth disposition."""
+
+    value = load_fixture("valid-assertion.json")
+    value["truth_status"] = truth_status
+    return ContextAssertion.from_mapping(value)
+
+
 def _authoritative_assertion() -> ContextAssertion:
     """Return the fixture as owning-domain authoritative truth."""
 
-    value = load_fixture("valid-assertion.json")
-    value["truth_status"] = "authoritative"
-    return ContextAssertion.from_mapping(value)
+    return _assertion_with_truth_status("authoritative")
 
 
 def _source() -> CanonicalAuthorityUri:
@@ -111,7 +117,7 @@ def test_authoritative_assertion_requires_owning_domain_event_source() -> None:
 
     with pytest.raises(
         ValueError,
-        match="authoritative assertion source must own the assertion subject",
+        match="owner-controlled assertion source must own the assertion subject",
     ):
         assertion.into_event(
             event_id=UUID(EVENT_UUID7_TEXT),
@@ -122,7 +128,34 @@ def test_authoritative_assertion_requires_owning_domain_event_source() -> None:
     hostile_event = _event(assertion, source=foreign_source)
     with pytest.raises(
         ValueError,
-        match="authoritative assertion source must own the assertion subject",
+        match="owner-controlled assertion source must own the assertion subject",
+    ):
+        ContextAssertion.from_event(hostile_event)
+
+
+@pytest.mark.parametrize("truth_status", ["superseded", "rejected"])
+def test_owner_controlled_disposition_requires_owning_domain_event_source(
+    truth_status: str,
+) -> None:
+    """Foreign producers cannot supersede or reject another domain's assertion."""
+
+    assertion = _assertion_with_truth_status(truth_status)
+    foreign_source = _foreign_source()
+
+    with pytest.raises(
+        ValueError,
+        match="owner-controlled assertion source must own the assertion subject",
+    ):
+        assertion.into_event(
+            event_id=UUID(EVENT_UUID7_TEXT),
+            source=foreign_source,
+            event_time=datetime(2026, 1, 15, 9, 6, tzinfo=UTC),
+        )
+
+    hostile_event = _event(assertion, source=foreign_source)
+    with pytest.raises(
+        ValueError,
+        match="owner-controlled assertion source must own the assertion subject",
     ):
         ContextAssertion.from_event(hostile_event)
 
