@@ -117,7 +117,7 @@ def test_authoritative_assertion_requires_owning_domain_event_source() -> None:
 
     with pytest.raises(
         ValueError,
-        match="owner-controlled assertion source must own the assertion subject",
+        match="authoritative assertion source must own the assertion subject",
     ):
         assertion.into_event(
             event_id=UUID(EVENT_UUID7_TEXT),
@@ -128,7 +128,7 @@ def test_authoritative_assertion_requires_owning_domain_event_source() -> None:
     hostile_event = _event(assertion, source=foreign_source)
     with pytest.raises(
         ValueError,
-        match="owner-controlled assertion source must own the assertion subject",
+        match="authoritative assertion source must own the assertion subject",
     ):
         ContextAssertion.from_event(hostile_event)
 
