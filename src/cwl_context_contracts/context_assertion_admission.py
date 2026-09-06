@@ -11,6 +11,7 @@ from .assertion import ContextAssertion
 from .events import CloudEventEnvelope
 
 CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE = "application/cloudevents+json"
+_CONTEXT_ASSERTION_SCHEMA_VERSION = 1
 _CONTEXT_ASSERTION_EVENT_PROFILE_ID = (
     "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
 )
@@ -30,6 +31,7 @@ class ContextAssertionAdmission:
 
     envelope: CloudEventEnvelope
     assertion: ContextAssertion
+    schema_version: int = field(default=_CONTEXT_ASSERTION_SCHEMA_VERSION, init=False)
     profile_id: str = field(default=_CONTEXT_ASSERTION_EVENT_PROFILE_ID, init=False)
     profile_version: int = field(
         default=_CONTEXT_ASSERTION_EVENT_PROFILE_VERSION,
