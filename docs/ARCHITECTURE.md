@@ -34,10 +34,12 @@ and subject types prevent an asset instance from being misrepresented as the
 producer context used for CloudEvents deduplication.
 
 Transporting or observing another context's fact does not transfer authority.
-For an `authoritative` Context Assertion event, the CloudEvent `source` must be
-the canonical authority that owns `data.subject`. An `observed` event may retain
-a different same-tenant observer as `source`; the observation remains observed
-and cannot be promoted by the transport or consumer.
+For `authoritative`, `superseded`, and `rejected` Context Assertion events, the
+CloudEvent `source` must be the canonical authority that owns `data.subject`:
+those dispositions assert the owning context's fact or lifecycle decision. An
+`observed`, `inferred`, or `proposed` event may retain a different same-tenant
+producer as `source`; the supplied disposition remains unchanged and does not
+gain the subject owner's authority through transport or projection.
 
 ## Truth model
 
@@ -49,7 +51,10 @@ risk belong in owning product payloads rather than in this shared truth enum.
 
 Consumers retain the supplied truth state. In particular, `observed`,
 `inferred`, or `proposed` evidence does not become `authoritative` merely
-because a consumer stores, displays, scores, or reasons over it.
+because a consumer stores, displays, scores, or reasons over it. Likewise, a
+consumer or foreign producer cannot mark another bounded context's assertion
+`superseded` or `rejected`; the owning context expresses those lifecycle
+dispositions through a new versioned assertion/event with its own provenance.
 
 ## Temporal model
 
@@ -140,9 +145,11 @@ and hostile vectors for the envelope/data boundary, including missing event
 identity, missing required provenance, wrong enclosed data media type, wrong
 event type, wrong `dataschema`, subject mismatch, foreign-authority rejection
 for authoritative truth, and foreign-observer preservation for observed truth.
-The SDK admission tests additionally bind that profile's canonical structured
-event to the AsyncAPI-advertised outer media type and reject an outer media-type
-mismatch.
+The SDK admission regression suite additionally rejects foreign-source
+`superseded` and `rejected` assertions so another bounded context cannot issue
+the subject owner's terminal lifecycle disposition. The SDK admission tests
+also bind the profile's canonical structured event to the AsyncAPI-advertised
+outer media type and reject an outer media-type mismatch.
 
 Consumers should admit this event as a single contract boundary:
 
