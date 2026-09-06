@@ -1,0 +1,12 @@
+{
+  "specversion": "1.0",
+  "id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+  "source": "urn:cwl:tenant_001:ea_core",
+  "type": "org.contextualwisdomlab.ea.lifecycle.changed.v1",
+  "subject": "urn:cwl:tenant_001:ea_core:application_record:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+  "time": "2026-08-16T00:00:00Z",
+  "datacontenttype": "application/json",
+  "dataschema": "https://schemas.contextualwisdomlab.org/ea/lifecycle-changed.v1.schema.json",
+  "tenantid": "tenant_001",
+  "data": {"phase": "phase_out"}
+}

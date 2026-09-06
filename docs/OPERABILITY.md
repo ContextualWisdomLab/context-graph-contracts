@@ -1,0 +1,29 @@
+# Operability
+
+## Scope
+
+`context-graph-contracts` is a **stateless**, contract-only Python distribution. It does not run a broker, graph database, catalog, workflow engine, API service, or UI. Operational acceptance therefore means that an exact package can be installed, its schemas/contracts/fixtures can be loaded, and every shipped semantic conformance profile can execute without relying on repository source files.
+
+## Installation acceptance
+
+Use an immutable released version rather than a mutable branch. Before admitting it to a consumer environment:
+
+1. Verify the release wheel or source distribution checksum against `SHA256SUMS` from the same exact source commit.
+2. Verify the GitHub artifact attestation for the package before trusting its provenance.
+3. Install into an isolated environment without editable/source-tree fallback.
+4. Load every name returned by `available_schema_names()`, `available_contract_names()`, `available_fixture_names()`, and `available_conformance_profile_names()`.
+5. Execute the timestamp, context-assertion, CloudEvent, and CWL JSON conformance vectors with the consuming implementation. A consumer must fail closed when it cannot preserve the declared semantics.
+
+The CI package job is the executable reference for installed-wheel and installed-sdist acceptance. The supply-chain workflow emits exact-head evidence under an artifact named `package-evidence-<commit-sha>` containing the built distributions, SPDX SBOM, and `SHA256SUMS`.
+
+## Failure handling
+
+Treat any of the following as non-passing: checksum mismatch, missing package resource, unsupported conformance profile, failed negative vector, failed exact-value round trip, unknown truth-status promotion, or inability to preserve tenant/provenance/time semantics. Do not substitute a source checkout for a failed package, and do not promote inferred/proposed facts to authoritative truth as a recovery shortcut.
+
+## Recovery
+
+There is no owned persistent runtime state to restore. Recovery is package-oriented: select a previously accepted immutable version, verify its checksum and attestation again, install it cleanly, and rerun the complete conformance suite. Consumer-owned projections or databases remain the consumer product's recovery responsibility and must never be repaired by direct cross-service application-table SQL.
+
+## Evidence retention
+
+For a candidate release retain the exact source commit, dependency lock, wheel, source distribution, SPDX 3 SBOM, `SHA256SUMS`, provenance/SBOM attestations, and the successful exact-head CI/security/review evidence required by live repository policy. A transient Actions artifact is build evidence, not by itself a published release or commercial-readiness claim.

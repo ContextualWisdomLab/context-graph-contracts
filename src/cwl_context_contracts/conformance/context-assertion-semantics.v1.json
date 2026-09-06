@@ -1,0 +1,122 @@
+{
+  "profile_id": "urn:cwl:context-contracts:context-assertion-semantics:v1",
+  "profile_version": 1,
+  "basis": "CWL Context Assertion v1 cross-field semantic invariants grounded in tenant isolation, RDF-style relation identity, bitemporal provenance, and multi-membership semantics",
+  "json_schema_role": "structural_and_lexical_only_for_cross_field_invariants",
+  "normative_requirement": "A consumer MUST reject every invalid_vectors value before treating a Context Assertion as semantically conformant. Draft 2020-12 structural validation alone is insufficient for same-tenant, non-self-edge, provenance-tenant, and membership-context uniqueness invariants.",
+  "invalid_vectors": [
+    {
+      "case_id": "duplicate_membership_context_ref",
+      "error_pattern": "unique",
+      "value": {
+        "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb701",
+        "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+        "predicate": "derived_from",
+        "object": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb703",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-01-15T09:00:00Z",
+          "recorded_at": "2026-01-15T09:05:00Z"
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+          "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "source_locator": "$.records[0]"
+        },
+        "memberships": [
+          {
+            "context_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+            "membership_level": 0,
+            "parent_context_ref": "urn:cwl:tenant_001:lineage_weave:workspace_record:0195d145-64e8-7f4f-8a23-a0cc784cb705"
+          },
+          {
+            "context_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+            "membership_level": 1,
+            "parent_context_ref": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "self_edge",
+      "error_pattern": "different assets",
+      "value": {
+        "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb701",
+        "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+        "predicate": "derived_from",
+        "object": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-01-15T09:00:00Z",
+          "recorded_at": "2026-01-15T09:05:00Z"
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+          "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "source_locator": "$.records[0]"
+        },
+        "memberships": [
+          {
+            "context_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+            "membership_level": 0,
+            "parent_context_ref": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "foreign_membership_tenant",
+      "error_pattern": "subject tenant",
+      "value": {
+        "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb701",
+        "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+        "predicate": "derived_from",
+        "object": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb703",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-01-15T09:00:00Z",
+          "recorded_at": "2026-01-15T09:05:00Z"
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+          "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "source_locator": "$.records[0]"
+        },
+        "memberships": [
+          {
+            "context_ref": "urn:cwl:tenant_002:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+            "membership_level": 0,
+            "parent_context_ref": null
+          }
+        ]
+      }
+    },
+    {
+      "case_id": "foreign_provenance_tenant",
+      "error_pattern": "provenance must belong",
+      "value": {
+        "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb701",
+        "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+        "predicate": "derived_from",
+        "object": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb703",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-01-15T09:00:00Z",
+          "recorded_at": "2026-01-15T09:05:00Z"
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_002:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+          "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "source_locator": "$.records[0]"
+        },
+        "memberships": [
+          {
+            "context_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+            "membership_level": 0,
+            "parent_context_ref": null
+          }
+        ]
+      }
+    }
+  ]
+}

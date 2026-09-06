@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contextualwisdomlab.org/context/truth-status.v1.schema.json",
+  "title": "CWL Truth Status",
+  "type": "string",
+  "enum": ["authoritative", "observed", "inferred", "proposed", "superseded", "rejected"]
+}

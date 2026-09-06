@@ -1,0 +1,28 @@
+{
+  "assertion_id": "0195d145-64e8-7f4f-8a23-a0cc784cb701",
+  "subject": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb702",
+  "predicate": "derived_from",
+  "object": "urn:cwl:tenant_001:lineage_weave:source_record:0195d145-64e8-7f4f-8a23-a0cc784cb703",
+  "truth_status": "observed",
+  "interval": {
+    "valid_from": "2026-01-15T09:00:00Z",
+    "recorded_at": "2026-01-15T09:05:00Z"
+  },
+  "provenance": {
+    "evidence_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+    "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "source_locator": "$.records[0]"
+  },
+  "memberships": [
+    {
+      "context_ref": "urn:cwl:tenant_001:lineage_weave:analysis_run:0195d145-64e8-7f4f-8a23-a0cc784cb704",
+      "membership_level": 0,
+      "parent_context_ref": "urn:cwl:tenant_001:lineage_weave:workspace_record:0195d145-64e8-7f4f-8a23-a0cc784cb705"
+    },
+    {
+      "context_ref": "urn:cwl:tenant_001:orgmetra:employment_group:0195d145-64e8-7f4f-8a23-a0cc784cb706",
+      "membership_level": 1,
+      "parent_context_ref": null
+    }
+  ]
+}
