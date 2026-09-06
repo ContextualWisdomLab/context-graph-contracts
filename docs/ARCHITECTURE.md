@@ -127,6 +127,12 @@ before parsing the shared CloudEvent envelope. A correct JSON body presented as
 message. This prevents callers from collapsing the outer structured-event media
 type and the enclosed assertion `datacontenttype` into one field.
 
+The admitted SDK receipt retains the validated envelope/assertion pair together
+with an explicit Context Assertion `schema_version`, semantic `profile_id` and
+`profile_version`, and `admission_version`. Consumers therefore do not need to
+re-parse `dataschema` text or infer a local compatibility label when recording
+which released contract admitted a projection.
+
 The Context Assertion data retains `truth_status`, the `valid_from`/`valid_to`
 and `recorded_at`/`superseded_at` bitemporal fields, memberships, and provenance.
 The packaged `context-assertion-event-semantics:v1` profile contains positive
@@ -147,8 +153,8 @@ Consumers should admit this event as a single contract boundary:
    split, subject identity, authority rule, truth, time, and provenance
    invariants through the packaged schema/reference SDK/conformance profile.
 3. Project the assertion into consumer-owned storage under consumer-owned
-   identity while preserving source authority, event identity, contract/profile
-   version, admission evidence, truth, bitemporal time, and provenance.
+   identity while preserving source authority, event identity, schema/profile/
+   admission versions, truth, bitemporal time, and provenance.
 4. Use every listed membership when interpreting the fact. A single membership
    is never a complete organizational, analytical, or social classification.
 
@@ -162,10 +168,10 @@ SHA do not substitute for a compatible published version and its conformance,
 package, SBOM/provenance, and reproducibility evidence.
 
 A consumer may claim Context Assertion projection compatibility only for the
-contract/profile version it actually admitted. A future incompatible event,
-schema, media-type, or semantic-profile revision requires a versioned
-compatibility path; consumers must fail closed rather than silently interpreting
-it as v1.
+schema/profile/admission versions it actually admitted. A future incompatible
+event, schema, media-type, semantic-profile, or admission revision requires a
+versioned compatibility path; consumers must fail closed rather than silently
+interpreting it as v1.
 
 `semantic-data-portal`, `enterprise-architecture-core`, LineageWeave, Orgmetra,
 and `contextual-orchestrator` remain independently deployable. They share these
