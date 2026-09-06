@@ -52,6 +52,13 @@ _ASSERTION_FIELDS = frozenset(
         "memberships",
     }
 )
+_OWNER_CONTROLLED_TRUTH_STATUSES = frozenset(
+    {
+        TruthStatus.AUTHORITATIVE,
+        TruthStatus.SUPERSEDED,
+        TruthStatus.REJECTED,
+    }
+)
 
 
 def _require_mapping(value: object, field_name: str) -> Mapping[str, Any]:
@@ -70,17 +77,17 @@ def _require_membership_level(value: object) -> int:
     return value
 
 
-def _require_authoritative_source_owner(
+def _require_owner_controlled_source(
     assertion: ContextAssertion,
     source: CanonicalAuthorityUri,
 ) -> None:
-    """Reject authoritative truth emitted by a non-owning domain authority."""
+    """Keep authoritative, superseded, and rejected dispositions owner-controlled."""
     if (
-        assertion.truth_status is TruthStatus.AUTHORITATIVE
+        assertion.truth_status in _OWNER_CONTROLLED_TRUTH_STATUSES
         and source != assertion.subject.authority_uri
     ):
         raise ValueError(
-            "authoritative assertion source must own the assertion subject"
+            "owner-controlled assertion source must own the assertion subject"
         )
 
 
@@ -253,7 +260,7 @@ class ContextAssertion:
         """Wrap the assertion as a provider-neutral CloudEvents payload."""
         if type(source) is not CanonicalAuthorityUri:
             raise TypeError("source must be a CanonicalAuthorityUri")
-        _require_authoritative_source_owner(self, source)
+        _require_owner_controlled_source(self, source)
         return CloudEventEnvelope(
             event_id=event_id,
             source=source,
@@ -279,7 +286,7 @@ class ContextAssertion:
         assertion = cls.from_mapping(event.data)
         if event.subject != assertion.subject:
             raise ValueError("event subject must equal assertion subject")
-        _require_authoritative_source_owner(assertion, event.source)
+        _require_owner_controlled_source(assertion, event.source)
         return assertion
 
     @classmethod
