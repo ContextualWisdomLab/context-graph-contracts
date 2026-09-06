@@ -97,3 +97,20 @@ def test_release_operator_docs_cover_shipped_evidence_and_stateless_rollback() -
         lower_text = text.lower()
         for token in expected_tokens:
             assert token.lower() in lower_text, f"{path_name} must document {token}"
+
+
+def test_product_technical_gap_baseline_preserves_context_fabric_release_boundary() -> None:
+    """Keep executable product gaps and immutable-release dependencies explicit."""
+    baseline = Path("docs/product-technical-gap-baseline.md").read_text(encoding="utf-8")
+    lower_baseline = baseline.lower()
+
+    for token in (
+        "contract-only shared kernel",
+        "protected `main`",
+        "context assertion",
+        "immutable release",
+        "quarantine sandbox runtime",
+        "enterprise-architecture-core",
+        "predecessor evidence",
+    ):
+        assert token in lower_baseline, token
