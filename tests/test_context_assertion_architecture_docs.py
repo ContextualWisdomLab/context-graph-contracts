@@ -31,7 +31,7 @@ def test_architecture_documents_complete_truth_and_event_semantics() -> None:
         "time",
         "subject",
         "dataschema",
-        "authoritative and observed assertions require provenance",
+        "require a non-null provenance reference",
         "valid_from",
         "recorded_at",
     )
