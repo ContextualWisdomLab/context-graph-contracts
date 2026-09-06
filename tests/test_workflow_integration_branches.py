@@ -7,17 +7,26 @@ from pathlib import Path
 
 from cwl_context_contracts import available_conformance_profile_names
 
+_CI_PATH = Path(".github/workflows/ci.yml")
+_SUPPLY_CHAIN_PATH = Path(".github/workflows/supply-chain.yml")
+_RECEIPT_PACKAGE_SMOKE_PATH = Path(".github/workflows/receipt-package-smoke.yml")
+_REPRODUCIBILITY_PATH = Path(".github/workflows/reproducibility.yml")
 _WORKFLOW_PATHS = (
-    Path(".github/workflows/ci.yml"),
-    Path(".github/workflows/supply-chain.yml"),
-    Path(".github/workflows/receipt-package-smoke.yml"),
+    _CI_PATH,
+    _SUPPLY_CHAIN_PATH,
+    _RECEIPT_PACKAGE_SMOKE_PATH,
+    _REPRODUCIBILITY_PATH,
 )
 _PUSH_BRANCHES_PATTERN = re.compile(
     r"(?m)^  push:\n    branches: \[([^\]]+)\]$"
 )
-_CI_PATH = Path(".github/workflows/ci.yml")
-_SUPPLY_CHAIN_PATH = Path(".github/workflows/supply-chain.yml")
-_RECEIPT_PACKAGE_SMOKE_PATH = Path(".github/workflows/receipt-package-smoke.yml")
+_EXACT_SOURCE_SHA = "${{ github.event.pull_request.head.sha || github.sha }}"
+_REQUIRED_EXACT_SOURCE_CHECKOUTS = {
+    _CI_PATH: 2,
+    _SUPPLY_CHAIN_PATH: 2,
+    _RECEIPT_PACKAGE_SMOKE_PATH: 1,
+    _REPRODUCIBILITY_PATH: 2,
+}
 
 
 def _push_branches(workflow_path: Path) -> set[str]:
@@ -39,20 +48,39 @@ def test_repository_workflows_run_on_git_flow_integration_branches() -> None:
         assert _push_branches(workflow_path) == expected_branches
 
 
-def test_dependency_lock_name_matches_the_default_checkout_commit() -> None:
-    """Do not label merge-candidate dependency bytes with the PR source-head SHA."""
+def test_pr_capable_workflows_checkout_exact_source_head() -> None:
+    """Bind PR evidence to the immutable source head rather than a merge ref."""
+    exact_ref = f"ref: {_EXACT_SOURCE_SHA}"
+    exact_expected_sha = f"EXPECTED_SHA: {_EXACT_SOURCE_SHA}"
+
+    for workflow_path, required_count in _REQUIRED_EXACT_SOURCE_CHECKOUTS.items():
+        workflow_text = workflow_path.read_text(encoding="utf-8")
+        assert workflow_text.count(exact_ref) >= required_count, workflow_path
+        assert exact_expected_sha in workflow_text, workflow_path
+
+
+def test_dependency_lock_name_matches_the_exact_source_checkout() -> None:
+    """Label dependency-lock evidence with the exact PR source or push SHA."""
     workflow_text = _CI_PATH.read_text(encoding="utf-8")
 
-    assert "name: uv-lock-${{ github.sha }}" in workflow_text
-    assert "github.event.pull_request.head.sha || github.sha" not in workflow_text
+    assert f"name: uv-lock-{_EXACT_SOURCE_SHA}" in workflow_text
+    assert "name: uv-lock-${{ github.sha }}" not in workflow_text
 
 
-def test_package_evidence_name_matches_the_default_checkout_commit() -> None:
-    """Do not label merge-candidate package bytes with the PR source-head SHA."""
+def test_package_evidence_name_matches_the_exact_source_checkout() -> None:
+    """Label package evidence with the exact PR source or push SHA."""
     workflow_text = _SUPPLY_CHAIN_PATH.read_text(encoding="utf-8")
 
-    assert "name: package-evidence-${{ github.sha }}" in workflow_text
-    assert "github.event.pull_request.head.sha || github.sha" not in workflow_text
+    assert f"name: package-evidence-{_EXACT_SOURCE_SHA}" in workflow_text
+    assert "name: package-evidence-${{ github.sha }}" not in workflow_text
+
+
+def test_reproducibility_evidence_name_matches_the_exact_source_checkout() -> None:
+    """Label reproducibility evidence with the exact PR source or push SHA."""
+    workflow_text = _REPRODUCIBILITY_PATH.read_text(encoding="utf-8")
+
+    assert f"name: reproducibility-{_EXACT_SOURCE_SHA}" in workflow_text
+    assert "name: reproducibility-${{ github.sha }}" not in workflow_text
 
 
 def test_package_smoke_covers_every_declared_conformance_profile() -> None:
