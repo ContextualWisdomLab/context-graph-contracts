@@ -12,6 +12,7 @@ _REQUIRED_INSTALLED_SDK_MARKERS = (
     "context-assertion-event-semantics.v1.json",
     "admission.envelope.to_mapping() == event_mapping",
     "admission.assertion.to_mapping() == event_mapping[\"data\"]",
+    "admission.schema_version",
     "admission.profile_id",
     "admission.profile_version",
     "admission.admission_version",
