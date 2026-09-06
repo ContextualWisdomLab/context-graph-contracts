@@ -20,12 +20,13 @@ jobs:
       - name: Checkout exact candidate into first clean tree
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           path: source-a
           persist-credentials: false
       - name: Checkout exact candidate into second clean tree
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           path: source-b
           persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
@@ -35,15 +36,15 @@ jobs:
         with:
           version: "0.11.32"
           enable-cache: false
-      - name: Bind both clean trees to the exact checkout commit
+      - name: Bind both clean trees to the exact source commit
         id: source
         env:
-          EXPECTED_SHA: ${{ github.sha }}
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           first_sha="$(git -C source-a rev-parse HEAD)"
           second_sha="$(git -C source-b rev-parse HEAD)"
           if [[ "$first_sha" != "$EXPECTED_SHA" || "$second_sha" != "$EXPECTED_SHA" ]]; then
-            echo "clean build trees do not match the workflow checkout SHA" >&2
+            echo "clean build trees do not match the exact source SHA" >&2
             exit 1
           fi
           source_date_epoch="$(git -C source-a show -s --format=%ct HEAD)"
@@ -79,7 +80,7 @@ jobs:
       - name: Retain exact-candidate reproducibility evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: reproducibility-${{ github.sha }}
+          name: reproducibility-${{ github.event.pull_request.head.sha || github.sha }}
           path: reproducibility-evidence
           if-no-files-found: error
           retention-days: 7
