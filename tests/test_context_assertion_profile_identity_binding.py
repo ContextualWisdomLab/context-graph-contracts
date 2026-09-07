@@ -45,6 +45,11 @@ def _canonical_event() -> dict[str, object]:
         ),
         (
             "context-assertion-message-admission.v1.json",
+            "event_profile_version",
+            2,
+        ),
+        (
+            "context-assertion-message-admission.v1.json",
             "structured_media_type",
             "application/json",
         ),
