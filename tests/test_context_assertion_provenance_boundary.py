@@ -4,7 +4,12 @@ from dataclasses import replace
 
 import pytest
 
-from cwl_context_contracts import ContextAssertion, TruthStatus, load_fixture, load_schema
+from cwl_context_contracts import (
+    ContextAssertion,
+    TruthStatus,
+    load_fixture,
+    load_schema,
+)
 
 
 def test_context_assertion_wire_requires_provenance_for_every_truth_status() -> None:
@@ -45,5 +50,8 @@ def test_context_assertion_schema_requires_non_null_provenance() -> None:
     schema = load_schema("context-assertion.schema.json")
     assert "provenance" in schema["required"]
     assert schema["properties"]["provenance"] == {
-        "$ref": "https://schemas.contextualwisdomlab.org/context/provenance-reference.v1.schema.json"
+        "$ref": (
+            "https://schemas.contextualwisdomlab.org/context/"
+            "provenance-reference.v1.schema.json"
+        )
     }
