@@ -22,9 +22,15 @@ forbids credentials and source payloads in the envelope.
 Cross-service notifications use CloudEvents 1.0.2 structured JSON. The
 `source` is a canonical tenant-scoped producer authority, the `subject` is a
 canonical asset URI, and `id` is UUIDv7. The optional `dataschema` field
-remains a core CloudEvents attribute and must be an absolute URI. Material
-assertions reference evidence through a canonical asset URI and SHA-256
-digest.
+remains a core CloudEvents attribute and must be an absolute URI.
+
+Every serialized Context Assertion carries one non-null typed provenance
+reference, regardless of whether its truth disposition is `authoritative`,
+`observed`, `inferred`, `proposed`, `superseded`, or `rejected`. Truth status
+states the owning domain's disposition; it does not make evidence identity
+optional. An internal local value may be constructed without provenance where
+the local domain model permits it, but it cannot be parsed from or serialized
+to the shared Context Fabric wire until provenance is attached.
 
 The provenance reference is a CWL profile of W3C PROV-O, not a new W3C
 Recommendation. `evidence_ref` identifies the evidence entity used or
@@ -52,6 +58,8 @@ content, schema identity is not confused with an extension, and
 authorization plus evidence retention remain the responsibility of each
 domain service.
 
+A Context Assertion with missing or null provenance is not valid shared-wire
+interchange, even for inferred, proposed, superseded, or rejected dispositions.
 `data` accepts only finite, acyclic, bounded JSON-native values. Event
 extensions cannot shadow core CloudEvents attributes. A digest mismatch is
 a contract failure; it is not an invitation to fetch or rewrite another

@@ -213,6 +213,8 @@ class ContextAssertion:
 
     def to_mapping(self) -> dict[str, Any]:
         """Serialize the assertion to the published JSON object shape."""
+        if self.provenance is None:
+            raise ValueError("Context Assertion interchange requires provenance")
         return {
             "assertion_id": str(self.assertion_id),
             "subject": str(self.subject),
@@ -220,9 +222,7 @@ class ContextAssertion:
             "object": str(self.object),
             "truth_status": self.truth_status.value,
             "interval": self.interval.to_mapping(),
-            "provenance": (
-                None if self.provenance is None else self.provenance.to_mapping()
-            ),
+            "provenance": self.provenance.to_mapping(),
             "memberships": [
                 membership.to_mapping() for membership in self.memberships
             ],
@@ -262,6 +262,7 @@ class ContextAssertion:
             "object",
             "truth_status",
             "interval",
+            "provenance",
             "memberships",
         }
         missing = required - snapshot.keys()
@@ -276,7 +277,9 @@ class ContextAssertion:
             Sequence,
         ):
             raise TypeError("memberships must be a sequence")
-        raw_provenance = snapshot.get("provenance")
+        raw_provenance = snapshot["provenance"]
+        if raw_provenance is None:
+            raise ValueError("provenance must be a non-null ProvenanceReference")
         return cls(
             assertion_id=raw_assertion_id,
             subject=CanonicalAssetUri.parse(snapshot["subject"]),
@@ -287,9 +290,5 @@ class ContextAssertion:
             memberships=tuple(
                 ContextMembership.from_mapping(item) for item in raw_memberships
             ),
-            provenance=(
-                None
-                if raw_provenance is None
-                else ProvenanceReference.from_mapping(raw_provenance)
-            ),
+            provenance=ProvenanceReference.from_mapping(raw_provenance),
         )
