@@ -20,6 +20,11 @@ def _canonical_event() -> dict[str, object]:
     [
         (
             "context-assertion-event-semantics.v1.json",
+            "profile_id",
+            "urn:cwl:context-contracts:context-assertion-event-semantics:v2",
+        ),
+        (
+            "context-assertion-event-semantics.v1.json",
             "profile_version",
             2,
         ),
