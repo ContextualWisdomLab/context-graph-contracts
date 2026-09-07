@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field
 from typing import Any
 
 from .assertion import ContextAssertion
@@ -23,6 +23,8 @@ _STRUCTURED_MEDIA_TYPE_PATTERN = re.compile(
     r'(?:;[ \t]*charset[ \t]*=[ \t]*(?:"utf-8"|utf-8)[ \t]*)?$',
     re.IGNORECASE | re.ASCII,
 )
+_ADMITTED_CONTEXT_ASSERTION_RECEIPT = object()
+_UNADMITTED_CONTEXT_ASSERTION_RECEIPT = object()
 
 
 @dataclass(frozen=True, slots=True)
@@ -38,9 +40,10 @@ class ContextAssertionAdmission:
         init=False,
     )
     admission_version: int = field(default=_CONTEXT_ASSERTION_ADMISSION_VERSION, init=False)
+    _admission_token: InitVar[object] = _UNADMITTED_CONTEXT_ASSERTION_RECEIPT
 
-    def __post_init__(self) -> None:
-        """Reject manually constructed receipts whose envelope and assertion disagree."""
+    def __post_init__(self, _admission_token: object) -> None:
+        """Reject forged receipts and state that disagrees with its admitted envelope."""
 
         if type(self.envelope) is not CloudEventEnvelope:
             raise TypeError("envelope must be a CloudEventEnvelope")
@@ -48,6 +51,10 @@ class ContextAssertionAdmission:
             raise TypeError("assertion must be a ContextAssertion")
         if ContextAssertion.from_event(self.envelope) != self.assertion:
             raise ValueError("assertion must match the admitted CloudEvent envelope")
+        if _admission_token is not _ADMITTED_CONTEXT_ASSERTION_RECEIPT:
+            raise ValueError(
+                "Context Assertion receipt must come from structured-message admission"
+            )
 
 
 def _is_context_assertion_structured_media_type(media_type: str) -> bool:
@@ -74,4 +81,8 @@ def admit_context_assertion_message(
         )
     envelope = CloudEventEnvelope.from_mapping(value)
     assertion = ContextAssertion.from_event(envelope)
-    return ContextAssertionAdmission(envelope=envelope, assertion=assertion)
+    return ContextAssertionAdmission(
+        envelope=envelope,
+        assertion=assertion,
+        _admission_token=_ADMITTED_CONTEXT_ASSERTION_RECEIPT,
+    )
