@@ -9,6 +9,11 @@
   case-insensitive CloudEvents media type and its UTF-8 `charset` form used by
   the HTTP structured binding, and reject wrong charsets, duplicate/unknown
   parameters, mismatched media types, CRLF injection, and non-string values.
+  Admission also fails closed if the installed event/message conformance
+  resources disagree with the SDK receipt's event-profile id/version,
+  message-profile id/version, message-to-event linkage, or canonical structured
+  media type. This prevents an installed package from issuing a receipt whose
+  semantic profile identity is contradicted by its own packaged evidence.
 - JSON Schema tests validate all schemas against Draft 2020-12.
 - Positive and negative fixtures are packaged as executable conformance
   evidence.
@@ -43,13 +48,13 @@
   `derived_from` edge, an enterprise-architecture `proposed` `realized_by`
   edge, cross-classified analysis-run plus employment-group membership, and
   exclusive-end temporal reconstruction.
-- Conformance evidence tests execute every packaged semantic profile through
-  `cwl-context-conformance`, bind the exact installed distribution version and
-  profile bytes with `cwl-context-conformance-manifest`, compare that evidence
-  with an independently supplied approved manifest through
-  `cwl-context-conformance-verify`, and require the composite
-  `cwl-context-conformance-admit` gate to rerun semantics plus exact manifest
-  verification before reporting admission.
+- Conformance evidence tests execute all seven packaged semantic profiles and
+  their 47 published vectors through `cwl-context-conformance`, bind the exact
+  installed distribution version and profile bytes with
+  `cwl-context-conformance-manifest`, compare that evidence with an independently
+  supplied approved manifest through `cwl-context-conformance-verify`, and
+  require the composite `cwl-context-conformance-admit` gate to rerun semantics
+  plus exact manifest verification before reporting admission.
 - Complete-resource evidence tests require `cwl-context-bundle-manifest` and
   `build_packaged_contract_bundle_manifest()` to bind the installed
   distribution version to SHA-256 of every explicitly published AsyncAPI,
