@@ -67,6 +67,20 @@ jobs:
           assert admission.profile_version == 1
           assert admission.admission_version == 1
 
+          try:
+              ContextAssertionAdmission(
+                  envelope=admission.envelope,
+                  assertion=admission.assertion,
+              )
+          except ValueError as error:
+              assert str(error) == (
+                  "Context Assertion receipt must come from structured-message admission"
+              )
+          else:
+              raise AssertionError(
+                  "Context Assertion receipt was minted without transport admission"
+              )
+
           hostile_media_types = (
               "\r\napplication/cloudevents+json",
               "application/cloudevents+json\r\n",
