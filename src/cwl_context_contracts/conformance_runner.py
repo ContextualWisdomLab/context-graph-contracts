@@ -12,6 +12,7 @@ from .conformance import (
     available_conformance_profile_names,
     load_conformance_profile,
 )
+from .context_assertion_admission import admit_context_assertion_message
 from .data_management import validate_data_management_assessment_semantics
 from .events import CloudEventEnvelope, _validate_and_freeze_json_value
 from .temporal import parse_cwl_timestamp
@@ -194,6 +195,52 @@ def _run_assertion_event_profile(
     return case_count, tuple(failures)
 
 
+def _run_assertion_message_profile(
+    profile_name: str,
+    profile: dict[str, Any],
+) -> tuple[int, tuple[ConformanceFailure, ...]]:
+    """Execute Context Assertion structured-message transport admission vectors."""
+    failures: list[ConformanceFailure] = []
+    case_count = 0
+    event_profile = load_conformance_profile("context-assertion-event-semantics.v1.json")
+    if profile.get("event_profile_id") != event_profile.get("profile_id"):
+        return 0, (
+            ConformanceFailure(
+                profile_name,
+                "event_profile_link",
+                "message admission profile references the wrong Context Assertion event profile",
+            ),
+        )
+    canonical_event = event_profile["valid_vectors"][0]["value"]
+
+    for index, vector in enumerate(profile["valid_vectors"]):
+        case_count += 1
+        case_id = str(vector.get("case_id", f"valid_vectors[{index}]"))
+        failure = _expected_acceptance(
+            profile_name=profile_name,
+            case_id=case_id,
+            action=lambda vector=vector: admit_context_assertion_message(
+                vector["media_type"], canonical_event
+            ),
+        )
+        if failure is not None:
+            failures.append(failure)
+    for index, vector in enumerate(profile["invalid_vectors"]):
+        case_count += 1
+        case_id = str(vector.get("case_id", f"invalid_vectors[{index}]"))
+        failure = _expected_rejection(
+            profile_name=profile_name,
+            case_id=case_id,
+            error_pattern=str(vector["error_pattern"]),
+            action=lambda vector=vector: admit_context_assertion_message(
+                vector["media_type"], canonical_event
+            ),
+        )
+        if failure is not None:
+            failures.append(failure)
+    return case_count, tuple(failures)
+
+
 def _run_cloudevent_profile(
     profile_name: str,
     profile: dict[str, Any],
@@ -304,6 +351,7 @@ _PROFILE_RUNNERS: dict[
     "cwl-timestamp-profile.v1.json": _run_timestamp_profile,
     "context-assertion-semantics.v1.json": _run_assertion_profile,
     "context-assertion-event-semantics.v1.json": _run_assertion_event_profile,
+    "context-assertion-message-admission.v1.json": _run_assertion_message_profile,
     "cloudevent-semantics.v1.json": _run_cloudevent_profile,
     "cwl-json-interoperability.v1.json": _run_json_profile,
     "data-management-assessment-semantics.v1.json": (

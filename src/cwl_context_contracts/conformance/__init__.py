@@ -12,6 +12,7 @@ _PROFILE_NAMES = (
     "cwl-timestamp-profile.v1.json",
     "context-assertion-semantics.v1.json",
     "context-assertion-event-semantics.v1.json",
+    "context-assertion-message-admission.v1.json",
     "cloudevent-semantics.v1.json",
     "cwl-json-interoperability.v1.json",
     "data-management-assessment-semantics.v1.json",
