@@ -65,6 +65,10 @@ jobs:
               "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
           )
           assert admission.profile_version == 1
+          assert admission.message_profile_id == (
+              "urn:cwl:context-contracts:context-assertion-message-admission:v1"
+          )
+          assert admission.message_profile_version == 1
           assert admission.admission_version == 1
 
           try:
