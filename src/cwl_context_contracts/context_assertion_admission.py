@@ -5,17 +5,21 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import InitVar, dataclass, field
+from functools import lru_cache
 from typing import Any
 
 from .assertion import ContextAssertion
+from .conformance import load_conformance_profile
 from .events import CloudEventEnvelope
 
 CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE = "application/cloudevents+json"
 _CONTEXT_ASSERTION_SCHEMA_VERSION = 1
+_CONTEXT_ASSERTION_EVENT_PROFILE_NAME = "context-assertion-event-semantics.v1.json"
 _CONTEXT_ASSERTION_EVENT_PROFILE_ID = (
     "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
 )
 _CONTEXT_ASSERTION_EVENT_PROFILE_VERSION = 1
+_CONTEXT_ASSERTION_MESSAGE_PROFILE_NAME = "context-assertion-message-admission.v1.json"
 _CONTEXT_ASSERTION_MESSAGE_PROFILE_ID = (
     "urn:cwl:context-contracts:context-assertion-message-admission:v1"
 )
@@ -75,6 +79,31 @@ def _is_context_assertion_structured_media_type(media_type: str) -> bool:
     return _STRUCTURED_MEDIA_TYPE_PATTERN.fullmatch(media_type) is not None
 
 
+@lru_cache(maxsize=1)
+def _validate_packaged_profile_identity() -> None:
+    """Fail closed if packaged profile identity drifts from the receipt contract."""
+
+    event_profile = load_conformance_profile(_CONTEXT_ASSERTION_EVENT_PROFILE_NAME)
+    message_profile = load_conformance_profile(_CONTEXT_ASSERTION_MESSAGE_PROFILE_NAME)
+    identity_matches = (
+        event_profile.get("profile_id") == _CONTEXT_ASSERTION_EVENT_PROFILE_ID
+        and event_profile.get("profile_version")
+        == _CONTEXT_ASSERTION_EVENT_PROFILE_VERSION
+        and message_profile.get("profile_id") == _CONTEXT_ASSERTION_MESSAGE_PROFILE_ID
+        and message_profile.get("profile_version")
+        == _CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION
+        and message_profile.get("event_profile_id")
+        == _CONTEXT_ASSERTION_EVENT_PROFILE_ID
+        and message_profile.get("structured_media_type")
+        == CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE
+    )
+    if not identity_matches:
+        raise RuntimeError(
+            "packaged Context Assertion profile identity does not match "
+            "the admission receipt contract"
+        )
+
+
 def admit_context_assertion_message(
     media_type: str,
     value: Mapping[str, Any],
@@ -91,6 +120,7 @@ def admit_context_assertion_message(
         raise ValueError(
             "Context Assertion media type must be application/cloudevents+json"
         )
+    _validate_packaged_profile_identity()
     envelope = CloudEventEnvelope.from_mapping(value)
     assertion = ContextAssertion.from_event(envelope)
     return ContextAssertionAdmission(
