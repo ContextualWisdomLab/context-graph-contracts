@@ -22,6 +22,9 @@ classifiers = [
   "Typing :: Typed",
 ]
 
+[project.scripts]
+cwl-context-conformance = "cwl_context_contracts.conformance_runner:main"
+
 [project.optional-dependencies]
 dev = [
   "coverage==7.15.2",
