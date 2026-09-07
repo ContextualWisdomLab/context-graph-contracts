@@ -16,6 +16,10 @@ _CONTEXT_ASSERTION_EVENT_PROFILE_ID = (
     "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
 )
 _CONTEXT_ASSERTION_EVENT_PROFILE_VERSION = 1
+_CONTEXT_ASSERTION_MESSAGE_PROFILE_ID = (
+    "urn:cwl:context-contracts:context-assertion-message-admission:v1"
+)
+_CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION = 1
 _CONTEXT_ASSERTION_ADMISSION_VERSION = 1
 _MAX_STRUCTURED_MEDIA_TYPE_LENGTH = 256
 _STRUCTURED_MEDIA_TYPE_PATTERN = re.compile(
@@ -37,6 +41,14 @@ class ContextAssertionAdmission:
     profile_id: str = field(default=_CONTEXT_ASSERTION_EVENT_PROFILE_ID, init=False)
     profile_version: int = field(
         default=_CONTEXT_ASSERTION_EVENT_PROFILE_VERSION,
+        init=False,
+    )
+    message_profile_id: str = field(
+        default=_CONTEXT_ASSERTION_MESSAGE_PROFILE_ID,
+        init=False,
+    )
+    message_profile_version: int = field(
+        default=_CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION,
         init=False,
     )
     admission_version: int = field(default=_CONTEXT_ASSERTION_ADMISSION_VERSION, init=False)
