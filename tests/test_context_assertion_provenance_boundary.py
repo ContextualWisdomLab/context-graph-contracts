@@ -1,5 +1,7 @@
 """Wire-level provenance requirements for Context Assertion interchange."""
 
+from dataclasses import replace
+
 import pytest
 
 from cwl_context_contracts import ContextAssertion, TruthStatus, load_fixture, load_schema
@@ -22,6 +24,19 @@ def test_context_assertion_wire_requires_provenance_for_every_truth_status() -> 
         }
         with pytest.raises(ValueError, match="provenance"):
             ContextAssertion.from_mapping(null_provenance)
+
+
+def test_context_assertion_serializer_refuses_provenance_free_local_value() -> None:
+    """An internal value without evidence cannot be serialized onto the shared wire."""
+
+    parsed = ContextAssertion.from_mapping(load_fixture("valid-assertion.json"))
+    local_only = replace(
+        parsed,
+        truth_status=TruthStatus.INFERRED,
+        provenance=None,
+    )
+    with pytest.raises(ValueError, match="provenance"):
+        local_only.to_mapping()
 
 
 def test_context_assertion_schema_requires_non_null_provenance() -> None:
