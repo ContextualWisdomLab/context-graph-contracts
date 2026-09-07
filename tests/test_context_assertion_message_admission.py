@@ -113,6 +113,10 @@ def test_admission_retains_envelope_identity_for_projection_receipts() -> None:
     assert admitted.schema_version == 1
     assert admitted.profile_id == "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
     assert admitted.profile_version == 1
+    assert admitted.message_profile_id == (
+        "urn:cwl:context-contracts:context-assertion-message-admission:v1"
+    )
+    assert admitted.message_profile_version == 1
     assert admitted.admission_version == 1
 
 
