@@ -1,6 +1,7 @@
 """Packaged semantic-profile regressions for Context Assertion events."""
 
 from cwl_context_contracts import (
+    CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
     available_conformance_profile_names,
     load_conformance_profile,
     run_packaged_conformance,
@@ -11,11 +12,12 @@ _PROFILE_ID = "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
 
 
 def test_assertion_event_profile_is_packaged_and_executable() -> None:
-    """Non-Python consumers receive executable cross-field event semantics."""
+    """Non-Python consumers receive executable message and event semantics."""
 
     assert _PROFILE_NAME in available_conformance_profile_names()
     profile = load_conformance_profile(_PROFILE_NAME)
     assert profile["profile_id"] == _PROFILE_ID
+    assert profile["structured_media_type"] == CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE
     valid_case_ids = {vector["case_id"] for vector in profile["valid_vectors"]}
     assert valid_case_ids >= {
         "canonical_assertion_event",
@@ -34,6 +36,7 @@ def test_assertion_event_profile_is_packaged_and_executable() -> None:
         "missing_event_datacontenttype",
         "missing_event_dataschema",
         "missing_assertion_provenance",
+        "wrong_structured_media_type",
         "wrong_event_datacontenttype",
         "event_subject_differs_from_assertion_subject",
         "wrong_assertion_event_type",
