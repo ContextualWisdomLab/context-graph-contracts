@@ -94,6 +94,8 @@ def _validate_packaged_profile_identity() -> None:
         == _CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION
         and message_profile.get("event_profile_id")
         == _CONTEXT_ASSERTION_EVENT_PROFILE_ID
+        and message_profile.get("event_profile_version")
+        == _CONTEXT_ASSERTION_EVENT_PROFILE_VERSION
         and message_profile.get("structured_media_type")
         == CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE
     )
