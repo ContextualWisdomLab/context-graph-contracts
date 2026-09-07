@@ -116,6 +116,24 @@ def test_admission_retains_envelope_identity_for_projection_receipts() -> None:
     assert admitted.admission_version == 1
 
 
+def test_admission_receipt_cannot_bypass_transport_admission() -> None:
+    """Prevent callers from minting a trusted receipt without media-type admission."""
+
+    admitted = admit_context_assertion_message(
+        CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
+        _canonical_event(),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Context Assertion receipt must come from structured-message admission",
+    ):
+        ContextAssertionAdmission(
+            envelope=admitted.envelope,
+            assertion=admitted.assertion,
+        )
+
+
 def test_admission_receipt_rejects_forged_types_and_mismatched_assertion() -> None:
     """Do not let callers forge a receipt around unrelated event or assertion state."""
 
