@@ -4,7 +4,7 @@ from enum import StrEnum
 
 
 class TruthStatus(StrEnum):
-    """Evidence status without implying authorization or confidence."""
+    """Evidence status without implying authorization, confidence, or rank."""
 
     AUTHORITATIVE = "authoritative"
     OBSERVED = "observed"
@@ -14,14 +14,6 @@ class TruthStatus(StrEnum):
     REJECTED = "rejected"
 
 
-_TRUTH_RANKS = {
-    TruthStatus.REJECTED: 0,
-    TruthStatus.SUPERSEDED: 1,
-    TruthStatus.PROPOSED: 2,
-    TruthStatus.INFERRED: 3,
-    TruthStatus.OBSERVED: 4,
-    TruthStatus.AUTHORITATIVE: 5,
-}
 _PROVENANCE_REQUIRED = {
     TruthStatus.AUTHORITATIVE: True,
     TruthStatus.OBSERVED: True,
@@ -44,14 +36,8 @@ def parse_truth_status(value: object) -> TruthStatus:
         raise ValueError("unknown truth status") from exc
 
 
-def truth_status_rank(status: TruthStatus) -> int:
-    """Return the stable legacy ordinal, never an authorization or transition rule."""
-    parsed = parse_truth_status(status)
-    return _TRUTH_RANKS[parsed]
-
-
 def requires_provenance(status: TruthStatus) -> bool:
-    """Return whether the status must carry a typed provenance reference."""
+    """Return whether local construction requires provenance for this status."""
     parsed = parse_truth_status(status)
     return _PROVENANCE_REQUIRED[parsed]
 
