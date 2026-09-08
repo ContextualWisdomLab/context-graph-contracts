@@ -16,8 +16,13 @@ All notable changes to this project are documented in this file.
   exactly. A consumer can no longer reinterpret an observed, inferred,
   proposed, superseded, or rejected assertion as a different origin or owner
   disposition; owning products issue a new assertion or event when recording a
-  new disposition. The retained `truth_status_rank()` ordinal is compatibility
-  metadata only and is not an authorization or transition rule.
+  new disposition. The pre-release `truth_status_rank()` ordinal has been
+  removed so the public SDK cannot imply a confidence, authorization, or
+  transition ordering that the accepted truth model explicitly forbids.
+- Context Assertion shared-wire parsing and serialization now requires
+  provenance for every truth disposition. Local construction policy remains a
+  separate implementation concern; cross-product interchange never depends on
+  direct producer-store access to recover omitted evidence identity.
 - Bitemporal open intervals now have one canonical producer shape across
   runtime, JSON Schema guidance, fixtures, and documentation: `valid_to` and
   `superseded_at` are omitted while open. Existing v1 payloads that used the
@@ -48,8 +53,8 @@ All notable changes to this project are documented in this file.
   installed-package smoke tests execute the same vectors consumers receive.
 - Repository architecture, security, testing, doctoring, and ADR baseline.
 - Typed context-assertion contract with subject-predicate-object identity,
-  non-promotable truth status, bitemporal validity, optional provenance, and
-  multilevel context memberships.
+  non-promotable truth status, bitemporal validity, required shared-wire
+  provenance, and multilevel context memberships.
 - Wire mappings for bitemporal intervals and provenance references.
 - CWL Timestamp Profile v1 parse/format helpers, with pre-release RFC3339-named
   aliases retained for compatibility; serialization rejects timezone offsets
