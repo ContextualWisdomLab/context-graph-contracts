@@ -89,3 +89,43 @@ def test_admission_rejects_packaged_profile_identity_drift(
 
     if validator is not None and hasattr(validator, "cache_clear"):
         validator.cache_clear()
+
+
+def test_admission_revalidates_packaged_profile_identity_for_every_receipt(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A prior successful receipt cannot cache away later packaged-profile drift."""
+
+    original_load = load_conformance_profile
+    drifted = False
+
+    def load_profile(name: str):
+        profile = original_load(name)
+        if drifted and name == "context-assertion-event-semantics.v1.json":
+            profile["profile_version"] = 2
+        return profile
+
+    monkeypatch.setattr(
+        admission_module,
+        "load_conformance_profile",
+        load_profile,
+        raising=False,
+    )
+    validator = getattr(admission_module, "_validate_packaged_profile_identity", None)
+    if validator is not None and hasattr(validator, "cache_clear"):
+        validator.cache_clear()
+
+    admission_module.admit_context_assertion_message(
+        admission_module.CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
+        _canonical_event(),
+    )
+    drifted = True
+
+    with pytest.raises(RuntimeError, match="packaged Context Assertion profile identity"):
+        admission_module.admit_context_assertion_message(
+            admission_module.CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
+            _canonical_event(),
+        )
+
+    if validator is not None and hasattr(validator, "cache_clear"):
+        validator.cache_clear()
