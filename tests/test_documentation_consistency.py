@@ -55,6 +55,17 @@ def test_truth_docs_preserve_origin_and_owner_only_dispositions() -> None:
         assert required_phrase in text, f"{path_name} must document {required_phrase}"
 
 
+def test_customer_docs_match_mandatory_shared_wire_provenance() -> None:
+    """Do not advertise provenance as optional after the wire contract made it mandatory."""
+    readme = Path("README.md").read_text(encoding="utf-8").lower()
+    changelog = Path("CHANGELOG.md").read_text(encoding="utf-8").lower()
+
+    assert "optional provenance" not in readme
+    assert "requires provenance" in readme
+    assert "optional provenance" not in changelog
+    assert "requires provenance" in changelog
+
+
 def test_threat_model_preserves_contract_only_security_boundary() -> None:
     """Keep security threats explicit without inventing runtime authority."""
     threat_model = Path("docs/THREAT_MODEL.md").read_text(encoding="utf-8")
