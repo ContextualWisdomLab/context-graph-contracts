@@ -203,12 +203,16 @@ def _run_assertion_message_profile(
     failures: list[ConformanceFailure] = []
     case_count = 0
     event_profile = load_conformance_profile("context-assertion-event-semantics.v1.json")
-    if profile.get("event_profile_id") != event_profile.get("profile_id"):
+    if (
+        profile.get("event_profile_id") != event_profile.get("profile_id")
+        or profile.get("event_profile_version") != event_profile.get("profile_version")
+    ):
         return 0, (
             ConformanceFailure(
                 profile_name,
                 "event_profile_link",
-                "message admission profile references the wrong Context Assertion event profile",
+                "message admission profile references the wrong Context Assertion "
+                "event profile identifier or version",
             ),
         )
     canonical_event = event_profile["valid_vectors"][0]["value"]
