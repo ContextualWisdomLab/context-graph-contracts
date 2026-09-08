@@ -17,6 +17,10 @@ from .data_management import validate_data_management_assessment_semantics
 from .events import CloudEventEnvelope, _validate_and_freeze_json_value
 from .temporal import parse_cwl_timestamp
 
+_CONTEXT_ASSERTION_EVENT_PROFILE_ID = (
+    "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
+)
+_CONTEXT_ASSERTION_EVENT_PROFILE_VERSION = 1
 _CONTEXT_ASSERTION_MESSAGE_PROFILE_ID = (
     "urn:cwl:context-contracts:context-assertion-message-admission:v1"
 )
@@ -170,6 +174,17 @@ def _run_assertion_event_profile(
     profile: dict[str, Any],
 ) -> tuple[int, tuple[ConformanceFailure, ...]]:
     """Execute Context Assertion structured-CloudEvent identity vectors."""
+    if (
+        profile.get("profile_id") != _CONTEXT_ASSERTION_EVENT_PROFILE_ID
+        or profile.get("profile_version") != _CONTEXT_ASSERTION_EVENT_PROFILE_VERSION
+    ):
+        return 0, (
+            ConformanceFailure(
+                profile_name,
+                "event_profile_identity",
+                "Context Assertion event profile identity does not match the v1 contract",
+            ),
+        )
     failures: list[ConformanceFailure] = []
     case_count = 0
 
