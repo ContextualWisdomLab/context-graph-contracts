@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import InitVar, dataclass, field
-from functools import lru_cache
 from typing import Any
 
 from .assertion import ContextAssertion
@@ -79,9 +78,8 @@ def _is_context_assertion_structured_media_type(media_type: str) -> bool:
     return _STRUCTURED_MEDIA_TYPE_PATTERN.fullmatch(media_type) is not None
 
 
-@lru_cache(maxsize=1)
 def _validate_packaged_profile_identity() -> None:
-    """Fail closed if packaged profile identity drifts from the receipt contract."""
+    """Fail closed if current packaged profile identity drifts from the receipt contract."""
 
     event_profile = load_conformance_profile(_CONTEXT_ASSERTION_EVENT_PROFILE_NAME)
     message_profile = load_conformance_profile(_CONTEXT_ASSERTION_MESSAGE_PROFILE_NAME)
