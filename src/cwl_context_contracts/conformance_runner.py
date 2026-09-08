@@ -17,6 +17,12 @@ from .data_management import validate_data_management_assessment_semantics
 from .events import CloudEventEnvelope, _validate_and_freeze_json_value
 from .temporal import parse_cwl_timestamp
 
+_CONTEXT_ASSERTION_MESSAGE_PROFILE_ID = (
+    "urn:cwl:context-contracts:context-assertion-message-admission:v1"
+)
+_CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION = 1
+_CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE = "application/cloudevents+json"
+
 
 @dataclass(frozen=True, slots=True)
 class ConformanceFailure:
@@ -202,6 +208,20 @@ def _run_assertion_message_profile(
     """Execute Context Assertion structured-message transport admission vectors."""
     failures: list[ConformanceFailure] = []
     case_count = 0
+    if (
+        profile.get("profile_id") != _CONTEXT_ASSERTION_MESSAGE_PROFILE_ID
+        or profile.get("profile_version") != _CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION
+        or profile.get("structured_media_type")
+        != _CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE
+    ):
+        return 0, (
+            ConformanceFailure(
+                profile_name,
+                "message_profile_identity",
+                "message admission profile identity or structured media type "
+                "does not match the v1 contract",
+            ),
+        )
     event_profile = load_conformance_profile("context-assertion-event-semantics.v1.json")
     if (
         profile.get("event_profile_id") != event_profile.get("profile_id")
