@@ -1,5 +1,6 @@
 """Truth vocabulary tests."""
 
+import cwl_context_contracts
 import pytest
 
 from cwl_context_contracts import (
@@ -7,12 +8,11 @@ from cwl_context_contracts import (
     parse_truth_status,
     refuse_truth_promotion,
     requires_provenance,
-    truth_status_rank,
 )
 
 
-def test_truth_status_has_stable_ordered_values() -> None:
-    """The public vocabulary contains only the six approved statuses."""
+def test_truth_status_has_stable_values_without_rank_semantics() -> None:
+    """The public vocabulary contains only the six approved non-ranked statuses."""
 
     assert [item.value for item in TruthStatus] == [
         "authoritative",
@@ -22,26 +22,25 @@ def test_truth_status_has_stable_ordered_values() -> None:
         "superseded",
         "rejected",
     ]
+    assert not hasattr(cwl_context_contracts, "truth_status_rank")
 
 
 @pytest.mark.parametrize(
-    ("status", "rank", "needs_evidence"),
+    ("status", "needs_evidence"),
     [
-        (TruthStatus.REJECTED, 0, False),
-        (TruthStatus.SUPERSEDED, 1, False),
-        (TruthStatus.PROPOSED, 2, False),
-        (TruthStatus.INFERRED, 3, False),
-        (TruthStatus.OBSERVED, 4, True),
-        (TruthStatus.AUTHORITATIVE, 5, True),
+        (TruthStatus.REJECTED, False),
+        (TruthStatus.SUPERSEDED, False),
+        (TruthStatus.PROPOSED, False),
+        (TruthStatus.INFERRED, False),
+        (TruthStatus.OBSERVED, True),
+        (TruthStatus.AUTHORITATIVE, True),
     ],
 )
-def test_truth_rank_and_provenance_requirement(
+def test_truth_status_local_provenance_requirement_is_explicit(
     status: TruthStatus,
-    rank: int,
     needs_evidence: bool,
 ) -> None:
-    """The legacy ordinal stays stable while evidence rules remain explicit."""
-    assert truth_status_rank(status) == rank
+    """Local construction evidence rules stay explicit without implying a rank."""
     assert requires_provenance(status) is needs_evidence
     assert parse_truth_status(status.value) is status
 
