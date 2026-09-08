@@ -23,7 +23,6 @@ from .truth import (
     parse_truth_status,
     refuse_truth_promotion,
     requires_provenance,
-    truth_status_rank,
 )
 
 __all__ = [
@@ -50,7 +49,6 @@ __all__ = [
     "parse_truth_status",
     "refuse_truth_promotion",
     "requires_provenance",
-    "truth_status_rank",
 ]
 
 __version__ = "0.1.0"
