@@ -37,7 +37,8 @@ origin or a recorded disposition, not confidence or a trust ordering. Parsers
 and adapters must retain the supplied status exactly. An owning product records
 acceptance, supersession, or rejection by issuing the corresponding assertion
 or event under its own authority; a consumer projection does not rewrite a
-foreign assertion into a different status.
+foreign assertion into a different status. The SDK intentionally exposes no
+ordinal or ranking API for this vocabulary.
 
 **Bitemporal validity.**
 Real-world validity (`valid_from` / `valid_to`) stays distinct from
@@ -55,16 +56,18 @@ conformance vectors so impossible calendar values cannot pass merely because
 `format` is annotation-only.
 
 **Provenance.**
-A material assertion can point to a source asset and a SHA-256 digest of the
-exact evidence bytes. A digest proves byte identity, not trust or
-authorization.
+Every cross-domain Context Assertion requires provenance that identifies a
+source asset and the SHA-256 digest of the exact evidence bytes. A digest proves
+byte identity, not trust or authorization. Local in-process construction may be
+more permissive for selected statuses, but serialization and shared-wire parsing
+fail closed when provenance is absent.
 
 **Context assertion.**
 A typed subject-predicate-object assertion carries truth status, bitemporal
-validity, optional provenance, and one or more context memberships. Packaged
-semantic vectors cover cross-field rules that JSON Schema cannot express
-portably, including same-tenant references, non-self edges, and unique context
-memberships.
+validity, mandatory shared-wire provenance, and one or more context memberships.
+Packaged semantic vectors cover cross-field rules that JSON Schema cannot
+express portably, including same-tenant references, non-self edges, and unique
+context memberships.
 
 **Service events.**
 Notifications use CloudEvents 1.0.2 structured JSON. `source` and `subject`
