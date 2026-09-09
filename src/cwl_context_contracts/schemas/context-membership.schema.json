@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contextualwisdomlab.org/context/context-membership.v1.schema.json",
+  "title": "CWL Context Membership",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["context_ref", "membership_level"],
+  "properties": {
+    "context_ref": {"$ref": "https://schemas.contextualwisdomlab.org/context/canonical-asset-uri.v1.schema.json"},
+    "membership_level": {"type": "integer", "minimum": 0, "maximum": 15},
+    "parent_context_ref": {
+      "oneOf": [
+        {"$ref": "https://schemas.contextualwisdomlab.org/context/canonical-asset-uri.v1.schema.json"},
+        {"type": "null"}
+      ]
+    }
+  }
+}

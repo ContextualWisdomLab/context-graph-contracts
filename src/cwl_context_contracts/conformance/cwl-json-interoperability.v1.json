@@ -1,0 +1,18 @@
+{
+  "profile_id": "urn:cwl:context-contracts:cwl-json-interoperability:v1",
+  "profile_version": 1,
+  "basis": "RFC 8259 section 6 interoperability guidance for numeric magnitude and precision",
+  "normative_requirement": "A CWL provider-neutral JSON event MUST preserve ordinary JSON booleans and exact interoperable integers, and MUST reject integer values outside [-(2**53)+1, (2**53)-1] unless a higher-level contract explicitly represents the value using a non-numeric typed encoding.",
+  "valid_integer_values": [
+    9007199254740991,
+    -9007199254740991
+  ],
+  "invalid_integer_values": [
+    9007199254740992,
+    -9007199254740992
+  ],
+  "profile_notes": [
+    "This profile protects exact cross-language value identity at the shared interchange boundary; it does not require domain schemas to stringify ordinary integers.",
+    "Higher-level contracts may define explicit decimal, big-integer, or string encodings when values outside the exact interoperable JSON number range are semantically required."
+  ]
+}
