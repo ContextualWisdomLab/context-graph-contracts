@@ -3,6 +3,8 @@
 import tomllib
 from pathlib import Path
 
+from cwl_context_contracts import ContextAssertion
+
 
 def test_contributing_python_matrix_matches_project_metadata() -> None:
     """Keep the documented tested Python versions aligned with classifiers."""
@@ -53,6 +55,15 @@ def test_truth_docs_preserve_origin_and_owner_only_dispositions() -> None:
         for status in statuses:
             assert status in text, f"{path_name} must document {status}"
         assert required_phrase in text, f"{path_name} must document {required_phrase}"
+
+
+def test_context_assertion_docstrings_require_exact_truth_status_retention() -> None:
+    """Keep public SDK docstrings aligned with exact disposition retention."""
+    assertion_doc = (ContextAssertion.__doc__ or "").lower()
+    retention_doc = (ContextAssertion.retain_truth_status.__doc__ or "").lower()
+
+    assert "retain the supplied truth status exactly" in assertion_doc
+    assert "exactly preserves" in retention_doc
 
 
 def test_customer_docs_match_mandatory_shared_wire_provenance() -> None:
