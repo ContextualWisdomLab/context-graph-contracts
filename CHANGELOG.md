@@ -6,6 +6,12 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+- PR #20 runner-image contract regression now satisfies the repository Ruff
+  module/import contract; predecessor exact-head Python 3.11–3.14 lanes failed
+  deterministically at `I001` because `tests/test_runner_image_contract.py`
+  contained one excess blank line after the test docstring. The repair removes
+  only that formatting defect without changing the runner-policy assertion or
+  weakening CI.
 - Release-source manifest admission now restricts wheel compatibility tags to
   ASCII alphanumeric, underscore, and dot-separated components, rejecting
   path syntax, control characters, and non-ASCII lookalikes before those names
