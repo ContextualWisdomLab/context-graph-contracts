@@ -1,19 +1,24 @@
-"""Regression tests for explicit hosted-runner image pinning."""
+"""Regression contract for GitHub-hosted runner image selection."""
 
 from pathlib import Path
 
-WORKFLOW_DIR = Path(__file__).parents[1] / ".github" / "workflows"
+_WORKFLOW_DIRECTORY = Path(__file__).parents[1] / ".github" / "workflows"
 
 
-def test_required_workflows_pin_supported_hosted_runner_image() -> None:
-    """Required lanes must not depend on the floating hosted-runner alias."""
+def test_hosted_workflows_pin_supported_runner_image() -> None:
+    """Require every workflow to pin the supported hosted image."""
     offenders: list[str] = []
-    for workflow_path in sorted(WORKFLOW_DIR.glob("*.yml")):
-        workflow_text = workflow_path.read_text(encoding="utf-8")
-        if "runs-on: ubuntu-latest" in workflow_text:
-            offenders.append(workflow_path.name)
+    for workflow_path in sorted(_WORKFLOW_DIRECTORY.glob("*.yml")):
+        labels = [
+            line.split(":", 1)[1].strip().split()[0]
+            for line in workflow_path.read_text(encoding="utf-8").splitlines()
+            if line.lstrip().startswith("runs-on:")
+        ]
+        if not labels or set(labels) != {"ubuntu-24.04"}:
+            observed = ",".join(labels) if labels else "missing"
+            offenders.append(f"{workflow_path.name}:{observed}")
 
     assert offenders == [], (
-        "floating ubuntu-latest runner aliases can remain queued before checkout; "
-        f"pin an explicit supported image in: {', '.join(offenders)}"
+        "workflows must pin every hosted lane to ubuntu-24.04; "
+        f"observed: {', '.join(offenders)}"
     )

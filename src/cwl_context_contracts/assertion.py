@@ -52,6 +52,13 @@ _ASSERTION_FIELDS = frozenset(
         "memberships",
     }
 )
+_OWNER_CONTROLLED_TRUTH_STATUSES = frozenset(
+    {
+        TruthStatus.AUTHORITATIVE,
+        TruthStatus.SUPERSEDED,
+        TruthStatus.REJECTED,
+    }
+)
 
 
 def _require_mapping(value: object, field_name: str) -> Mapping[str, Any]:
@@ -68,6 +75,25 @@ def _require_membership_level(value: object) -> int:
     if value < 0 or value > MAX_MEMBERSHIP_LEVEL:
         raise ValueError("membership_level must be between 0 and 15")
     return value
+
+
+def _require_owner_controlled_source(
+    assertion: ContextAssertion,
+    source: CanonicalAuthorityUri,
+) -> None:
+    """Keep authoritative, superseded, and rejected dispositions owner-controlled."""
+    if (
+        assertion.truth_status not in _OWNER_CONTROLLED_TRUTH_STATUSES
+        or source == assertion.subject.authority_uri
+    ):
+        return
+    if assertion.truth_status is TruthStatus.AUTHORITATIVE:
+        raise ValueError(
+            "authoritative assertion source must own the assertion subject"
+        )
+    raise ValueError(
+        "owner-controlled assertion source must own the assertion subject"
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -138,8 +164,8 @@ class ContextAssertion:
     """A typed, time-bounded, multi-affiliated statement about two assets.
 
     The object is an interchange fact, not a graph-store record. Parsers and
-    adapters must retain the supplied truth status; they cannot promote
-    observed, inferred, or proposed statements to authoritative.
+    adapters must retain the supplied truth status exactly; only the owning
+    bounded context may emit a new assertion to change that disposition.
     """
 
     assertion_id: UUID
@@ -149,10 +175,10 @@ class ContextAssertion:
     truth_status: TruthStatus
     interval: BitemporalInterval
     memberships: tuple[ContextMembership, ...]
-    provenance: ProvenanceReference | None = None
+    provenance: ProvenanceReference
 
     def __post_init__(self) -> None:
-        """Validate identity, affiliation, time, and non-promotion invariants."""
+        """Validate identity, affiliation, time, provenance, and tenant invariants."""
         object.__setattr__(
             self,
             "assertion_id",
@@ -199,16 +225,18 @@ class ContextAssertion:
                 raise ValueError("membership context_ref values must be unique")
             seen_contexts.add(context_key)
         object.__setattr__(self, "memberships", frozen_memberships)
-        if self.provenance is not None:
-            if type(self.provenance) is not ProvenanceReference:
-                raise TypeError("provenance must be a ProvenanceReference")
-            if self.provenance.evidence_ref.tenant_id != self.subject.tenant_id:
-                raise ValueError("provenance must belong to the subject tenant")
-        elif requires_provenance(self.truth_status):
-            raise ValueError("observed and authoritative assertions need provenance")
+        if self.provenance is None and requires_provenance(self.truth_status):
+            raise ValueError(
+                "observed and authoritative assertions need provenance; "
+                "all truth dispositions require provenance"
+            )
+        if type(self.provenance) is not ProvenanceReference:
+            raise TypeError("provenance must be a ProvenanceReference")
+        if self.provenance.evidence_ref.tenant_id != self.subject.tenant_id:
+            raise ValueError("provenance must belong to the subject tenant")
 
     def retain_truth_status(self, requested: TruthStatus) -> TruthStatus:
-        """Return ``requested`` only when it does not promote this assertion."""
+        """Return ``requested`` only when it preserves this assertion's status."""
         return refuse_truth_promotion(self.truth_status, requested)
 
     def to_mapping(self) -> dict[str, Any]:
@@ -220,9 +248,7 @@ class ContextAssertion:
             "object": str(self.object),
             "truth_status": self.truth_status.value,
             "interval": self.interval.to_mapping(),
-            "provenance": (
-                None if self.provenance is None else self.provenance.to_mapping()
-            ),
+            "provenance": self.provenance.to_mapping(),
             "memberships": [
                 membership.to_mapping() for membership in self.memberships
             ],
@@ -237,6 +263,9 @@ class ContextAssertion:
         extensions: Mapping[str, str] | None = None,
     ) -> CloudEventEnvelope:
         """Wrap the assertion as a provider-neutral CloudEvents payload."""
+        if type(source) is not CanonicalAuthorityUri:
+            raise TypeError("source must be a CanonicalAuthorityUri")
+        _require_owner_controlled_source(self, source)
         return CloudEventEnvelope(
             event_id=event_id,
             source=source,
@@ -247,6 +276,23 @@ class ContextAssertion:
             data_schema=ASSERTION_DATA_SCHEMA,
             extensions={} if extensions is None else extensions,
         )
+
+    @classmethod
+    def from_event(cls, event: CloudEventEnvelope) -> ContextAssertion:
+        """Admit an assertion only when CloudEvent and payload identities agree."""
+        if type(event) is not CloudEventEnvelope:
+            raise TypeError("event must be a CloudEventEnvelope")
+        if event.event_type != ASSERTION_EVENT_TYPE:
+            raise ValueError("event type must identify a Context Assertion")
+        if event.data_schema != ASSERTION_DATA_SCHEMA:
+            raise ValueError(
+                "event dataschema must identify the Context Assertion schema"
+            )
+        assertion = cls.from_mapping(event.data)
+        if event.subject != assertion.subject:
+            raise ValueError("event subject must equal assertion subject")
+        _require_owner_controlled_source(assertion, event.source)
+        return assertion
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> ContextAssertion:
@@ -262,6 +308,7 @@ class ContextAssertion:
             "object",
             "truth_status",
             "interval",
+            "provenance",
             "memberships",
         }
         missing = required - snapshot.keys()
@@ -276,7 +323,9 @@ class ContextAssertion:
             Sequence,
         ):
             raise TypeError("memberships must be a sequence")
-        raw_provenance = snapshot.get("provenance")
+        raw_provenance = snapshot["provenance"]
+        if raw_provenance is None:
+            raise ValueError("provenance is required for every truth disposition")
         return cls(
             assertion_id=raw_assertion_id,
             subject=CanonicalAssetUri.parse(snapshot["subject"]),
@@ -287,9 +336,5 @@ class ContextAssertion:
             memberships=tuple(
                 ContextMembership.from_mapping(item) for item in raw_memberships
             ),
-            provenance=(
-                None
-                if raw_provenance is None
-                else ProvenanceReference.from_mapping(raw_provenance)
-            ),
+            provenance=ProvenanceReference.from_mapping(raw_provenance),
         )

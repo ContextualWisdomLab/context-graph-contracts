@@ -88,7 +88,11 @@ def test_attested_package_bytes_are_in_the_reproducibility_comparison() -> None:
     assert source_epoch in package_job
     assert min(positions) >= 0
     assert first_build < witness_checkout < witness_build < comparison < package_upload
-    assert "name: package-reproducibility-${{ github.sha }}" in package_job
+    assert (
+        "name: package-reproducibility-"
+        "${{ github.event.pull_request.head.sha || github.sha }}"
+        in package_job
+    )
 
 
 def test_protected_main_pins_python_before_python_backed_verification() -> None:

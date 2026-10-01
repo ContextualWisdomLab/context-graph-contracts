@@ -21,6 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
@@ -30,14 +31,14 @@ jobs:
           version: "0.11.32"
           enable-cache: false
       - run: uv lock --check
-      - name: Bind release builds to the exact checkout commit
+      - name: Bind release builds to the exact source commit
         id: source
         env:
-          EXPECTED_SHA: ${{ github.sha }}
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           source_sha="$(git rev-parse HEAD)"
           if [[ "$source_sha" != "$EXPECTED_SHA" ]]; then
-            echo "package build tree does not match the workflow checkout SHA" >&2
+            echo "package build tree does not match the exact source SHA" >&2
             exit 1
           fi
           source_date_epoch="$(git show -s --format=%ct HEAD)"
@@ -53,16 +54,16 @@ jobs:
       - name: Checkout exact candidate for reproducibility witness
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           path: reproducibility-source
           persist-credentials: false
       - name: Verify witness checkout and dependency lock
         env:
-          EXPECTED_SHA: ${{ github.sha }}
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           witness_sha="$(git -C reproducibility-source rev-parse HEAD)"
           if [[ "$witness_sha" != "$EXPECTED_SHA" ]]; then
-            echo "reproducibility witness does not match the workflow checkout SHA" >&2
+            echo "reproducibility witness does not match the exact source SHA" >&2
             exit 1
           fi
           (cd reproducibility-source && uv lock --check)
@@ -87,7 +88,7 @@ jobs:
       - name: Retain package-evidence reproducibility proof
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: package-reproducibility-${{ github.sha }}
+          name: package-reproducibility-${{ github.event.pull_request.head.sha || github.sha }}
           path: package-reproducibility-evidence
           if-no-files-found: error
           retention-days: 7
@@ -163,7 +164,7 @@ jobs:
       - name: Upload checked-out commit package evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: package-evidence-${{ github.sha }}
+          name: package-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             dist/*.whl
             dist/*.tar.gz
@@ -193,7 +194,7 @@ jobs:
       - name: Download exact-head package evidence
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: package-evidence-${{ github.sha }}
+          name: package-evidence-${{ github.event.pull_request.head.sha || github.sha }}
           path: evidence
       - name: Verify downloaded package evidence before attestation
         env:

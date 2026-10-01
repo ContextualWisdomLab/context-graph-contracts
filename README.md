@@ -72,13 +72,13 @@ Real-world validity (`valid_from` / `valid_to`) remains distinct from system-rec
 
 ### Provenance
 
-Material assertions can bind a source asset and digest of exact evidence bytes. A digest proves byte identity only. It does not prove trust, authorization, scientific validity, legal ownership, or business truth.
+Every Context Assertion carries a typed provenance reference to the evidence or activity lineage behind its current truth disposition. The reference may bind a source asset and digest of exact evidence bytes. A digest proves byte identity only; trust, authorization, scientific validity, legal ownership, and business truth remain separate gates.
 
 ### Context Assertions and service events
 
-Context Assertions carry typed subject–predicate–object facts with truth status, temporal validity, provenance, and context memberships. Service notifications use CloudEvents 1.0.2 structured JSON. JSON Schema Draft 2020-12 supplies structural contracts; packaged semantic vectors cover important cross-field invariants that schema validation alone cannot safely establish.
+Context Assertions carry typed subject–predicate–object facts with truth status, temporal validity, provenance, and context memberships. Service notifications use CloudEvents 1.0.2 structured JSON. The assertion-event contract binds assertion data to the CloudEvent envelope, and message admission accepts only the supported `application/cloudevents+json` structured media type forms before minting receipt evidence. JSON Schema Draft 2020-12 supplies structural contracts; packaged semantic vectors cover important cross-field invariants that schema validation alone cannot safely establish.
 
-Packaged semantic conformance includes **CWL Timestamp Profile v1**, the **Context assertion** semantic profile, and the **CWL JSON interoperability profile**, alongside the shared CloudEvent profile.
+Packaged semantic conformance includes **CWL Timestamp Profile v1**, **Context assertion semantics v1**, **Context assertion event semantics v1**, and the **CWL JSON interoperability profile**, alongside the shared CloudEvent and message-admission profiles.
 
 The AsyncAPI 3.1.0 resource is intentionally reusable contract material. It does not declare servers, channels, operations, broker addresses, or runtime topology.
 
@@ -123,6 +123,7 @@ The reference package exposes focused commands for consumers that need machine-c
 | `cwl-context-release-admit` | Combine semantic and bundle compatibility evidence |
 | `cwl-context-package-evidence-verify` | Check local package-evidence integrity before provenance verification |
 | `cwl-context-release-evidence-admit` | Compose the release-evidence admission boundary |
+| `cwl-context-release-source-manifest` | Bind verified package bytes to exact protected source identity before independent attestation verification |
 
 These commands deliberately stop short of trust and authorization. Their outputs are deterministic compatibility/evidence artifacts, not signatures, source provenance, reviewer approval, deployment authorization, or domain authority.
 

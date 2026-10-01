@@ -63,7 +63,7 @@ def _membership() -> ContextMembership:
 
 
 def _provenance() -> ProvenanceReference:
-    """Return evidence for observed or authoritative assertions."""
+    """Return typed evidence for a Context Assertion disposition."""
     return ProvenanceReference(
         _asset("analysis_run", CONTEXT_UUID7),
         DIGEST,
@@ -103,9 +103,10 @@ def test_invalid_assertion_fixture_keeps_inferred_lineage_non_authoritative() ->
 
 
 def test_inferred_lineage_edge_cannot_be_promoted() -> None:
-    """LineageWeave inferred edges stay inferred at the contract boundary."""
-    assertion = _assertion(truth_status=TruthStatus.INFERRED, provenance=None)
+    """LineageWeave inferred edges retain evidence without becoming authoritative."""
+    assertion = _assertion(truth_status=TruthStatus.INFERRED)
     assert assertion.retain_truth_status(TruthStatus.INFERRED) is TruthStatus.INFERRED
+    assert assertion.provenance == _provenance()
     with pytest.raises(ValueError, match="cannot promote"):
         assertion.retain_truth_status(TruthStatus.AUTHORITATIVE)
     with pytest.raises(ValueError, match="cannot promote"):
@@ -113,11 +114,15 @@ def test_inferred_lineage_edge_cannot_be_promoted() -> None:
 
 
 def test_proposed_ea_relationship_remains_proposed() -> None:
-    """Enterprise-architecture proposals do not become approved facts here."""
+    """Enterprise-architecture proposals retain evidence without becoming facts."""
     assertion = _assertion(
         predicate=PREDICATE_REALIZED_BY,
         truth_status=TruthStatus.PROPOSED,
-        provenance=None,
+        provenance=ProvenanceReference(
+            _asset("architecture_model", CONTEXT_UUID7, "ea_core"),
+            DIGEST,
+            "$.proposals[0]",
+        ),
         subject=_asset("capability_record", UUID7_TEXT, "ea_core"),
         object=_asset("application_record", OBJECT_UUID7, "ea_core"),
         memberships=(
@@ -155,12 +160,12 @@ def test_temporal_reconstruction_uses_exclusive_knowledge_cutoff() -> None:
     assertion = _assertion(
         interval=BitemporalInterval(start, recorded, ended, ended),
         truth_status=TruthStatus.SUPERSEDED,
-        provenance=None,
     )
     assert assertion.interval.is_valid_at(datetime(2025, 5, 31, tzinfo=UTC)) is True
     assert assertion.interval.is_valid_at(ended) is False
     assert assertion.interval.was_known_at(datetime(2025, 5, 31, tzinfo=UTC)) is True
     assert assertion.interval.was_known_at(ended) is False
+    assert assertion.provenance == _provenance()
 
 
 def test_into_event_uses_published_assertion_event_contract() -> None:
@@ -178,6 +183,16 @@ def test_into_event_uses_published_assertion_event_contract() -> None:
     assert event.event_type == ASSERTION_EVENT_TYPE
     assert event.data_schema == ASSERTION_DATA_SCHEMA
     assert ContextAssertion.from_mapping(event.to_mapping()["data"]) == assertion
+
+
+def test_into_event_rejects_untyped_authority_source() -> None:
+    """The event boundary must reject strings that only resemble authorities."""
+    with pytest.raises(TypeError, match="source"):
+        _assertion().into_event(
+            event_id=UUID(EVENT_UUID7_TEXT),
+            source="urn:cwl:tenant_001:lineage_weave",  # type: ignore[arg-type]
+            event_time=datetime(2026, 1, 15, 9, 6, tzinfo=UTC),
+        )
 
 
 @pytest.mark.parametrize(
@@ -256,7 +271,7 @@ def test_assertion_rejects_foreign_membership_and_duplicate_contexts() -> None:
 
 
 def test_assertion_rejects_foreign_provenance_and_missing_required_evidence() -> None:
-    """Observed facts need same-tenant evidence; inferred facts may omit it."""
+    """Every truth disposition requires same-tenant typed evidence."""
     foreign = ProvenanceReference(
         CanonicalAssetUri.build(
             tenant_id="tenant_002",
@@ -268,10 +283,9 @@ def test_assertion_rejects_foreign_provenance_and_missing_required_evidence() ->
     )
     with pytest.raises(ValueError, match="provenance must belong"):
         _assertion(provenance=foreign)
-    with pytest.raises(ValueError, match="need provenance"):
-        _assertion(provenance=None)
-    inferred = _assertion(truth_status=TruthStatus.INFERRED, provenance=None)
-    assert inferred.provenance is None
+    for status in TruthStatus:
+        with pytest.raises(ValueError, match="provenance"):
+            _assertion(truth_status=status, provenance=None)
 
 
 def test_assertion_rejects_more_than_sixteen_memberships() -> None:
@@ -301,6 +315,10 @@ def test_from_mapping_snapshots_once_and_rejects_hostile_shapes() -> None:
     del missing["predicate"]
     with pytest.raises(ValueError, match="missing required"):
         ContextAssertion.from_mapping(missing)
+    missing_provenance = dict(valid)
+    del missing_provenance["provenance"]
+    with pytest.raises(ValueError, match="provenance"):
+        ContextAssertion.from_mapping(missing_provenance)
     with pytest.raises(TypeError, match="memberships"):
         ContextAssertion.from_mapping({**valid, "memberships": "nope"})
 

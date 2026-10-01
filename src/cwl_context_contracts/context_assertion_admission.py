@@ -1,0 +1,133 @@
+"""Transport-aware admission for packaged Context Assertion CloudEvents."""
+
+from __future__ import annotations
+
+import re
+from collections.abc import Mapping
+from dataclasses import InitVar, dataclass, field
+from typing import Any
+
+from .assertion import ContextAssertion
+from .conformance import load_conformance_profile
+from .events import CloudEventEnvelope
+
+CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE = "application/cloudevents+json"
+_CONTEXT_ASSERTION_SCHEMA_VERSION = 1
+_CONTEXT_ASSERTION_EVENT_PROFILE_NAME = "context-assertion-event-semantics.v1.json"
+_CONTEXT_ASSERTION_EVENT_PROFILE_ID = (
+    "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
+)
+_CONTEXT_ASSERTION_EVENT_PROFILE_VERSION = 1
+_CONTEXT_ASSERTION_MESSAGE_PROFILE_NAME = "context-assertion-message-admission.v1.json"
+_CONTEXT_ASSERTION_MESSAGE_PROFILE_ID = (
+    "urn:cwl:context-contracts:context-assertion-message-admission:v1"
+)
+_CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION = 1
+_CONTEXT_ASSERTION_ADMISSION_VERSION = 1
+_MAX_STRUCTURED_MEDIA_TYPE_LENGTH = 256
+_STRUCTURED_MEDIA_TYPE_PATTERN = re.compile(
+    r'^[ \t]*application/cloudevents\+json[ \t]*'
+    r'(?:;[ \t]*charset[ \t]*=[ \t]*(?:"utf-8"|utf-8)[ \t]*)?$',
+    re.IGNORECASE | re.ASCII,
+)
+_ADMITTED_CONTEXT_ASSERTION_RECEIPT = object()
+_UNADMITTED_CONTEXT_ASSERTION_RECEIPT = object()
+
+
+@dataclass(frozen=True, slots=True)
+class ContextAssertionAdmission:
+    """One admitted assertion plus the envelope and version evidence it arrived with."""
+
+    envelope: CloudEventEnvelope
+    assertion: ContextAssertion
+    schema_version: int = field(default=_CONTEXT_ASSERTION_SCHEMA_VERSION, init=False)
+    profile_id: str = field(default=_CONTEXT_ASSERTION_EVENT_PROFILE_ID, init=False)
+    profile_version: int = field(
+        default=_CONTEXT_ASSERTION_EVENT_PROFILE_VERSION,
+        init=False,
+    )
+    message_profile_id: str = field(
+        default=_CONTEXT_ASSERTION_MESSAGE_PROFILE_ID,
+        init=False,
+    )
+    message_profile_version: int = field(
+        default=_CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION,
+        init=False,
+    )
+    admission_version: int = field(
+        default=_CONTEXT_ASSERTION_ADMISSION_VERSION,
+        init=False,
+    )
+    _admission_token: InitVar[object] = _UNADMITTED_CONTEXT_ASSERTION_RECEIPT
+
+    def __post_init__(self, _admission_token: object) -> None:
+        """Reject forged receipts or state that disagrees with its envelope."""
+
+        if type(self.envelope) is not CloudEventEnvelope:
+            raise TypeError("envelope must be a CloudEventEnvelope")
+        if type(self.assertion) is not ContextAssertion:
+            raise TypeError("assertion must be a ContextAssertion")
+        if ContextAssertion.from_event(self.envelope) != self.assertion:
+            raise ValueError("assertion must match the admitted CloudEvent envelope")
+        if _admission_token is not _ADMITTED_CONTEXT_ASSERTION_RECEIPT:
+            raise ValueError(
+                "Context Assertion receipt must come from structured-message admission"
+            )
+
+
+def _is_context_assertion_structured_media_type(media_type: str) -> bool:
+    """Accept the JSON structured media type and its UTF-8 HTTP variant."""
+
+    return _STRUCTURED_MEDIA_TYPE_PATTERN.fullmatch(media_type) is not None
+
+
+def _validate_packaged_profile_identity() -> None:
+    """Fail closed when packaged profile identity drifts from the contract."""
+
+    event_profile = load_conformance_profile(_CONTEXT_ASSERTION_EVENT_PROFILE_NAME)
+    message_profile = load_conformance_profile(_CONTEXT_ASSERTION_MESSAGE_PROFILE_NAME)
+    identity_matches = (
+        event_profile.get("profile_id") == _CONTEXT_ASSERTION_EVENT_PROFILE_ID
+        and event_profile.get("profile_version")
+        == _CONTEXT_ASSERTION_EVENT_PROFILE_VERSION
+        and message_profile.get("profile_id") == _CONTEXT_ASSERTION_MESSAGE_PROFILE_ID
+        and message_profile.get("profile_version")
+        == _CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION
+        and message_profile.get("event_profile_id")
+        == _CONTEXT_ASSERTION_EVENT_PROFILE_ID
+        and message_profile.get("event_profile_version")
+        == _CONTEXT_ASSERTION_EVENT_PROFILE_VERSION
+        and message_profile.get("structured_media_type")
+        == CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE
+    )
+    if not identity_matches:
+        raise RuntimeError(
+            "packaged Context Assertion profile identity does not match "
+            "the admission receipt contract"
+        )
+
+
+def admit_context_assertion_message(
+    media_type: str,
+    value: Mapping[str, Any],
+) -> ContextAssertionAdmission:
+    """Admit one structured message without discarding its event identity."""
+
+    if not isinstance(media_type, str):
+        raise TypeError("Context Assertion media type must be a string")
+    if len(media_type) > _MAX_STRUCTURED_MEDIA_TYPE_LENGTH:
+        raise ValueError(
+            "Context Assertion media type must not exceed 256 characters"
+        )
+    if not _is_context_assertion_structured_media_type(media_type):
+        raise ValueError(
+            "Context Assertion media type must be application/cloudevents+json"
+        )
+    _validate_packaged_profile_identity()
+    envelope = CloudEventEnvelope.from_mapping(value)
+    assertion = ContextAssertion.from_event(envelope)
+    return ContextAssertionAdmission(
+        envelope=envelope,
+        assertion=assertion,
+        _admission_token=_ADMITTED_CONTEXT_ASSERTION_RECEIPT,
+    )

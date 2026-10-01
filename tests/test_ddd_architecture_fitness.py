@@ -88,6 +88,29 @@ def test_baseline_records_data_management_contract_boundary() -> None:
     assert "system of record" in baseline.lower()
 
 
+def test_baseline_keeps_solo_review_deadlock_in_central_governance() -> None:
+    """Do not turn an impossible central approval count into a staffing request."""
+
+    baseline = Path("docs/product-technical-gap-baseline.md").read_text(
+        encoding="utf-8"
+    )
+    assert "ContextualWisdomLab/.github#772" in baseline
+    assert "required_approving_review_count" in baseline
+    assert "Provision qualifying reviewer" not in baseline
+    assert "non-author human reviewer permission provisioning" not in baseline
+
+
+def test_baseline_routes_default_branch_repair_to_central_governance() -> None:
+    """Keep mutable branch state out of architecture policy while naming its owner."""
+
+    baseline = Path("docs/product-technical-gap-baseline.md").read_text(
+        encoding="utf-8"
+    )
+    assert "ContextualWisdomLab/.github#1137" in baseline
+    assert "default_branch=develop" in baseline
+    assert "~DEFAULT_BRANCH" in baseline
+
+
 def test_gap_baseline_does_not_persist_volatile_runner_execution_identity() -> None:
     """Keep exact runner execution identity in refetched PR/control-plane state."""
 
