@@ -55,7 +55,7 @@ def test_admission_accepts_standard_structured_json_media_type_variants(
 
 
 def test_admission_rejects_oversized_structured_media_type() -> None:
-    """Bound caller-controlled transport metadata before regular-expression admission."""
+    """Bound caller-controlled metadata before regular-expression admission."""
 
     oversized = CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE + (" " * 257)
 
@@ -95,7 +95,10 @@ def test_admission_rejects_non_advertised_structured_media_type(
 def test_admission_rejects_non_string_media_type() -> None:
     """Do not coerce an untyped transport value into the admission contract."""
 
-    with pytest.raises(TypeError, match="Context Assertion media type must be a string"):
+    with pytest.raises(
+        TypeError,
+        match="Context Assertion media type must be a string",
+    ):
         admit_context_assertion_message(1, _canonical_event())  # type: ignore[arg-type]
 
 
@@ -111,7 +114,9 @@ def test_admission_retains_envelope_identity_for_projection_receipts() -> None:
     assert admitted.envelope.to_mapping() == value
     assert admitted.assertion.truth_status.value == "observed"
     assert admitted.schema_version == 1
-    assert admitted.profile_id == "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
+    assert admitted.profile_id == (
+        "urn:cwl:context-contracts:context-assertion-event-semantics:v1"
+    )
     assert admitted.profile_version == 1
     assert admitted.message_profile_id == (
         "urn:cwl:context-contracts:context-assertion-message-admission:v1"

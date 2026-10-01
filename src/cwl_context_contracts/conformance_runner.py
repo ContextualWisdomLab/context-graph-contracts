@@ -182,7 +182,8 @@ def _run_assertion_event_profile(
             ConformanceFailure(
                 profile_name,
                 "event_profile_identity",
-                "Context Assertion event profile identity does not match the v1 contract",
+                "Context Assertion event profile identity does not match "
+                "the v1 contract",
             ),
         )
     failures: list[ConformanceFailure] = []
@@ -237,7 +238,9 @@ def _run_assertion_message_profile(
                 "does not match the v1 contract",
             ),
         )
-    event_profile = load_conformance_profile("context-assertion-event-semantics.v1.json")
+    event_profile = load_conformance_profile(
+        "context-assertion-event-semantics.v1.json"
+    )
     if (
         profile.get("event_profile_id") != event_profile.get("profile_id")
         or profile.get("event_profile_version") != event_profile.get("profile_version")

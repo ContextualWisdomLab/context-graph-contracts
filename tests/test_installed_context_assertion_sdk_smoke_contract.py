@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-
 _RECEIPT_SMOKE = Path(".github/workflows/receipt-package-smoke.yml")
 _REQUIRED_INSTALLED_SDK_MARKERS = (
     "CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE",

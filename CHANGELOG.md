@@ -14,6 +14,16 @@ All notable changes to this project are documented in this file.
   `charset` form used by the CloudEvents HTTP structured binding while still
   rejecting mismatched media types, unsupported/duplicate parameters, and CRLF
   injection attempts before envelope admission.
+- PR #20 runner-image contract regression now satisfies the repository Ruff
+  module/import contract; predecessor exact-head Python 3.11–3.14 lanes failed
+  deterministically at `I001` because `tests/test_runner_image_contract.py`
+  contained one excess blank line after the test docstring. The repair removes
+  only that formatting defect without changing the runner-policy assertion or
+  weakening CI.
+- Release-source manifest admission now restricts wheel compatibility tags to
+  ASCII alphanumeric, underscore, and dot-separated components, rejecting
+  path syntax, control characters, and non-ASCII lookalikes before those names
+  can become release evidence.
 - README is now a customer and operator page; local test commands live in
   `CONTRIBUTING.md`.
 - ADRs 0001–0005 now include Context, Decision, Consequences, and APA 7th
@@ -54,6 +64,13 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- Source-bound release provenance through
+  `cwl-context-release-source-manifest`, which strictly binds one verified
+  wheel/source/SPDX package snapshot to protected `main`, the exact source SHA,
+  repository and signer workflow, then requires the manifest itself to be
+  attested and independently verified before its source fields are treated as
+  release provenance. Duplicate/non-standard/oversized JSON fails closed, and
+  the manifest remains evidence rather than application or domain authority.
 - Dedicated exact-head release-package reproducibility acceptance that builds
   wheel and source distribution from two independent clean checkouts with a
   shared commit-derived `SOURCE_DATE_EPOCH`, rejects artifact-name or byte drift

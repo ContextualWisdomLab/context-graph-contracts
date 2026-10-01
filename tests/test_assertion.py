@@ -185,6 +185,16 @@ def test_into_event_uses_published_assertion_event_contract() -> None:
     assert ContextAssertion.from_mapping(event.to_mapping()["data"]) == assertion
 
 
+def test_into_event_rejects_untyped_authority_source() -> None:
+    """The event boundary must reject strings that only resemble authorities."""
+    with pytest.raises(TypeError, match="source"):
+        _assertion().into_event(
+            event_id=UUID(EVENT_UUID7_TEXT),
+            source="urn:cwl:tenant_001:lineage_weave",  # type: ignore[arg-type]
+            event_time=datetime(2026, 1, 15, 9, 6, tzinfo=UTC),
+        )
+
+
 @pytest.mark.parametrize(
     ("overrides", "error", "message"),
     [

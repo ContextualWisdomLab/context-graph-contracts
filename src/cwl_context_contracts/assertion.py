@@ -236,7 +236,7 @@ class ContextAssertion:
             raise ValueError("provenance must belong to the subject tenant")
 
     def retain_truth_status(self, requested: TruthStatus) -> TruthStatus:
-        """Return ``requested`` only when it exactly preserves this assertion's status."""
+        """Return ``requested`` only when it preserves this assertion's status."""
         return refuse_truth_promotion(self.truth_status, requested)
 
     def to_mapping(self) -> dict[str, Any]:
@@ -323,6 +323,9 @@ class ContextAssertion:
             Sequence,
         ):
             raise TypeError("memberships must be a sequence")
+        raw_provenance = snapshot["provenance"]
+        if raw_provenance is None:
+            raise ValueError("provenance is required for every truth disposition")
         return cls(
             assertion_id=raw_assertion_id,
             subject=CanonicalAssetUri.parse(snapshot["subject"]),
@@ -333,5 +336,5 @@ class ContextAssertion:
             memberships=tuple(
                 ContextMembership.from_mapping(item) for item in raw_memberships
             ),
-            provenance=ProvenanceReference.from_mapping(snapshot["provenance"]),
+            provenance=ProvenanceReference.from_mapping(raw_provenance),
         )

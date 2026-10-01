@@ -61,7 +61,7 @@ def test_admission_rejects_packaged_profile_identity_drift(
     field: str,
     replacement: object,
 ) -> None:
-    """A receipt cannot claim version/media identity that packaged evidence contradicts."""
+    """A receipt cannot claim identity contradicted by packaged evidence."""
 
     original_load = load_conformance_profile
 
@@ -81,7 +81,10 @@ def test_admission_rejects_packaged_profile_identity_drift(
     if validator is not None and hasattr(validator, "cache_clear"):
         validator.cache_clear()
 
-    with pytest.raises(RuntimeError, match="packaged Context Assertion profile identity"):
+    with pytest.raises(
+        RuntimeError,
+        match="packaged Context Assertion profile identity",
+    ):
         admission_module.admit_context_assertion_message(
             admission_module.CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
             _canonical_event(),
@@ -121,7 +124,10 @@ def test_admission_revalidates_packaged_profile_identity_for_every_receipt(
     )
     drifted = True
 
-    with pytest.raises(RuntimeError, match="packaged Context Assertion profile identity"):
+    with pytest.raises(
+        RuntimeError,
+        match="packaged Context Assertion profile identity",
+    ):
         admission_module.admit_context_assertion_message(
             admission_module.CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE,
             _canonical_event(),

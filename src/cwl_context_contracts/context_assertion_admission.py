@@ -54,11 +54,14 @@ class ContextAssertionAdmission:
         default=_CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION,
         init=False,
     )
-    admission_version: int = field(default=_CONTEXT_ASSERTION_ADMISSION_VERSION, init=False)
+    admission_version: int = field(
+        default=_CONTEXT_ASSERTION_ADMISSION_VERSION,
+        init=False,
+    )
     _admission_token: InitVar[object] = _UNADMITTED_CONTEXT_ASSERTION_RECEIPT
 
     def __post_init__(self, _admission_token: object) -> None:
-        """Reject forged receipts and state that disagrees with its admitted envelope."""
+        """Reject forged receipts or state that disagrees with its envelope."""
 
         if type(self.envelope) is not CloudEventEnvelope:
             raise TypeError("envelope must be a CloudEventEnvelope")
@@ -79,7 +82,7 @@ def _is_context_assertion_structured_media_type(media_type: str) -> bool:
 
 
 def _validate_packaged_profile_identity() -> None:
-    """Fail closed if current packaged profile identity drifts from the receipt contract."""
+    """Fail closed when packaged profile identity drifts from the contract."""
 
     event_profile = load_conformance_profile(_CONTEXT_ASSERTION_EVENT_PROFILE_NAME)
     message_profile = load_conformance_profile(_CONTEXT_ASSERTION_MESSAGE_PROFILE_NAME)

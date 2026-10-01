@@ -2,143 +2,175 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/ContextualWisdomLab/context-graph-contracts)
 
-**Provider-neutral contracts for exchanging context, lineage, architecture, and impact evidence across ContextualWisdomLab products.**
+**Versioned interoperability contracts for identity, truth, time, provenance, and Context Fabric events — without a shared database or transferred domain authority.**
 
-Context Graph Contracts gives independently owned services a shared language for identity, truth status, time, provenance, and events **without sharing a database or surrendering domain authority**.
+Context Graph Contracts gives independently owned ContextualWisdomLab products a small, provider-neutral language for exchanging context and architecture facts. Producers can say **what object they mean, who is authoritative for it, where an assertion came from, when it was valid and recorded, and which exact evidence supports it**. Consumers can validate those claims without importing the producer's application model or writing directly to its store.
 
-It is for product teams and integrators who need to answer: *Are we talking about the same object, from the same authority, at the same effective time, with evidence that can be checked?*
+## Why use it
 
-> This README describes the current candidate stack. Protected integration history and an immutable released package remain the authority for production consumers until this stack passes current governance and is released.
-
-## Why it exists
-
-Cross-product integration becomes fragile when every service invents its own identifiers, timestamps, provenance fields, event envelopes, and ideas of “truth.” Context Graph Contracts makes those exchange rules explicit while keeping product behavior in the products that own it.
-
-| Need | What this repository provides |
+| Integration need | Contract responsibility |
 | --- | --- |
-| Stable identity | Canonical authority and asset URIs for cross-product references |
-| Truth semantics | `authoritative`, `observed`, `inferred`, `proposed`, `superseded`, and `rejected` states |
-| Time semantics | Separate real-world validity and system-recording time |
-| Provenance | Exact evidence references and SHA-256 byte identity without pretending a digest proves trust |
-| Context assertions | Typed subject-predicate-object assertions with context membership and cross-field rules |
-| Service events | CloudEvents-based envelopes with bounded interoperable JSON payloads |
-| Published contracts | JSON Schema Draft 2020-12, AsyncAPI 3.1.0 components, fixtures, and semantic conformance profiles |
-| Integration evidence | Installed-package conformance, bundle identity, package evidence, and release-admission checks |
+| Stable cross-product identity | Canonical authority and asset URIs |
+| Evidence origin | Explicit truth status: authoritative, observed, inferred, proposed, superseded, or rejected |
+| Time-aware facts | Separate real-world validity from system-recording time |
+| Provenance | Exact source/evidence references with SHA-256 byte identity where applicable |
+| Context relationships | Typed Context Assertions with bounded membership and semantic invariants |
+| Service notifications | CloudEvents 1.0.2 structured JSON with shared identity and interoperability rules |
+| Compatibility evidence | Packaged semantic vectors, manifests, admission decisions, and release-evidence verification |
+
+The goal is interoperability, not centralization. A shared contract lets two products understand one another while each product keeps its own authorization, persistence, workflow, retry, and audit authority.
+
+## Current status
+
+Context Graph Contracts is an **alpha contract stack under active development**. The candidate package metadata is currently `cwl-context-contracts` `0.1.0` for Python 3.11 or newer, with no third-party runtime dependencies.
+
+There is **no GitHub release published for this repository yet**. An open branch, pull request, source-tree version, successful conformance run, or package build is not a released integration contract. Production consumers should bind only to an immutable released artifact after the owning release process publishes one with the required package, provenance, conformance, and approval evidence.
+
+Until that happens, the source checkout and open contract stack are suitable for review, compatibility development, and pre-release integration testing — not for claiming a stable production dependency.
 
 ## Product boundary
 
-This repository owns **interoperability contracts and deterministic compatibility evidence**. It is not a graph database, catalog, workflow engine, message broker, authorization service, or product runtime.
+Context Graph Contracts owns the **provider-neutral interoperability bounded context**: shared wire identity, authority identity, truth origin/status, bitemporal semantics, provenance, Context Assertion and CloudEvent grammar, semantic conformance vectors, and deterministic compatibility evidence.
 
-```text
-Producing product
-      │
-      │ released contract + evidence
-      ▼
-┌───────────────────────────┐
-│  Context Graph Contracts  │
-│                           │
-│ identity · truth · time   │
-│ provenance · events       │
-└─────────────┬─────────────┘
-              │
-              │ released contract + evidence
-              ▼
-       Consuming product
-```
+It is **not**:
 
-Owning products keep their own persistence, authorization, retry policy, audit trail, and business decisions. A compatible assertion or event does not grant a consumer permission to mutate another product's store.
+- a graph database or search engine;
+- a semantic catalog or data-management system of record;
+- an enterprise-architecture decision application;
+- a message broker or event bus;
+- a workflow/orchestration engine;
+- an authorization service; or
+- a shared persistence layer for ContextualWisdomLab products.
+
+A positive contract or conformance result never grants permission to mutate another product. The producing and consuming products retain their own authorization and business authority.
 
 ## Contract baseline
 
 ### Identity and authority
 
-A producer authority uses a tenant-scoped CWL authority URI, while a canonical asset URI identifies the object being discussed. The contract keeps **who may own a fact** separate from **who happens to transport or observe it**.
+A producer authority uses the URI form:
+
+```text
+urn:cwl:{tenant_id}:{authority}
+```
+
+A canonical asset uses:
+
+```text
+urn:cwl:{tenant_id}:{authority}:{object_type}:{uuidv7}
+```
+
+In the shared CloudEvent profile, `source` identifies producer authority and `subject` identifies the object being discussed. Shared identity does not make the contract repository authoritative for the underlying object.
 
 ### Truth status
 
-Cross-domain assertions carry explicit truth origin/status. Consumers must not silently promote `observed`, `inferred`, or `proposed` evidence to `authoritative`.
+Cross-domain assertions distinguish `authoritative`, `observed`, `inferred`, `proposed`, `superseded`, and `rejected`. These values describe the assertion's origin/governance state, not a generic confidence score. Consumers must not silently promote observed, inferred, or proposed data into authoritative truth.
 
 ### Bitemporal semantics
 
-Real-world validity stays separate from system-recording time. Open intervals are represented explicitly rather than with sentinel dates.
+Real-world validity (`valid_from` / `valid_to`) remains distinct from system-recording time (`recorded_at` / `superseded_at`). Open intervals use `null`; sentinel dates are not part of the wire contract.
 
 ### Provenance
 
-Every Context Assertion carries a typed provenance reference to the evidence or activity lineage behind its current truth disposition. The reference may bind exact source evidence with a SHA-256 digest; a digest proves byte identity only, while trust, authorization, review, and provenance admission remain separate gates.
+Every Context Assertion carries a typed provenance reference to the evidence or activity lineage behind its current truth disposition. The reference may bind a source asset and digest of exact evidence bytes. A digest proves byte identity only; trust, authorization, scientific validity, legal ownership, and business truth remain separate gates.
 
-### Events
+### Context Assertions and service events
 
-Service notifications use CloudEvents structured JSON. The current candidate also binds Context Assertion event data to the CloudEvent envelope so event identity and assertion semantics travel together rather than being conflated.
+Context Assertions carry typed subject–predicate–object facts with truth status, temporal validity, provenance, and context memberships. Service notifications use CloudEvents 1.0.2 structured JSON. The assertion-event contract binds assertion data to the CloudEvent envelope, and message admission accepts only the supported `application/cloudevents+json` structured media type forms before minting receipt evidence. JSON Schema Draft 2020-12 supplies structural contracts; packaged semantic vectors cover important cross-field invariants that schema validation alone cannot safely establish.
 
-Detailed field and cross-field rules live in the published schemas, fixtures, semantic profiles, and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Packaged semantic conformance includes **CWL Timestamp Profile v1**, **Context assertion semantics v1**, **Context assertion event semantics v1**, and the **CWL JSON interoperability profile**, alongside the shared CloudEvent and message-admission profiles.
 
-## Quickstart
+The AsyncAPI 3.1.0 resource is intentionally reusable contract material. It does not declare servers, channels, operations, broker addresses, or runtime topology.
 
-The current source package is `cwl-context-contracts` `0.1.0` (Alpha), requires Python 3.11+, and has no runtime dependencies.
+## Evaluate the source contract
+
+The repository pins `uv` and its development environment. From a source checkout, run the same core path used by CI:
 
 ```bash
-uv sync --extra dev --locked
-uv run cwl-context-conformance
+uv lock --check
+uv sync --frozen --extra dev --python 3.14
+uv run --frozen --extra dev --python 3.14 python -m pytest -q
+uv run --frozen --extra dev --python 3.14 cwl-context-conformance
 ```
 
-The packaged semantic inventory currently covers **CWL Timestamp Profile v1**, **Context assertion semantics v1**, **Context assertion event semantics v1**, **CloudEvent semantics v1**, the **CWL JSON interoperability profile**, and **Data-management assessment semantics v1**. The assertion-event profile composes CloudEvent identity with Context Assertion data so consumers test the complete exchange boundary rather than either layer in isolation.
+A successful conformance command means the installed reference package agrees with its packaged semantic vectors. It does **not** prove that another implementation is conformant, that an artifact is authentic, or that an integration is authorized.
 
-A successful conformance run means the installed reference package agrees with its packaged semantic vectors. It does **not** prove that an artifact is trusted, independently approved, released from protected source, or authorized for a particular runtime.
+## Integration path
 
-Python consumers can use the package APIs for schemas/contracts, `ContextAssertion`, and conformance evidence rather than copying contract JSON into private forks.
+A production consumer should keep the admission sequence explicit:
 
-## Integration and release evidence
+1. select an immutable contract release approved for that consumer;
+2. run the packaged semantic conformance suite;
+3. compare the exact approved semantic-profile and complete contract-bundle identities with the installed package;
+4. verify package provenance and release evidence independently; and
+5. apply the consumer's own authorization and domain rules before enabling the integration.
 
-Use progressively stronger evidence according to the integration decision you are making:
+Never production-bind a mutable branch or infer approval from a passing parser test.
 
-| Question | CLI |
+### Evidence CLI
+
+The reference package exposes focused commands for consumers that need machine-checkable evidence:
+
+| Command | Purpose |
 | --- | --- |
-| Does this installed package execute the published semantic vectors? | `cwl-context-conformance` |
-| Which exact semantic-profile bytes are installed? | `cwl-context-conformance-manifest` |
-| Does installed semantic evidence match an approved manifest? | `cwl-context-conformance-admit` |
-| Which exact published contract resources are installed? | `cwl-context-bundle-manifest` / `cwl-context-bundle-verify` |
-| Does the installed package satisfy the combined compatibility gate? | `cwl-context-release-admit` |
-| Are wheel/sdist/SBOM/checksum bytes internally coherent? | `cwl-context-package-evidence-verify` |
-| Does qualifying release evidence satisfy the deterministic admission contract? | `cwl-context-release-evidence-admit` |
+| `cwl-context-conformance` | Execute packaged semantic vectors |
+| `cwl-context-conformance-manifest` | Identify exact semantic-profile bytes |
+| `cwl-context-conformance-verify` | Compare an approved profile manifest with the installed package |
+| `cwl-context-conformance-admit` | Combine semantic execution with approved-profile identity |
+| `cwl-context-conformance-receipt` | Produce deterministic admission evidence |
+| `cwl-context-bundle-manifest` | Identify the complete published contract-resource set |
+| `cwl-context-bundle-verify` | Compare an approved bundle with installed resources |
+| `cwl-context-release-admit` | Combine semantic and bundle compatibility evidence |
+| `cwl-context-package-evidence-verify` | Check local package-evidence integrity before provenance verification |
+| `cwl-context-release-evidence-admit` | Compose the release-evidence admission boundary |
+| `cwl-context-release-source-manifest` | Bind verified package bytes to exact protected source identity before independent attestation verification |
 
-These commands deliberately stop short of authority they do not own. Compatibility evidence is not a signature, independent approval, protected-branch provenance, publication authorization, or runtime permission.
+These commands deliberately stop short of trust and authorization. Their outputs are deterministic compatibility/evidence artifacts, not signatures, source provenance, reviewer approval, deployment authorization, or domain authority.
 
-Consumers should pin and admit an **immutable released distribution**. Do not integrate production behavior against an open sibling PR head just because its schema looks compatible.
+## Architecture at a glance
 
-## Who integrates with it
-
-Current ecosystem consumers and producers include `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`, `LineageWeave`, and `contextual-orchestrator`. They exchange contracts or evidence while retaining their own authoritative state; they do not read one another's application databases through this package.
-
-## Quality and status
-
-The source package is **0.1.0 / Alpha**. The repository quality contract includes Python 3.11–3.14 verification, strict repository validation, installed-package smoke checks, package/release evidence checks, reproducibility/SBOM workflows, and an exact **100% owned production statement/branch coverage** threshold.
-
-Those engineering gates are not customer-adoption, certification, deployment, or release claims. Open PR behavior remains candidate truth until integrated and released.
-
-For local validation:
-
-```bash
-uv sync --extra dev --locked
-uv run --extra dev python -m coverage run -m pytest -q
-uv run --extra dev python -m coverage report
+```text
+Owning producer
+  authoritative store / policy
+           |
+           | versioned assertion or event
+           v
++--------------------------------------+
+|       Context Graph Contracts        |
+| identity · truth · time · provenance |
+| schemas · events · conformance       |
++------------------+-------------------+
+                   |
+                   | validated contract data
+                   v
+          consumer-owned ACL
+                   |
+                   v
+Owning consumer
+  store / policy / workflow / UI
 ```
+
+Products such as `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd-cloud`, `LineageWeave`, and `contextual-orchestrator` may use this grammar at their integration boundaries. They remain authoritative for their own domains and must not use these contracts as an excuse for cross-service SQL or shared application tables.
 
 ## Documentation map
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — contract architecture, identity, truth, temporal, and provenance boundaries.
-- [`docs/CONTEXT_MAP.md`](docs/CONTEXT_MAP.md) — DDD ownership and neighboring contexts.
-- [`docs/product-technical-gap-baseline.md`](docs/product-technical-gap-baseline.md) — current product/technical gaps and evidence state.
+Start with the smallest document that answers the integration question:
+
+- [`docs/index.md`](docs/index.md) — documentation landing and integration path.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — identity, truth, temporal, provenance, and contract architecture.
+- [`docs/CONTEXT_MAP.md`](docs/CONTEXT_MAP.md) — bounded contexts and dependency direction.
+- [`docs/UBIQUITOUS_LANGUAGE.md`](docs/UBIQUITOUS_LANGUAGE.md) — canonical domain vocabulary.
 - [`docs/adr/`](docs/adr/) — accepted architecture decisions.
-- [`docs/index.md`](docs/index.md) — documentation home.
-- [`docs/doctoring/REFERENCES.md`](docs/doctoring/REFERENCES.md) — standards and research basis.
+- [`docs/product-technical-gap-baseline.md`](docs/product-technical-gap-baseline.md) — current maturity, gaps, and evidence limits.
+- [`docs/doctoring/REFERENCES.md`](docs/doctoring/REFERENCES.md) — standards and bibliographic sources.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — local development and contribution procedure.
 
 ## Contributing
 
-Keep the Shared Kernel deliberately small. Add only semantics that genuinely need to cross product boundaries; keep product-specific storage, workflow, UI, authorization decisions, and domain behavior in their owning repositories.
+Keep the Shared Kernel deliberately small. New contracts should represent genuinely shared interoperability semantics, not move a producer's business model, storage, workflow, or authorization decisions into this repository.
 
-Changes to a published contract need versioning, compatibility tests, conformance evidence, package/release evidence, and migration guidance appropriate to their impact. New dependencies must be commercially usable under the intended distribution model and retain required provenance and attribution.
+Changes should update the versioned schema/event/profile, executable conformance evidence, documentation, and compatibility boundary together. Do not treat an open ContextualWisdomLab branch as a released dependency, and do not introduce commercially incompatible inbound software or assets.
 
 ## License
 
-Context Graph Contracts is licensed under the [Apache License 2.0](LICENSE).
+Context Graph Contracts is licensed under the [Apache License 2.0](LICENSE). Third-party development and build tooling retains its own license terms and is not relicensed by this repository.
