@@ -54,15 +54,13 @@ def test_truth_status_parser_rejects_unknown_or_non_string_values() -> None:
         parse_truth_status("trusted")
 
 
-def test_truth_promotion_is_refused_while_demotion_is_allowed() -> None:
-    """Adapters may lower trust or keep it, but they may not raise it."""
+def test_truth_status_rewrite_is_refused_while_retention_is_allowed() -> None:
+    """Adapters may retain a status but cannot rewrite its disposition."""
     assert (
         refuse_truth_promotion(TruthStatus.OBSERVED, TruthStatus.OBSERVED)
         is TruthStatus.OBSERVED
     )
-    assert (
+    with pytest.raises(ValueError, match="retain truth status"):
         refuse_truth_promotion(TruthStatus.OBSERVED, TruthStatus.REJECTED)
-        is TruthStatus.REJECTED
-    )
     with pytest.raises(ValueError, match="cannot promote"):
         refuse_truth_promotion(TruthStatus.INFERRED, TruthStatus.AUTHORITATIVE)
