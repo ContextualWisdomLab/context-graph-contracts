@@ -103,8 +103,9 @@ def test_complete_release_evidence_admits_only_one_matching_distribution(
     )
     assert report.next_action == (
         "verify artifact attestations bind these exact package bytes to the intended "
-        "protected main source commit, then satisfy independent review and release "
-        "authorization before publication"
+        "protected main source commit, generate and independently verify the "
+        "attested release-source manifest, then satisfy independent review and "
+        "release authorization before publication"
     )
 
 
