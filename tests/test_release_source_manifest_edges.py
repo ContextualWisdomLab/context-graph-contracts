@@ -155,6 +155,34 @@ def test_artifact_object_set_and_filename_contract_fail_closed(artifacts) -> Non
         _build(snapshot)
 
 
+@pytest.mark.parametrize(
+    "wheel_name",
+    [
+        "cwl_context_contracts-0.1.0-py3-../none-any.whl",
+        "cwl_context_contracts-0.1.0-py3-\n-any.whl",
+        "cwl_context_contracts-0.1.0-py3-no\ne-any.whl",
+        "cwl_context_contracts-0.1.0-py3-none-any\tag.whl",
+        "cwl_context_contracts-0.1.0-py\u0663-none-any.whl",
+    ],
+)
+def test_wheel_tags_reject_path_control_and_non_ascii_characters(
+    wheel_name: str,
+) -> None:
+    """Wheel evidence accepts only ASCII tag components, never path syntax."""
+    snapshot = _snapshot()
+    artifacts = snapshot["artifacts"]
+    assert isinstance(artifacts, list)
+    wheel = artifacts[0]
+    assert isinstance(wheel, dict)
+    wheel["name"] = wheel_name
+
+    with pytest.raises(
+        manifest_module.ReleaseSourceManifestInputError,
+        match="package_snapshot_artifacts_invalid",
+    ):
+        _build(snapshot)
+
+
 def test_malformed_json_snapshot_is_not_treated_as_evidence(
     tmp_path: Path,
     capsys,

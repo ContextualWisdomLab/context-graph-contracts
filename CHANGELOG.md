@@ -6,6 +6,10 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+- Release-source manifest admission now restricts wheel compatibility tags to
+  ASCII alphanumeric, underscore, and dot-separated components, rejecting
+  path syntax, control characters, and non-ASCII lookalikes before those names
+  can become release evidence.
 - README is now a customer and operator page; local test commands live in
   `CONTRIBUTING.md`.
 - ADRs 0001–0005 now include Context, Decision, Consequences, and APA 7th

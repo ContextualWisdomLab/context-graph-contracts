@@ -33,9 +33,11 @@ _INPUT_ACTION = (
 )
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _SOURCE_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+_WHEEL_TAG_COMPONENT = r"[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*"
 _WHEEL_PATTERN = re.compile(
     r"^cwl_context_contracts-([0-9]+\.[0-9]+\.[0-9]+)-"
-    r"[^-]+-[^-]+-[^-]+\.whl$"
+    rf"{_WHEEL_TAG_COMPONENT}-{_WHEEL_TAG_COMPONENT}-"
+    rf"{_WHEEL_TAG_COMPONENT}\.whl$"
 )
 _SDIST_PATTERN = re.compile(
     r"^cwl_context_contracts-([0-9]+\.[0-9]+\.[0-9]+)\.tar\.gz$"
