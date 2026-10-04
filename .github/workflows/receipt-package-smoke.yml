@@ -8,13 +8,21 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   installed-wheel:
-    runs-on: ubuntu-24.04
+    if: >-
+      github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      group: CWL contracts CI
+      labels: [self-hosted, Linux, X64, cwlab]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -115,26 +123,29 @@ jobs:
       - name: Exercise release evidence from installed wheel
         run: |
           set -euo pipefail
+          export SMOKE_ROOT
+          SMOKE_ROOT="$(mktemp -d "${RUNNER_TEMP:?}/contracts-smoke.XXXXXX")"
+          trap 'rm -rf -- "$SMOKE_ROOT"' EXIT
           .receipt-smoke/bin/cwl-context-conformance-manifest \
-            > /tmp/approved-manifest.json
+            > "$SMOKE_ROOT/approved-manifest.json"
           .receipt-smoke/bin/cwl-context-conformance-receipt \
-            /tmp/approved-manifest.json > /tmp/admission-receipt.json
+            "$SMOKE_ROOT/approved-manifest.json" > "$SMOKE_ROOT/admission-receipt.json"
           .receipt-smoke/bin/cwl-context-bundle-manifest \
-            > /tmp/contract-bundle-manifest.json
+            > "$SMOKE_ROOT/contract-bundle-manifest.json"
           .receipt-smoke/bin/cwl-context-bundle-verify \
-            /tmp/contract-bundle-manifest.json \
-            > /tmp/contract-bundle-verification.json
+            "$SMOKE_ROOT/contract-bundle-manifest.json" \
+            > "$SMOKE_ROOT/contract-bundle-verification.json"
           .receipt-smoke/bin/cwl-context-release-admit \
-            /tmp/approved-manifest.json \
-            /tmp/contract-bundle-manifest.json \
-            > /tmp/contract-release-admission.json
-          mkdir -p /tmp/package-evidence
-          cp dist/*.whl dist/*.tar.gz /tmp/package-evidence/
+            "$SMOKE_ROOT/approved-manifest.json" \
+            "$SMOKE_ROOT/contract-bundle-manifest.json" \
+            > "$SMOKE_ROOT/contract-release-admission.json"
+          mkdir -p "$SMOKE_ROOT/package-evidence"
+          cp dist/*.whl dist/*.tar.gz "$SMOKE_ROOT/package-evidence/"
           package_version="$(
             .receipt-smoke/bin/python -c \
               'from importlib.metadata import version; print(version("cwl-context-contracts"))'
           )"
-          cat > /tmp/package-evidence/cwl-context-contracts.spdx.json <<JSON
+          cat > "$SMOKE_ROOT/package-evidence/cwl-context-contracts.spdx.json" <<JSON
           {
             "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
             "@graph": [
@@ -148,48 +159,49 @@ jobs:
           }
           JSON
           (
-            cd /tmp/package-evidence
-            sha256sum \
+            cd "$SMOKE_ROOT/package-evidence"
+            sha256sum -- \
               *.whl \
               *.tar.gz \
               cwl-context-contracts.spdx.json \
               > SHA256SUMS
           )
           .receipt-smoke/bin/cwl-context-package-evidence-verify \
-            /tmp/package-evidence \
-            > /tmp/package-evidence-verification.json
+            "$SMOKE_ROOT/package-evidence" \
+            > "$SMOKE_ROOT/package-evidence-verification.json"
           .receipt-smoke/bin/cwl-context-release-evidence-admit \
-            /tmp/package-evidence \
-            /tmp/approved-manifest.json \
-            /tmp/contract-bundle-manifest.json \
-            > /tmp/complete-release-evidence-admission.json
+            "$SMOKE_ROOT/package-evidence" \
+            "$SMOKE_ROOT/approved-manifest.json" \
+            "$SMOKE_ROOT/contract-bundle-manifest.json" \
+            > "$SMOKE_ROOT/complete-release-evidence-admission.json"
           .receipt-smoke/bin/python - <<'PY'
           import json
+          import os
           from pathlib import Path
 
           receipt = json.loads(
-              Path("/tmp/admission-receipt.json").read_text(encoding="utf-8")
+              (Path(os.environ["SMOKE_ROOT"]) / "admission-receipt.json").read_text(encoding="utf-8")
           )
           bundle_manifest = json.loads(
-              Path("/tmp/contract-bundle-manifest.json").read_text(encoding="utf-8")
+              (Path(os.environ["SMOKE_ROOT"]) / "contract-bundle-manifest.json").read_text(encoding="utf-8")
           )
           bundle_verification = json.loads(
-              Path("/tmp/contract-bundle-verification.json").read_text(
+              (Path(os.environ["SMOKE_ROOT"]) / "contract-bundle-verification.json").read_text(
                   encoding="utf-8"
               )
           )
           release_admission = json.loads(
-              Path("/tmp/contract-release-admission.json").read_text(
+              (Path(os.environ["SMOKE_ROOT"]) / "contract-release-admission.json").read_text(
                   encoding="utf-8"
               )
           )
           package_evidence = json.loads(
-              Path("/tmp/package-evidence-verification.json").read_text(
+              (Path(os.environ["SMOKE_ROOT"]) / "package-evidence-verification.json").read_text(
                   encoding="utf-8"
               )
           )
           complete_release_evidence = json.loads(
-              Path("/tmp/complete-release-evidence-admission.json").read_text(
+              (Path(os.environ["SMOKE_ROOT"]) / "complete-release-evidence-admission.json").read_text(
                   encoding="utf-8"
               )
           )

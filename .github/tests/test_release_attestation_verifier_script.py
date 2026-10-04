@@ -15,7 +15,10 @@ from cwl_context_contracts.package_evidence_verifier import (
     verify_package_evidence_directory,
 )
 
-_SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[2]
+    / ".github/scripts/verify_release_attestations.sh"
+)
 _SOURCE_SHA = "a" * 40
 _REPOSITORY = "ContextualWisdomLab/context-graph-contracts"
 _SIGNER_WORKFLOW = (
@@ -66,9 +69,7 @@ def _expected_provenance() -> dict[str, Any]:
             ],
         },
         "runDetails": {
-            "builder": {
-                "id": f"https://github.com/{_SIGNER_WORKFLOW}@{source_ref}"
-            },
+            "builder": {"id": f"https://github.com/{_SIGNER_WORKFLOW}@{source_ref}"},
             "metadata": {
                 "invocationId": (
                     f"https://github.com/{_REPOSITORY}/actions/runs/123/attempts/1"
@@ -123,7 +124,7 @@ def _write_fake_gh(tmp_path: Path) -> tuple[Path, Path]:
         'if [[ -n "${GH_FAKE_REPLACEMENT_SBOM:-}" ]]; then\n'
         '  printf \'%s\\n\' "$GH_FAKE_REPLACEMENT_SBOM" > "$GH_FAKE_SBOM_PATH"\n'
         "fi\n"
-        "if [[ \" $* \" == *\" --predicate-type \"* ]]; then\n"
+        'if [[ " $* " == *" --predicate-type "* ]]; then\n'
         "  printf '%s\\n' \"$GH_FAKE_SBOM_RESULT\"\n"
         '  if [[ "${GH_FAKE_REPLACE_VERIFICATION_OUTPUTS:-0}" == "1" ]]; then\n'
         '    output_path="$GH_FAKE_VERIFICATION_DIR/$(basename "$3").sbom.json"\n'
@@ -168,6 +169,9 @@ def _run_verifier(
     replacement_downloaded_sbom: dict[str, Any] | None = None,
     replace_verification_outputs: bool = False,
     replace_artifact_between_attestations: bool = False,
+    signed_runner_environment: str = "github-hosted",
+    expected_runner_environment: str | None = None,
+    cwd: Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run the verifier with isolated evidence and a fake GitHub CLI."""
     evidence_dir = tmp_path / "evidence"
@@ -199,9 +203,13 @@ def _run_verifier(
     sbom_artifact_digest = (
         replacement_digest if replace_artifact_between_attestations else initial_digest
     )
+    provenance = _expected_provenance()
+    provenance["buildDefinition"]["internalParameters"]["github"][
+        "runner_environment"
+    ] = signed_runner_environment
     provenance_result = _verification_result(
         initial_digest,
-        _expected_provenance(),
+        provenance,
         "https://slsa.dev/provenance/v1",
     )
     sbom_result = _verification_result(
@@ -222,6 +230,9 @@ def _run_verifier(
             encoding="utf-8",
         )
     env = os.environ.copy()
+    env.pop("EXPECTED_RUNNER_ENVIRONMENT", None)
+    if expected_runner_environment is not None:
+        env["EXPECTED_RUNNER_ENVIRONMENT"] = expected_runner_environment
     env.update(
         {
             "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}",
@@ -248,9 +259,7 @@ def _run_verifier(
     if replacement_downloaded_sbom is not None:
         env["GH_FAKE_REPLACEMENT_SBOM"] = json.dumps(replacement_downloaded_sbom)
     if replace_artifact_between_attestations:
-        env["GH_FAKE_REPLACEMENT_ARTIFACT_PATH"] = str(
-            evidence_dir / artifact_names[0]
-        )
+        env["GH_FAKE_REPLACEMENT_ARTIFACT_PATH"] = str(evidence_dir / artifact_names[0])
         env["GH_FAKE_REPLACEMENT_ARTIFACT"] = _REPLACEMENT_ARTIFACT_BYTES.decode()
     return subprocess.run(
         ["bash", str(_SCRIPT_PATH)],
@@ -258,6 +267,7 @@ def _run_verifier(
         capture_output=True,
         text=True,
         env=env,
+        cwd=cwd,
     )
 
 
@@ -447,3 +457,69 @@ def test_verifier_rejects_mid_verification_output_symlink_replacement(
     )
 
     assert result.returncode != 0
+
+
+def test_migrated_shell_verifier_imports_source_from_nonrepo_cwd(
+    tmp_path: Path,
+) -> None:
+    """Resolve the real package source independently of the caller directory."""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    result = _run_verifier(
+        tmp_path,
+        (
+            "cwl_context_contracts-0.1-py3-none-any.whl",
+            "cwl_context_contracts-0.1.tar.gz",
+        ),
+        cwd=outside,
+    )
+    assert result.returncode == 0, result.stderr
+    assert len(list((tmp_path / "verification").glob("*.json"))) == 4
+
+
+def test_shell_self_hosted_policy_omits_hosted_denial(tmp_path: Path) -> None:
+    """Opt in only to exact signed self-hosted provenance while retaining identity."""
+    result = _run_verifier(
+        tmp_path,
+        (
+            "cwl_context_contracts-0.1-py3-none-any.whl",
+            "cwl_context_contracts-0.1.tar.gz",
+        ),
+        signed_runner_environment="self-hosted",
+        expected_runner_environment="self-hosted",
+    )
+    assert result.returncode == 0, result.stderr
+    lines = (tmp_path / "gh.log").read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 4
+    assert all("--deny-self-hosted-runners" not in line for line in lines)
+    assert all(f"--source-digest {_SOURCE_SHA}" in line for line in lines)
+    assert all(f"--signer-workflow {_SIGNER_WORKFLOW}" in line for line in lines)
+
+
+def test_shell_self_hosted_policy_rejects_hosted_signed_claim(tmp_path: Path) -> None:
+    """The shell must pass runner policy through to signed predicate validation."""
+    result = _run_verifier(
+        tmp_path,
+        (
+            "cwl_context_contracts-0.1-py3-none-any.whl",
+            "cwl_context_contracts-0.1.tar.gz",
+        ),
+        expected_runner_environment="self-hosted",
+    )
+    assert result.returncode != 0
+    assert "runner environment" in result.stderr
+
+
+def test_shell_rejects_unknown_runner_policy_before_query(tmp_path: Path) -> None:
+    """A typo cannot silently disable hosted-runner denial or select a new policy."""
+    result = _run_verifier(
+        tmp_path,
+        (
+            "cwl_context_contracts-0.1-py3-none-any.whl",
+            "cwl_context_contracts-0.1.tar.gz",
+        ),
+        expected_runner_environment="unknown",
+    )
+    assert result.returncode != 0
+    assert "runner environment" in result.stderr
+    assert not (tmp_path / "gh.log").exists()

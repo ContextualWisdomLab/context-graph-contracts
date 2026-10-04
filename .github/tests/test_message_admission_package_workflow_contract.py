@@ -6,7 +6,9 @@ from pathlib import Path
 def test_ci_packages_and_enumerates_message_admission_profile() -> None:
     """Keep wheel/sdist inventory and installed-profile smoke aligned with the SDK."""
 
-    workflow = Path(".github/workflows/ci.yml").read_text(encoding="utf-8")
+    workflow = (
+        Path(__file__).resolve().parents[2] / ".github/workflows/ci.yml"
+    ).read_text(encoding="utf-8")
 
     assert (
         '"cwl_context_contracts/conformance/'

@@ -12,7 +12,10 @@ from cwl_context_contracts.package_evidence_verifier import (
     verify_package_evidence_directory,
 )
 
-_SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[2]
+    / ".github/scripts/verify_release_attestations.sh"
+)
 _SOURCE_SHA = "a" * 40
 _EXPECTED_SBOM = {
     "@context": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld",
@@ -77,9 +80,9 @@ def test_verifier_refuses_preexisting_verification_directory(tmp_path: Path) -> 
         "set -euo pipefail\n"
         'printf \'%s\\n\' "$*" >> "$GH_FAKE_LOG"\n'
         'if [[ " $* " == *" --predicate-type "* ]]; then\n'
-        '  printf \'%s\\n\' "$GH_FAKE_SBOM_RESULT"\n'
+        "  printf '%s\\n' \"$GH_FAKE_SBOM_RESULT\"\n"
         "else\n"
-        "  printf '[{\"verificationResult\":{\"statement\":{\"predicate\":{}}}}]\\n'\n"
+        '  printf \'[{"verificationResult":{"statement":{"predicate":{}}}}]\\n\'\n'
         "fi\n",
         encoding="utf-8",
     )

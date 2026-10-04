@@ -10,7 +10,9 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-_SCRIPT_PATH = Path("scripts/verify_attestation_output.py")
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[2] / ".github/scripts/verify_attestation_output.py"
+)
 _STATEMENT_TYPE = "https://in-toto.io/Statement/v1"
 _OTHER_STATEMENT_TYPE = "https://in-toto.io/Statement/v2"
 _PROVENANCE_PREDICATE = "https://slsa.dev/provenance/v1"
@@ -35,6 +37,7 @@ def _provenance_predicate() -> dict[str, Any]:
                     "path": _WORKFLOW_PATH,
                 }
             },
+            "internalParameters": {"github": {"runner_environment": "github-hosted"}},
             "resolvedDependencies": [
                 {
                     "uri": f"git+https://github.com/{_REPOSITORY}@{_SOURCE_REF}",
@@ -43,9 +46,7 @@ def _provenance_predicate() -> dict[str, Any]:
             ],
         },
         "runDetails": {
-            "builder": {
-                "id": f"https://github.com/{_SIGNER_WORKFLOW}@{_SOURCE_REF}"
-            }
+            "builder": {"id": f"https://github.com/{_SIGNER_WORKFLOW}@{_SOURCE_REF}"}
         },
     }
 
@@ -58,9 +59,7 @@ def _verification_result(
     """Return gh-shaped JSON carrying one exact signed DSSE statement."""
     artifact_digest = hashlib.sha256(_ARTIFACT_BYTES).hexdigest()
     predicate = (
-        _provenance_predicate()
-        if predicate_type == _PROVENANCE_PREDICATE
-        else {}
+        _provenance_predicate() if predicate_type == _PROVENANCE_PREDICATE else {}
     )
     statement: dict[str, Any] = {
         "_type": statement_type,

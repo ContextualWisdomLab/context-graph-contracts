@@ -8,7 +8,9 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-_SCRIPT_PATH = Path("scripts/verify_attestation_output.py")
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[2] / ".github/scripts/verify_attestation_output.py"
+)
 _ARTIFACT_DIGEST = "a" * 64
 
 

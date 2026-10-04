@@ -8,13 +8,21 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   test:
-    runs-on: ubuntu-24.04
+    if: >-
+      github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      group: CWL contracts CI
+      labels: [self-hosted, Linux, X64, cwlab]
     timeout-minutes: 10
     strategy:
       fail-fast: false
@@ -46,13 +54,17 @@ jobs:
           python -m ruff check . --output-format=github
       - run: >-
           uv run --frozen --extra dev --python "${{ matrix.python-version }}"
-          python -m coverage run -m pytest -q
+          python -m coverage run -m pytest -q tests .github/tests
       - run: >-
           uv run --frozen --extra dev --python "${{ matrix.python-version }}"
           python -m coverage report
 
   package:
-    runs-on: ubuntu-24.04
+    if: >-
+      github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      group: CWL contracts CI
+      labels: [self-hosted, Linux, X64, cwlab]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -312,24 +324,28 @@ jobs:
       - name: Smoke-test installed conformance evidence commands
         run: |
           set -euo pipefail
-          .package-smoke/bin/cwl-context-conformance > /tmp/conformance-report.json
-          .package-smoke/bin/cwl-context-conformance-manifest > /tmp/approved-manifest.json
+          export SMOKE_ROOT
+          SMOKE_ROOT="$(mktemp -d "${RUNNER_TEMP:?}/contracts-smoke.XXXXXX")"
+          trap 'rm -rf -- "$SMOKE_ROOT"' EXIT
+          .package-smoke/bin/cwl-context-conformance > "$SMOKE_ROOT/conformance-report.json"
+          .package-smoke/bin/cwl-context-conformance-manifest > "$SMOKE_ROOT/approved-manifest.json"
           .package-smoke/bin/cwl-context-conformance-verify \
-            /tmp/approved-manifest.json > /tmp/verification-report.json
+            "$SMOKE_ROOT/approved-manifest.json" > "$SMOKE_ROOT/verification-report.json"
           .package-smoke/bin/cwl-context-conformance-admit \
-            /tmp/approved-manifest.json > /tmp/admission-report.json
+            "$SMOKE_ROOT/approved-manifest.json" > "$SMOKE_ROOT/admission-report.json"
           .package-smoke/bin/python - <<'PY'
           import json
+          import os
           from pathlib import Path
 
           conformance = json.loads(
-              Path("/tmp/conformance-report.json").read_text(encoding="utf-8")
+              (Path(os.environ["SMOKE_ROOT"]) / "conformance-report.json").read_text(encoding="utf-8")
           )
           verification = json.loads(
-              Path("/tmp/verification-report.json").read_text(encoding="utf-8")
+              (Path(os.environ["SMOKE_ROOT"]) / "verification-report.json").read_text(encoding="utf-8")
           )
           admission = json.loads(
-              Path("/tmp/admission-report.json").read_text(encoding="utf-8")
+              (Path(os.environ["SMOKE_ROOT"]) / "admission-report.json").read_text(encoding="utf-8")
           )
           assert conformance["status"] == "pass"
           assert conformance["failures"] == []

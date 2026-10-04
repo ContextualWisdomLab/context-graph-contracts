@@ -13,6 +13,11 @@ EVIDENCE_DIR="${EVIDENCE_DIR:-evidence}"
 VERIFICATION_DIR="${VERIFICATION_DIR:-attestation-verification}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROVENANCE_PREDICATE="https://slsa.dev/provenance/v1"
+export EXPECTED_RUNNER_ENVIRONMENT="${EXPECTED_RUNNER_ENVIRONMENT-github-hosted}"
+case "$EXPECTED_RUNNER_ENVIRONMENT" in
+  github-hosted|self-hosted) ;;
+  *) echo "unsupported expected runner environment" >&2; exit 1 ;;
+esac
 
 if [[ "$SOURCE_REF" != "$EXPECTED_SOURCE_REF" ]]; then
   echo "refusing attestation verification outside protected main" >&2
@@ -40,7 +45,7 @@ if [[ ! -f "$sbom_path" || -L "$sbom_path" ]]; then
 fi
 
 snapshot_package_evidence() {
-  PYTHONPATH="$SCRIPT_DIR/../src" python - "$EVIDENCE_DIR" <<'PY'
+  PYTHONPATH="$SCRIPT_DIR/../../src" python - "$EVIDENCE_DIR" <<'PY'
 from __future__ import annotations
 
 import json
@@ -167,8 +172,10 @@ common_policy=(
   --signer-digest "$SOURCE_SHA"
   --signer-workflow "$SIGNER_WORKFLOW"
   --cert-oidc-issuer https://token.actions.githubusercontent.com
-  --deny-self-hosted-runners
 )
+if [[ "$EXPECTED_RUNNER_ENVIRONMENT" == "github-hosted" ]]; then
+  common_policy+=(--deny-self-hosted-runners)
+fi
 
 for artifact in "${artifacts[@]}"; do
   artifact_name="$(basename "$artifact")"

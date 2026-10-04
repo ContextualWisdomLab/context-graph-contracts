@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-_SUPPLY_CHAIN = Path(".github/workflows/supply-chain.yml")
+_SUPPLY_CHAIN = (
+    Path(__file__).resolve().parents[2] / ".github/workflows/supply-chain.yml"
+)
 
 
 def _protected_main_job() -> str:
@@ -80,6 +82,9 @@ def test_source_manifest_itself_is_attested_and_verified_against_same_source() -
     assert '--source-ref "$EXPECTED_SOURCE_REF"' in verify_step
     assert '--signer-digest "$SOURCE_SHA"' in verify_step
     assert '--signer-workflow "$SIGNER_WORKFLOW"' in verify_step
-    assert "--deny-self-hosted-runners" in verify_step
+    assert "--deny-self-hosted-runners" not in verify_step
+    assert "EXPECTED_RUNNER_ENVIRONMENT: self-hosted" in job
+    assert "group: CWL contracts release" in job
+    assert "environment: contracts-release" in job
     assert "--predicate-type https://slsa.dev/provenance/v1" in verify_step
     assert "release-source-manifest.provenance.json" in verify_step

@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
@@ -16,7 +20,11 @@ jobs:
   package-evidence:
     outputs:
       package-snapshot: ${{ steps.package-evidence-verification.outputs.package_snapshot }}
-    runs-on: ubuntu-24.04
+    if: >-
+      github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on:
+      group: CWL contracts CI
+      labels: [self-hosted, Linux, X64, cwlab]
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -75,15 +83,15 @@ jobs:
       - name: Bind package-evidence bytes to reproducibility proof
         run: |
           mkdir package-reproducibility-evidence
-          python scripts/verify_reproducible_package_builds.py dist reproducibility-build \
+          python .github/scripts/verify_reproducible_package_builds.py dist reproducibility-build \
             | tee package-reproducibility-evidence/verification.txt
           (
             cd dist
-            sha256sum *.whl *.tar.gz
+            sha256sum -- *.whl *.tar.gz
           ) > package-reproducibility-evidence/package-evidence-SHA256SUMS
           (
             cd reproducibility-build
-            sha256sum *.whl *.tar.gz
+            sha256sum -- *.whl *.tar.gz
           ) > package-reproducibility-evidence/witness-SHA256SUMS
       - name: Retain package-evidence reproducibility proof
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -142,7 +150,7 @@ jobs:
           PY
           (
             cd dist
-            sha256sum *.whl *.tar.gz cwl-context-contracts.spdx.json > SHA256SUMS
+            sha256sum -- *.whl *.tar.gz cwl-context-contracts.spdx.json > SHA256SUMS
             sha256sum -c SHA256SUMS
           )
       - name: Verify package evidence with the release tool
@@ -175,9 +183,16 @@ jobs:
           retention-days: 7
 
   attest-protected-main:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      github.ref_protected && vars.CONTRACTS_SELF_HOSTED_RELEASE_ENABLED == 'true'
     needs: package-evidence
-    runs-on: ubuntu-24.04
+    environment: contracts-release
+    env:
+      EXPECTED_RUNNER_ENVIRONMENT: self-hosted
+    runs-on:
+      group: CWL contracts release
+      labels: [self-hosted, Linux, X64, cwlab]
     timeout-minutes: 10
     permissions:
       contents: read
@@ -187,7 +202,17 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ github.sha }}
           persist-credentials: false
+      - name: Bind signing checkout to the exact source commit
+        env:
+          EXPECTED_SHA: ${{ github.sha }}
+        run: |
+          source_sha="$(git rev-parse HEAD)"
+          if [[ "$source_sha" != "$EXPECTED_SHA" ]]; then
+            echo "signing checkout does not match the exact source SHA" >&2
+            exit 1
+          fi
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.14"
@@ -258,7 +283,7 @@ jobs:
           EXPECTED_PACKAGE_SNAPSHOT: ${{ needs.package-evidence.outputs.package-snapshot }}
           EVIDENCE_DIR: evidence
           VERIFICATION_DIR: attestation-verification
-        run: bash scripts/verify_release_attestations.sh
+        run: bash .github/scripts/verify_release_attestations.sh
       - name: Build attestable release-source manifest
         env:
           SOURCE_SHA: ${{ github.sha }}
@@ -295,10 +320,9 @@ jobs:
             --signer-digest "$SOURCE_SHA" \
             --signer-workflow "$SIGNER_WORKFLOW" \
             --cert-oidc-issuer https://token.actions.githubusercontent.com \
-            --deny-self-hosted-runners \
             --predicate-type https://slsa.dev/provenance/v1 \
             --format json \
-            | python scripts/verify_attestation_output.py \
+            | python .github/scripts/verify_attestation_output.py \
                 attestation-verification/release-source-manifest.provenance.json \
                 "$manifest_digest" \
                 https://slsa.dev/provenance/v1

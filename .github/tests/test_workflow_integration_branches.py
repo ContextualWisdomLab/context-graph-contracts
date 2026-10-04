@@ -7,19 +7,23 @@ from pathlib import Path
 
 from cwl_context_contracts import available_conformance_profile_names
 
-_CI_PATH = Path(".github/workflows/ci.yml")
-_SUPPLY_CHAIN_PATH = Path(".github/workflows/supply-chain.yml")
-_RECEIPT_PACKAGE_SMOKE_PATH = Path(".github/workflows/receipt-package-smoke.yml")
-_REPRODUCIBILITY_PATH = Path(".github/workflows/reproducibility.yml")
+_CI_PATH = Path(__file__).resolve().parents[2] / ".github/workflows/ci.yml"
+_SUPPLY_CHAIN_PATH = (
+    Path(__file__).resolve().parents[2] / ".github/workflows/supply-chain.yml"
+)
+_RECEIPT_PACKAGE_SMOKE_PATH = (
+    Path(__file__).resolve().parents[2] / ".github/workflows/receipt-package-smoke.yml"
+)
+_REPRODUCIBILITY_PATH = (
+    Path(__file__).resolve().parents[2] / ".github/workflows/reproducibility.yml"
+)
 _WORKFLOW_PATHS = (
     _CI_PATH,
     _SUPPLY_CHAIN_PATH,
     _RECEIPT_PACKAGE_SMOKE_PATH,
     _REPRODUCIBILITY_PATH,
 )
-_PUSH_BRANCHES_PATTERN = re.compile(
-    r"(?m)^  push:\n    branches: \[([^\]]+)\]$"
-)
+_PUSH_BRANCHES_PATTERN = re.compile(r"(?m)^  push:\n    branches: \[([^\]]+)\]$")
 _EXACT_SOURCE_SHA = "${{ github.event.pull_request.head.sha || github.sha }}"
 _REQUIRED_EXACT_SOURCE_CHECKOUTS = {
     _CI_PATH: 2,
@@ -34,11 +38,7 @@ def _push_branches(workflow_path: Path) -> set[str]:
     workflow_text = workflow_path.read_text(encoding="utf-8")
     match = _PUSH_BRANCHES_PATTERN.search(workflow_text)
     assert match is not None, f"{workflow_path} must declare explicit push branches"
-    return {
-        branch.strip()
-        for branch in match.group(1).split(",")
-        if branch.strip()
-    }
+    return {branch.strip() for branch in match.group(1).split(",") if branch.strip()}
 
 
 def test_repository_workflows_run_on_git_flow_integration_branches() -> None:
@@ -110,8 +110,7 @@ def test_protected_main_revalidates_downloaded_evidence_before_attesting() -> No
     assert "verify_package_evidence_directory" in verification_step
     assert (
         "EXPECTED_PACKAGE_SNAPSHOT: "
-        "${{ needs.package-evidence.outputs.package-snapshot }}"
-        in verification_step
+        "${{ needs.package-evidence.outputs.package-snapshot }}" in verification_step
     )
     assert "package evidence changed since build verification" in verification_step
 

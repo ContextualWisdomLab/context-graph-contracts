@@ -91,7 +91,7 @@
   3.0.1 JSON-LD to be supplied to pinned `actions/attest` through explicit
   `https://spdx.dev/Document/v3` custom-predicate mode rather than its SPDX-2
   automatic detector. They require exact repository/ref/source-digest/signer
-  identity, GitHub Actions OIDC issuer, hosted-runner policy, one wheel plus one
+  identity, GitHub Actions OIDC issuer, explicitly selected signed runner-environment policy, one wheel plus one
   source distribution, both SLSA and SPDX predicate verification, and
   machine-readable verification-result retention under the exact source SHA.
   The executable verifier additionally requires the downloaded canonical SPDX

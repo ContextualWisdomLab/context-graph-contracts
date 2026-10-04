@@ -124,6 +124,12 @@ def _require_matching_provenance_predicate(
     source_sha = os.environ["SOURCE_SHA"]
     signer_workflow = os.environ["SIGNER_WORKFLOW"]
     workflow_path = signer_workflow.removeprefix(f"{repository}/")
+    expected_runner_environment = os.environ.get(
+        "EXPECTED_RUNNER_ENVIRONMENT", "github-hosted"
+    )
+    if expected_runner_environment not in {"github-hosted", "self-hosted"}:
+        raise ValueError("unsupported expected runner environment")
+    runner_environment_mismatch = False
     expected = {
         "buildType": _GITHUB_ACTIONS_BUILD_TYPE,
         "externalParameters": {
@@ -157,7 +163,18 @@ def _require_matching_provenance_predicate(
         except (KeyError, TypeError):
             continue
         if actual == expected:
-            return
+            try:
+                runner_environment = build_definition["internalParameters"]["github"][
+                    "runner_environment"
+                ]
+            except (KeyError, TypeError):
+                runner_environment_mismatch = True
+                continue
+            if runner_environment == expected_runner_environment:
+                return
+            runner_environment_mismatch = True
+    if runner_environment_mismatch:
+        raise ValueError("signed provenance runner environment does not match policy")
     raise ValueError(
         "provenance predicate does not match expected GitHub Actions build"
     )
