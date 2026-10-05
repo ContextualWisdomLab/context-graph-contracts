@@ -156,6 +156,7 @@ Products such as `semantic-data-portal`, `enterprise-architecture-core`, `pg-erd
 
 Start with the smallest document that answers the integration question:
 
+- [`examples/context_assertion_quickstart.py`](examples/context_assertion_quickstart.py) — executable installed-SDK synthetic sample; compatibility only, not release approval or runtime authorization.
 - [`docs/index.md`](docs/index.md) — documentation landing and integration path.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — identity, truth, temporal, provenance, and contract architecture.
 - [`docs/CONTEXT_MAP.md`](docs/CONTEXT_MAP.md) — bounded contexts and dependency direction.

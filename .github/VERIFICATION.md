@@ -8,7 +8,34 @@ an immutable release, or consumer authority. Current repository `.github/`
 directory is the migration scope; the organization's separate `.github`
 repository was not modified.
 
-## Actually executed
+## Current acceptance — October 5, 2026
+
+- Published existing migration as Draft PR #29, stacked on #21. Remote source
+  `d25fc5b0068e92276ec70cb01b000badff3c4ec4` includes inline pre-checkout
+  candidate admission: unsupported forks fail instead of skipping every job.
+  Six tuples exercised against five actual shells; independent review passed.
+- Combined local follow-up with the executable SDK quickstart: Python
+  **3.11–3.14 each 599 passed**; SDK statement/branch coverage remains **100%**.
+  Ruff/actionlint pass. Quickstart executed from a real nonrepository cwd with
+  the installed wheel's isolated interpreter; synthetic authority/media
+  rejection and envelope/truth/time/provenance preservation succeeded.
+- Quickstart independent review passed: four focused tests, scoped Ruff and
+  separately isolated installed-wheel execution passed. All four reviewed file
+  hashes match. No runtime package implementation or dependencies were changed.
+- Remote inventory rechecked at 12:09–12:11 KST: proposed groups still absent,
+  environments=0, repo-scoped runners=0, all four workflow identities disabled.
+  Parent independently queried environments=0, rulesets=[] and disabled workflow
+  identities. The old organization ruleset 18156473 in Issue #15 is historical,
+  not current governance proof. Neither develop nor main has workflow source.
+- PR checks labelled successful are **review skipped** (Draft / expired trial),
+  not qualifying approval or CI evidence. No remote execution is claimed.
+
+Next operation: publish the reviewed quickstart on the same Draft PR and bind
+this exact consumer scope to the existing runner-owner issue
+`ContextualWisdomLab/linux-cluster-ops#326`; do not borrow existing restricted
+security/control runners or another consumer's pending approval.
+
+## Historical migration checks (before follow-up)
 
 - Baseline before edits: 565 tests passed, SDK coverage 100%.
 - Python 3.11, 3.12, 3.13: full suite, **589 passed** per interpreter.
