@@ -35,8 +35,9 @@ silently fall back to hosted infrastructure. Provision dedicated, disposable
 Linux x64 runners with this repository-only access through the runner owner.
 Require a fresh VM/container boundary per job, no production network access,
 no host Docker socket or mounted credentials, and no reuse of PR workspaces by
-signing jobs. Fork guards are defense in depth, **not** isolation. PRs from
-forks are not executed by these lanes and skipped checks are not acceptance.
+signing jobs. Pre-checkout admission is defense in depth, **not** isolation. PRs from
+forks fail candidate jobs before checkout; they are not silently skipped or
+promoted to passing source evidence.
 
 Provision Git, Bash, GNU checksum tools, supported Node for pinned JavaScript
 actions, Python setup tooling, and GitHub CLI with artifact-attestation support.

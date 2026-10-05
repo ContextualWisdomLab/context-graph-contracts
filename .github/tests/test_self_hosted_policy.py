@@ -7,10 +7,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOWS = ROOT / ".github" / "workflows"
-FORK_GUARD = (
-    "github.event_name != 'pull_request' || "
-    "github.event.pull_request.head.repo.full_name == github.repository"
-)
 
 
 def _jobs() -> list[tuple[str, str, str]]:
@@ -39,7 +35,9 @@ def test_all_executable_jobs_use_dedicated_self_hosted_groups() -> None:
         assert re.search(r"(?m)^    runs-on:\n", block), (workflow, name)
         assert re.search(r"(?m)^    timeout-minutes: (10|20|30)$", block)
         if name != "attest-protected-main":
-            assert FORK_GUARD in block, (workflow, name)
+            assert not re.search(r"(?m)^    if:", block), (workflow, name)
+            assert "name: Admit candidate before checkout" in block
+            assert "HEAD_REPOSITORY:" in block
 
 
 def test_privileged_release_is_separately_approved_and_explicitly_enabled() -> None:
