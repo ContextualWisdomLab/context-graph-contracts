@@ -8,8 +8,12 @@ from typing import Any
 
 import pytest
 
-_SCRIPT_PATH = Path("scripts/strict_json_identity.py")
-_VERIFIER_SCRIPT_PATH = Path("scripts/verify_attestation_output.py")
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[2] / ".github/scripts/strict_json_identity.py"
+)
+_VERIFIER_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[2] / ".github/scripts/verify_attestation_output.py"
+)
 
 
 def _load_script() -> dict[str, Any]:

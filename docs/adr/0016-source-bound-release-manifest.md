@@ -40,7 +40,7 @@ Rejected. Release mechanics are not Context Fabric domain truth. Doing so would 
 
 ### D. Emit one release-source manifest and authenticate that manifest independently
 
-Selected. The manifest is a compact digest-bound release evidence artifact. The protected-main workflow first re-verifies package provenance and SPDX attestations, then creates the manifest, attests the manifest itself, and verifies that attestation against the same repository, protected ref, exact source digest, signer digest/workflow, GitHub Actions OIDC issuer, hosted-runner policy and SLSA predicate before retaining the evidence.
+Selected. The manifest is a compact digest-bound release evidence artifact. The protected-main workflow first re-verifies package provenance and SPDX attestations, then creates the manifest, attests the manifest itself, and verifies that attestation against the same repository, protected ref, exact source digest, signer digest/workflow, GitHub Actions OIDC issuer, explicitly selected signed runner-environment policy and SLSA predicate before retaining the evidence.
 
 ## Decision
 

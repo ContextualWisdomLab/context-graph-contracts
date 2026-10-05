@@ -14,7 +14,10 @@ from cwl_context_contracts.package_evidence_verifier import (
     verify_package_evidence_directory,
 )
 
-_SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[2]
+    / ".github/scripts/verify_release_attestations.sh"
+)
 _SOURCE_SHA = "a" * 40
 _REPOSITORY = "ContextualWisdomLab/context-graph-contracts"
 _SOURCE_REF = "refs/heads/main"
@@ -56,6 +59,7 @@ def _provenance_predicate() -> dict[str, Any]:
                     "path": _WORKFLOW_PATH,
                 }
             },
+            "internalParameters": {"github": {"runner_environment": "github-hosted"}},
             "resolvedDependencies": [
                 {
                     "uri": f"git+https://github.com/{_REPOSITORY}@{_SOURCE_REF}",
@@ -64,9 +68,7 @@ def _provenance_predicate() -> dict[str, Any]:
             ],
         },
         "runDetails": {
-            "builder": {
-                "id": f"https://github.com/{_SIGNER_WORKFLOW}@{_SOURCE_REF}"
-            }
+            "builder": {"id": f"https://github.com/{_SIGNER_WORKFLOW}@{_SOURCE_REF}"}
         },
     }
 
@@ -136,12 +138,12 @@ def test_verifier_rejects_regular_output_replacement_after_gh_writes(
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n"
         'if [[ " $* " == *" --predicate-type "* ]]; then\n'
-        '  printf \'%s\\n\' "$GH_FAKE_MISMATCHED_RESULT"\n'
+        "  printf '%s\\n' \"$GH_FAKE_MISMATCHED_RESULT\"\n"
         '  output_path="$GH_FAKE_VERIFICATION_DIR/$(basename "$3").sbom.json"\n'
         '  rm -f "$output_path"\n'
         '  printf \'%s\\n\' "$GH_FAKE_ATTACKER_RESULT" > "$output_path"\n'
         "else\n"
-        '  printf \'%s\\n\' "$GH_FAKE_PROVENANCE_RESULT"\n'
+        "  printf '%s\\n' \"$GH_FAKE_PROVENANCE_RESULT\"\n"
         "fi\n",
         encoding="utf-8",
     )

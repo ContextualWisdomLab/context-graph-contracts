@@ -2,7 +2,9 @@
 
 from pathlib import Path
 
-_RECEIPT_SMOKE = Path(".github/workflows/receipt-package-smoke.yml")
+_RECEIPT_SMOKE = (
+    Path(__file__).resolve().parents[2] / ".github/workflows/receipt-package-smoke.yml"
+)
 _REQUIRED_INSTALLED_SDK_MARKERS = (
     "CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE",
     "ContextAssertionAdmission",
@@ -10,7 +12,7 @@ _REQUIRED_INSTALLED_SDK_MARKERS = (
     "load_conformance_profile(",
     "context-assertion-event-semantics.v1.json",
     "admission.envelope.to_mapping() == event_mapping",
-    "admission.assertion.to_mapping() == event_mapping[\"data\"]",
+    'admission.assertion.to_mapping() == event_mapping["data"]',
     "admission.schema_version",
     "admission.profile_id",
     "admission.profile_version",

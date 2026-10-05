@@ -13,7 +13,10 @@ from cwl_context_contracts.package_evidence_verifier import (
     verify_package_evidence_directory,
 )
 
-_SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[2]
+    / ".github/scripts/verify_release_attestations.sh"
+)
 _SOURCE_SHA = "a" * 40
 _REPOSITORY = "ContextualWisdomLab/context-graph-contracts"
 _SOURCE_REF = "refs/heads/main"
@@ -48,6 +51,7 @@ def _provenance_predicate() -> dict[str, object]:
                     "path": _WORKFLOW_PATH,
                 }
             },
+            "internalParameters": {"github": {"runner_environment": "github-hosted"}},
             "resolvedDependencies": [
                 {
                     "uri": f"git+https://github.com/{_REPOSITORY}@{_SOURCE_REF}",
@@ -56,9 +60,7 @@ def _provenance_predicate() -> dict[str, object]:
             ],
         },
         "runDetails": {
-            "builder": {
-                "id": f"https://github.com/{_SIGNER_WORKFLOW}@{_SOURCE_REF}"
-            }
+            "builder": {"id": f"https://github.com/{_SIGNER_WORKFLOW}@{_SOURCE_REF}"}
         },
     }
 
@@ -128,9 +130,9 @@ def test_every_attestation_lookup_selects_its_predicate_explicitly(
         "set -euo pipefail\n"
         'case " $* " in\n'
         f'  *" --predicate-type={_PROVENANCE_PREDICATE} "*) '
-        'printf \'%s\\n\' "$GH_PROVENANCE" ;;\n'
+        "printf '%s\\n' \"$GH_PROVENANCE\" ;;\n"
         f'  *" --predicate-type {_SPDX_PREDICATE} "*) '
-        'printf \'%s\\n\' "$GH_SBOM" ;;\n'
+        "printf '%s\\n' \"$GH_SBOM\" ;;\n"
         '  *) echo "missing explicit predicate type" >&2; exit 9 ;;\n'
         "esac\n",
         encoding="utf-8",

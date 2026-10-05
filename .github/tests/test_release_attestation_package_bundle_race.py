@@ -13,7 +13,10 @@ from cwl_context_contracts.package_evidence_verifier import (
     verify_package_evidence_directory,
 )
 
-_SCRIPT_PATH = Path("scripts/verify_release_attestations.sh")
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[2]
+    / ".github/scripts/verify_release_attestations.sh"
+)
 _SOURCE_SHA = "a" * 40
 _SPDX_PREDICATE = "https://spdx.dev/Document/v3"
 _VERSION = "0.1.0"
@@ -67,7 +70,7 @@ def _write_bundle(
 
 def _fake_gh_source() -> str:
     """Return a fake gh that verifies the artifact and SPDX bytes it receives."""
-    return r'''#!/usr/bin/env python3
+    return r"""#!/usr/bin/env python3
 import base64
 import hashlib
 import json
@@ -114,7 +117,7 @@ result = [
     }
 ]
 print(json.dumps(result))
-'''
+"""
 
 
 def test_verifier_rejects_coherent_bundle_replacement_after_build_snapshot(

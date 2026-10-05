@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-_SUPPLY_CHAIN_PATH = Path(".github/workflows/supply-chain.yml")
+_SUPPLY_CHAIN_PATH = (
+    Path(__file__).resolve().parents[2] / ".github/workflows/supply-chain.yml"
+)
 _SETUP_PYTHON = "actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405"
 
 
@@ -33,10 +35,14 @@ def test_protected_main_invokes_executable_attestation_verifier() -> None:
         "SIGNER_WORKFLOW: ${{ github.repository }}/.github/workflows/supply-chain.yml"
         in job
     )
+    assert "EXPECTED_RUNNER_ENVIRONMENT: self-hosted" in job
+    assert "group: CWL contracts release" in job
+    assert "environment: contracts-release" in job
+    assert "--deny-self-hosted-runners" not in job
     assert "SPDX_PREDICATE: https://spdx.dev/Document/v3" in job
     assert "EVIDENCE_DIR: evidence" in job
     assert "VERIFICATION_DIR: attestation-verification" in job
-    assert "run: bash scripts/verify_release_attestations.sh" in job
+    assert "run: bash .github/scripts/verify_release_attestations.sh" in job
 
 
 def test_protected_main_binds_attestations_to_build_job_package_snapshot() -> None:
@@ -71,7 +77,7 @@ def test_attested_package_bytes_are_in_the_reproducibility_comparison() -> None:
         "uv build --wheel --sdist --out-dir ../reproducibility-build"
     )
     comparison = package_job.find(
-        "python scripts/verify_reproducible_package_builds.py "
+        "python .github/scripts/verify_reproducible_package_builds.py "
         "dist reproducibility-build"
     )
     upload_marker = "name: Upload checked-out commit package evidence"
@@ -90,8 +96,7 @@ def test_attested_package_bytes_are_in_the_reproducibility_comparison() -> None:
     assert first_build < witness_checkout < witness_build < comparison < package_upload
     assert (
         "name: package-reproducibility-"
-        "${{ github.event.pull_request.head.sha || github.sha }}"
-        in package_job
+        "${{ github.event.pull_request.head.sha || github.sha }}" in package_job
     )
 
 
@@ -120,8 +125,7 @@ def test_spdx3_attestation_uses_explicit_in_toto_predicate_mode() -> None:
     assert "sbom-path:" not in attestation_step
     assert "predicate-type: https://spdx.dev/Document/v3" in attestation_step
     assert (
-        "predicate-path: evidence/cwl-context-contracts.spdx.json"
-        in attestation_step
+        "predicate-path: evidence/cwl-context-contracts.spdx.json" in attestation_step
     )
 
 

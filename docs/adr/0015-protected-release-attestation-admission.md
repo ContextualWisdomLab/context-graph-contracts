@@ -24,10 +24,22 @@ For a protected `main` release candidate:
 2. Create SLSA provenance and SPDX 3 attestations only after that admission succeeds. SPDX 3 uses the explicit `https://spdx.dev/Document/v3` predicate boundary rather than an SPDX 2 compatibility downgrade.
 3. Before querying GitHub for attestations, snapshot each release artifact through a stable regular-file descriptor and compute its SHA-256 digest.
 4. For every candidate emitted as successfully verified by `gh`, decode the paired bundle's base64 DSSE payload, require the in-toto payload type, parse the signed JSON strictly, and require the signed statement's `subject` to include the exact pre-verification artifact SHA-256 digest. An artifact replacement between the provenance and SPDX checks therefore fails closed instead of allowing evidence splicing.
-5. For the SLSA provenance assertion, require the subject-matched signed DSSE statement to use the pinned GitHub Actions workflow build type and to bind the exact protected ref, repository URL, workflow path, resolved Git commit, and builder workflow identity emitted by the pinned `actions/attest` implementation. Reject missing or unexpected external parameters rather than accepting predicate-type-only provenance.
+5. For the SLSA provenance assertion, require the subject-matched signed DSSE statement to use the pinned GitHub Actions workflow build type and to bind the exact protected ref, repository URL, workflow path, resolved Git commit, and builder workflow identity emitted by the pinned `actions/attest` implementation. Also require signed `buildDefinition.internalParameters.github.runner_environment` to equal the supported caller policy (`github-hosted` by default, or explicitly `self-hosted`); reject missing, unknown, or mismatched values. Reject missing or unexpected external parameters rather than accepting predicate-type-only provenance.
 6. For the SPDX assertion, require the subject-matched **signed DSSE statement's** predicate to equal the pre-verification canonical SPDX 3.0.1 snapshot by deterministic parsed-value SHA-256 identity. Parse every JSON number losslessly as an exact decimal and encode the parsed JSON value injectively before hashing. Never use `verificationResult.statement.predicate` as the identity source, because its protobuf/protojson representation can already have rounded a distinct legal JSON number.
-7. Apply repository, protected source ref, exact source digest, signer workflow/digest, GitHub Actions OIDC issuer, and hosted-runner policy independently through `gh attestation verify`. These certificate/source filters complement rather than replace signed SLSA predicate validation.
+7. Apply repository, protected source ref, exact source digest, signer workflow/digest, GitHub Actions OIDC issuer, and the selected runner policy independently through `gh attestation verify`. Default `github-hosted` callers retain `--deny-self-hosted-runners`; explicit `self-hosted` callers omit it and must pass the strict signed runner-environment check. These certificate/source filters complement rather than replace signed SLSA predicate validation.
 8. Evaluate the exact JSON bytes emitted by the successful verifier process before retaining them. Reject malformed/missing verified bundle structure, invalid base64, unexpected DSSE payload type, duplicate JSON members, non-standard numeric constants, malformed UTF-8/JSON, oversized evidence, subject drift, provenance build-identity drift, and predicate drift. Retained files are audit evidence, not a second mutable input to the admission decision.
+
+The workflow routes build/test to the proposed dedicated `CWL contracts CI`
+runner group, and attestation to the separate proposed `CWL contracts release`
+group with GitHub environment `contracts-release` and explicit
+`EXPECTED_RUNNER_ENVIRONMENT: self-hosted`. The protected-main job additionally
+requires `CONTRACTS_SELF_HOSTED_RELEASE_ENABLED` to equal `true`. These declarations
+neither provision groups nor change owner restrictions or configure required
+human approvals. Operators must establish and verify those controls independently.
+Self-hosted isolation is weaker and operator-managed; signed runner-environment
+equality does not prove clean/ephemeral hosts, administrator trust, or a
+GitHub-hosted isolation/SLSA guarantee. No routing, enablement, environment name,
+or successful attestation implicitly approves publication.
 
 This decision supplies deterministic artifact/provenance consistency only. It does not create a qualifying human approval, make an unprotected branch release-eligible, authorize publication, or replace downstream independent verification.
 
@@ -46,13 +58,13 @@ This decision supplies deterministic artifact/provenance consistency only. It do
 
 Executable acceptance lives in:
 
-- `tests/test_workflow_integration_branches.py`, which requires downloaded package evidence to be re-admitted before the first protected-main attestation action;
-- `tests/test_provenance_attestation_policy.py`, which admits the exact pinned GitHub Actions SLSA build identity and rejects content-free provenance, wrong protected refs, wrong resolved commits, wrong builder workflows, and unexpected external parameters;
-- `tests/test_release_attestation_verifier_script.py`, including package-shape, protected-ref, realistic GitHub Actions provenance, SPDX predicate-drift, mutable-SBOM, verification-output replacement, signed-bundle shape, and cross-attestation artifact-replacement regressions;
-- `tests/test_release_attestation_numeric_identity.py`, which simulates a signed decimal above the binary64 exact-integer boundary together with a rounded `verificationResult.statement` view and proves admission follows the exact signed DSSE payload instead;
-- `scripts/strict_json_identity.py`, which performs bounded strict JSON parsing and lossless semantic identity;
-- `scripts/verify_release_attestations.sh`, which snapshots canonical SPDX and artifact identity before verification; and
-- `scripts/verify_attestation_output.py`, which decodes the verified bundle's signed DSSE payload and requires its statement subject, SLSA build identity, and, for SPDX, its predicate to bind the protected release context before retaining the exact verifier output.
+- `.github/tests/test_workflow_integration_branches.py`, which requires downloaded package evidence to be re-admitted before the first protected-main attestation action;
+- `.github/tests/test_provenance_attestation_policy.py`, which admits the exact pinned GitHub Actions SLSA build identity and rejects content-free provenance, wrong protected refs, wrong resolved commits, wrong builder workflows, and unexpected external parameters;
+- `.github/tests/test_release_attestation_verifier_script.py`, including package-shape, protected-ref, realistic GitHub Actions provenance, SPDX predicate-drift, mutable-SBOM, verification-output replacement, signed-bundle shape, and cross-attestation artifact-replacement regressions;
+- `.github/tests/test_release_attestation_numeric_identity.py`, which simulates a signed decimal above the binary64 exact-integer boundary together with a rounded `verificationResult.statement` view and proves admission follows the exact signed DSSE payload instead;
+- `.github/scripts/strict_json_identity.py`, which performs bounded strict JSON parsing and lossless semantic identity;
+- `.github/scripts/verify_release_attestations.sh`, which snapshots canonical SPDX and artifact identity before verification; and
+- `.github/scripts/verify_attestation_output.py`, which decodes the verified bundle's signed DSSE payload and requires its statement subject, SLSA build identity, and, for SPDX, its predicate to bind the protected release context before retaining the exact verifier output.
 
 Operational proof is intentionally deferred until the same reviewed implementation runs successfully on one exact integrated protected `main` SHA with all repository and governance gates satisfied together.
 

@@ -39,3 +39,5 @@ approved facts.
 - Catalog, EA, workflow, or UI functionality.
 - Automatic promotion of inferred relationships.
 - Provider-specific Atlan or SAP LeanIX payloads.
+
+[Executable SDK quickstart: synthetic compatibility sample, not release approval or runtime authorization](../examples/context_assertion_quickstart.py).

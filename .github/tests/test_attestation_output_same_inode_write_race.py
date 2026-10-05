@@ -13,7 +13,7 @@ def test_verified_output_rejects_same_inode_mutation(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Retained evidence must equal the exact bytes accepted from ``gh``."""
-    monkeypatch.syspath_prepend(str(Path("scripts").resolve()))
+    monkeypatch.syspath_prepend(str(Path(__file__).resolve().parents[1] / "scripts"))
     import verify_attestation_output as verifier
 
     target = tmp_path / "verified.json"

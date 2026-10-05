@@ -8,15 +8,35 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   release-package-reproducibility:
-    runs-on: ubuntu-24.04
+    runs-on:
+      group: CWL contracts CI
+      labels: [self-hosted, Linux, X64, cwlab]
     timeout-minutes: 10
     steps:
+      - name: Admit candidate before checkout
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_REPOSITORY: ${{ github.event.pull_request.head.repo.full_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            exit 0
+          fi
+          if [[ "$EVENT_NAME" == "pull_request" && -n "$HEAD_REPOSITORY" && "$HEAD_REPOSITORY" == "$REPOSITORY" ]]; then
+            exit 0
+          fi
+          echo "unsupported candidate source; no source checkout or execution admitted" >&2
+          exit 1
       - name: Checkout exact candidate into first clean tree
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -57,6 +77,11 @@ jobs:
         run: |
           (cd source-a && uv lock --check)
           (cd source-b && uv lock --check)
+      - name: Initialize fresh reproducibility output directories
+        run: |
+          cd "${GITHUB_WORKSPACE:?}"
+          rm -rf -- build-a build-b reproducibility-evidence
+          mkdir -- build-a build-b reproducibility-evidence
       - name: Build release packages from first clean tree
         env:
           SOURCE_DATE_EPOCH: ${{ steps.source.outputs.source_date_epoch }}
@@ -69,13 +94,12 @@ jobs:
           (cd source-b && uv build --wheel --sdist --out-dir ../build-b)
       - name: Verify byte-reproducible release packages
         run: |
-          mkdir reproducibility-evidence
-          python source-a/scripts/verify_reproducible_package_builds.py \
+          python source-a/.github/scripts/verify_reproducible_package_builds.py \
             build-a build-b \
             | tee reproducibility-evidence/verification.txt
           (
             cd build-a
-            sha256sum *.whl *.tar.gz
+            sha256sum -- *.whl *.tar.gz
           ) > reproducibility-evidence/SHA256SUMS
       - name: Retain exact-candidate reproducibility evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

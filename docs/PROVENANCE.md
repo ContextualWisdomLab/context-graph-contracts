@@ -14,12 +14,42 @@ The `supply-chain` workflow is the executable baseline:
 - only after that admission succeeds, create **SLSA** build provenance and canonical SPDX 3 SBOM attestations with GitHub Actions OIDC-backed artifact attestations;
 - because pinned `actions/attest` v4.2.2 auto-detects SPDX through SPDX 2.x `spdxVersion`/`SPDXID` fields, attest the canonical SPDX 3.0.1 JSON-LD through explicit in-toto custom-predicate mode (`https://spdx.dev/Document/v3`) instead of creating a second compatibility SBOM;
 - before querying GitHub, snapshot each package artifact through a stable regular-file descriptor and compute its SHA-256 identity;
-- immediately verify each wheel and source distribution against the exact repository, `refs/heads/main`, source SHA, signer workflow/digest, GitHub Actions OIDC issuer, and GitHub-hosted runner policy for both SLSA provenance and SPDX 3 predicates;
+- immediately verify each wheel and source distribution against the exact repository, `refs/heads/main`, source SHA, signer workflow/digest, GitHub Actions OIDC issuer, and the explicit self-hosted runner policy for both SLSA provenance and SPDX 3 predicates;
 - for each candidate that `gh attestation verify --format json` reports as successfully verified, decode the paired `attestation.bundle.dsseEnvelope.payload`, require `application/vnd.in-toto+json`, parse the exact signed in-toto JSON with bounded duplicate-safe and exact-decimal semantics, and require the signed `statement.subject` to carry the snapshotted artifact digest;
 - require at least one **subject-matched signed DSSE statement** for each package artifact whose SPDX predicate exactly equals the downloaded canonical SPDX document. The parsed `verificationResult.statement` view is deliberately not used as the semantic-identity source because its protobuf/protojson representation can round generic JSON numbers before policy code sees them; and
 - retain the exact machine-readable verifier bytes under `attestation-verification-<commit-sha>` for release evidence review only after those semantic checks pass.
 
 The workflow uses the SLSA provenance predicate family rather than treating a status label or PR description as provenance. ADR 0015 records the protected-release attestation admission boundary. The normative references are maintained in `docs/doctoring/REFERENCES.md`.
+
+## Runner isolation and CI ownership
+
+Repository-owned workflows, CI-only helpers, and their regression tests live under
+`.github/workflows`, `.github/scripts`, and `.github/tests`. The helpers are not a
+public SDK surface; their source imports and tests resolve from the repository
+location rather than assuming the caller's working directory.
+
+Build/test jobs target the proposed dedicated `CWL contracts CI` runner group.
+Attestation targets the separate proposed `CWL contracts release` group and the
+`contracts-release` GitHub environment. These names do not provision runner groups,
+restrict their owners, configure environment approvals, or prove operational
+isolation. Operators must provision and validate those controls separately. The
+protected-main job also requires the explicit repository variable
+`CONTRACTS_SELF_HOSTED_RELEASE_ENABLED` to equal `true`; routing and enabling the
+job do not themselves approve a release.
+
+The signed SLSA predicate must carry
+`buildDefinition.internalParameters.github.runner_environment` equal to
+`EXPECTED_RUNNER_ENVIRONMENT`. Helpers default to `github-hosted`, including
+`gh --deny-self-hosted-runners`. Only an explicit `self-hosted` caller omits that
+flag and instead requires the exact signed self-hosted value. Missing, unknown, or
+mismatched runner environments are rejected, while repository, workflow, ref,
+source SHA, builder identity, subject digest, and SBOM checks remain mandatory.
+
+Self-hosted execution has weaker, operator-managed isolation: a matching signed
+runner class does not prove ephemeral execution, clean hosts, trustworthy runner
+administrators, or separation from untrusted code. It does not provide a
+GitHub-hosted isolation or SLSA level guarantee. Environment names and valid
+attestations do not create human approval or publication authority.
 
 ## Verification by a consumer
 
@@ -27,7 +57,7 @@ A buyer or downstream build should verify bytes, producer identity, and semantic
 
 1. Download the exact package-evidence artifact and run `cwl-context-package-evidence-verify <evidence-directory>`. Exit `0` proves that the local wheel, source distribution, SPDX 3.0.1 SBOM, and `SHA256SUMS` agree and that the required evidence shape is present. It does **not** prove who produced those bytes.
 2. Verify the **GitHub artifact attestation** for each wheel and source distribution against `ContextualWisdomLab/context-graph-contracts`, the intended protected-main source SHA/ref, and the expected signer workflow. Verify both the default SLSA provenance predicate and the `https://spdx.dev/Document/v3` predicate rather than accepting any attestation merely because a signature is valid.
-3. Confirm the attested source repository, `refs/heads/main`, source digest, signer workflow/digest, GitHub Actions OIDC issuer, and hosted-runner provenance match the intended release evidence. For every accepted statement, also confirm the exact signed in-toto statement carried by the verified bundle's DSSE payload names the SHA-256 digest of the local wheel or source distribution being admitted. The repository's protected-main workflow performs the same fail-closed checks, but a consumer with its own trust policy should still verify independently.
+3. Confirm the attested source repository, `refs/heads/main`, source digest, signer workflow/digest, GitHub Actions OIDC issuer, and signed runner environment match the intended release evidence. For every accepted statement, also confirm the exact signed in-toto statement carried by the verified bundle's DSSE payload names the SHA-256 digest of the local wheel or source distribution being admitted. The repository's protected-main workflow performs the same fail-closed checks, but a consumer with its own trust policy should still verify independently.
 4. Compare the SPDX predicate parsed losslessly from the **subject-matched signed DSSE payload** with the exact downloaded canonical SPDX 3.0.1 document retained in package evidence. Do not use only the convenience `verificationResult.statement.predicate` representation as an identity boundary for arbitrary JSON numbers; predicate-type equality and a rounded parsed view do not prove that the signed SBOM is the retained SBOM.
 5. Install the verified package and run `cwl-context-conformance`; cryptographic provenance does not prove semantic correctness or consumer compatibility by itself.
 6. Capture `cwl-context-conformance-manifest` from that installed package and compare it with the independently approved manifest for the intended release using `cwl-context-conformance-verify`. A successful comparison proves the approved distribution version and semantic-profile bytes are installed; it does not prove who approved the manifest, who built the package, or whether the consumer is authorized to mutate any store.

@@ -12,7 +12,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-_SCRIPT_PATH = Path("scripts/verify_attestation_output.py")
+import pytest
+
+_SCRIPT_PATH = (
+    Path(__file__).resolve().parents[2] / ".github/scripts/verify_attestation_output.py"
+)
 _SOURCE_SHA = "a" * 40
 _ARTIFACT_DIGEST = hashlib.sha256(b"artifact").hexdigest()
 _REPOSITORY = "ContextualWisdomLab/context-graph-contracts"
@@ -46,19 +50,13 @@ def _provenance_predicate() -> dict[str, Any]:
             },
             "resolvedDependencies": [
                 {
-                    "uri": (
-                        f"git+https://github.com/{_REPOSITORY}@{_SOURCE_REF}"
-                    ),
+                    "uri": (f"git+https://github.com/{_REPOSITORY}@{_SOURCE_REF}"),
                     "digest": {"gitCommit": _SOURCE_SHA},
                 }
             ],
         },
         "runDetails": {
-            "builder": {
-                "id": (
-                    f"https://github.com/{_SIGNER_WORKFLOW}@{_SOURCE_REF}"
-                )
-            },
+            "builder": {"id": (f"https://github.com/{_SIGNER_WORKFLOW}@{_SOURCE_REF}")},
             "metadata": {
                 "invocationId": (
                     f"https://github.com/{_REPOSITORY}/actions/runs/123/attempts/1"
@@ -93,10 +91,16 @@ def _verification_result(predicate: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def _run_verifier(
-    tmp_path: Path, predicate: dict[str, Any]
+    tmp_path: Path,
+    predicate: dict[str, Any],
+    *,
+    expected_runner_environment: str | None = None,
 ) -> subprocess.CompletedProcess[str]:
     """Run the verifier with the release workflow identity supplied by its caller."""
     env = os.environ.copy()
+    env.pop("EXPECTED_RUNNER_ENVIRONMENT", None)
+    if expected_runner_environment is not None:
+        env["EXPECTED_RUNNER_ENVIRONMENT"] = expected_runner_environment
     env.update(
         {
             "SOURCE_SHA": _SOURCE_SHA,
@@ -156,9 +160,9 @@ def test_provenance_rejects_wrong_workflow_ref(tmp_path: Path) -> None:
 def test_provenance_rejects_wrong_resolved_source_digest(tmp_path: Path) -> None:
     """Require the signed source dependency to name the exact release commit."""
     predicate = _provenance_predicate()
-    predicate["buildDefinition"]["resolvedDependencies"][0]["digest"][
-        "gitCommit"
-    ] = "b" * 40
+    predicate["buildDefinition"]["resolvedDependencies"][0]["digest"]["gitCommit"] = (
+        "b" * 40
+    )
 
     result = _run_verifier(tmp_path, predicate)
 
@@ -188,3 +192,60 @@ def test_provenance_rejects_unexpected_external_parameter(tmp_path: Path) -> Non
 
     assert result.returncode != 0
     assert _POLICY_ERROR in result.stderr
+
+
+@pytest.mark.parametrize(
+    ("signed_environment", "expected_environment", "accepted"),
+    [
+        ("self-hosted", "self-hosted", True),
+        ("self-hosted", None, False),
+        ("github-hosted", "self-hosted", False),
+        ("self-hosted", "github-hosted", False),
+        ("unknown", "self-hosted", False),
+        ("unknown", "unknown", False),
+        ("github-hosted", "unknown", False),
+        ("github-hosted", "", False),
+        (None, "self-hosted", False),
+        (None, None, False),
+    ],
+)
+def test_provenance_binds_signed_runner_environment(
+    tmp_path: Path,
+    signed_environment: str | None,
+    expected_environment: str | None,
+    accepted: bool,
+) -> None:
+    """Require an explicit supported signed runner class matching caller policy."""
+    predicate = _provenance_predicate()
+    github = predicate["buildDefinition"]["internalParameters"]["github"]
+    if signed_environment is None:
+        del github["runner_environment"]
+    else:
+        github["runner_environment"] = signed_environment
+    result = _run_verifier(
+        tmp_path, predicate, expected_runner_environment=expected_environment
+    )
+    if accepted:
+        assert result.returncode == 0, result.stderr
+        assert (tmp_path / "verified.json").is_file()
+    else:
+        assert result.returncode != 0
+        assert "runner environment" in result.stderr
+        assert not (tmp_path / "verified.json").exists()
+
+
+@pytest.mark.parametrize("missing", ["internalParameters", "github"])
+def test_provenance_rejects_missing_runner_environment_container(
+    tmp_path: Path, missing: str
+) -> None:
+    """Do not infer a runner class from missing signed internal parameters."""
+    predicate = _provenance_predicate()
+    definition = predicate["buildDefinition"]
+    if missing == "internalParameters":
+        del definition[missing]
+    else:
+        del definition["internalParameters"][missing]
+    result = _run_verifier(tmp_path, predicate)
+    assert result.returncode != 0
+    assert "runner environment" in result.stderr
+    assert not (tmp_path / "verified.json").exists()

@@ -6,7 +6,10 @@ import subprocess
 import sys
 from pathlib import Path
 
-_SCRIPT = Path("scripts/verify_reproducible_package_builds.py")
+_SCRIPT = (
+    Path(__file__).resolve().parents[2]
+    / ".github/scripts/verify_reproducible_package_builds.py"
+)
 _WHEEL = "cwl_context_contracts-0.1.0-py3-none-any.whl"
 _SDIST = "cwl_context_contracts-0.1.0.tar.gz"
 

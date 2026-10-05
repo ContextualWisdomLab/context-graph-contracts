@@ -51,7 +51,7 @@ packages = ["src/cwl_context_contracts"]
 
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers"
-testpaths = ["tests"]
+testpaths = ["tests", ".github/tests"]
 
 [tool.coverage.run]
 branch = true
