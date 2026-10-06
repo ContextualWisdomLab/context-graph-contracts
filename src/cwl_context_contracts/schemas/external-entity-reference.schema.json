@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contextualwisdomlab.org/context/external-entity-reference.v1.schema.json",
+  "title": "CWL External Entity Reference",
+  "description": "Opaque reference to one entity inside a tenant-scoped external source. external_id is never normalized; the authority URI carries the tenant.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_authority",
+    "external_entity_type",
+    "external_id",
+    "fully_qualified_name"
+  ],
+  "properties": {
+    "source_authority": {
+      "$ref": "https://schemas.contextualwisdomlab.org/context/canonical-authority-uri.v1.schema.json"
+    },
+    "external_entity_type": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 63,
+      "pattern": "^[a-z][a-z0-9]+(?:_[a-z0-9]+)*$"
+    },
+    "external_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    },
+    "fully_qualified_name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+    }
+  }
+}

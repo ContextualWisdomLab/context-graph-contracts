@@ -132,6 +132,14 @@
   release-admission command, package-evidence verifier, and complete
   release-evidence admission command from an isolated wheel installation.
 
+External metadata observation tests (ADR 0017) cover:
+
+- the DTO round trip for all six truth statuses;
+- replay derivation against an independent implementation, plus tenant and field-framing separation;
+- hostile mappings and JSON text: duplicate members, non-finite numbers, inexact integers, oversize input and Unicode look-alike authorities;
+- every receipt reason code, foreign owner-controlled forgery, supersession as a new fact, and receipt-minting bypass;
+- the packaged `external-metadata-observation-semantics.v1.json` profile, run through the buyer-facing runner, including drift reporting for each vector family.
+
 Future language SDKs must consume the same fixture and conformance-profile
 corpus and produce byte-wise compatible structured events after canonical
 serialization. A language SDK is not considered compatible merely because its

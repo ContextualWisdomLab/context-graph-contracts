@@ -18,6 +18,8 @@ These terms are normative for code, schemas, tests and documentation in `context
 | Conformance Evidence | Deterministic evidence that a candidate value or implementation was evaluated against the published semantic/schema profile. |
 | Admission Receipt | Deterministic evidence recording the exact admitted contract/conformance identity. It is not a business approval or product authorization token. |
 | Release Evidence | Package checksums, SBOM/provenance and attestation evidence that binds a distributable artifact to the verified source/release process. |
+| External Metadata Observation | A provenance-bound, bitemporal report from an external metadata source about one external entity. It is evidence, not catalog state, and keeps the source's truth status exactly (ADR 0017). |
+| Metadata Projection Receipt | The admission decision over one External Metadata Observation, with a bounded reason code. Only the reference admission function mints it; it is not authorization. |
 | Anti-Corruption Layer | Consumer-owned translation that keeps an owning product's domain model from leaking into the Shared Kernel. |
 | Shared Kernel | The intentionally minimal cross-product vocabulary in this repository. Expansion requires proof that the concept must be identical across bounded contexts. |
 

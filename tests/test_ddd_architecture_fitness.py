@@ -25,7 +25,9 @@ _FOREIGN_PRODUCT_PACKAGES = {
     "ea_core_foundation",
     "enterprise_architecture_core",
     "lineageweave",
+    "metadata",
     "naruon",
+    "openmetadata",
     "pg_erd_cloud",
     "semantic_data_portal",
 }
@@ -129,3 +131,24 @@ def test_gap_baseline_does_not_persist_volatile_runner_execution_identity() -> N
         in runner_row
     )
     assert "runner_id:" not in runner_row
+
+
+def test_external_metadata_observation_boundary_is_recorded() -> None:
+    """Keep external catalog observations as evidence, never catalog authority."""
+
+    adr = Path("docs/adr/0017-external-metadata-observation-contract.md").read_text(
+        encoding="utf-8"
+    )
+    baseline = Path("docs/product-technical-gap-baseline.md").read_text(
+        encoding="utf-8"
+    )
+    language = Path("docs/UBIQUITOUS_LANGUAGE.md").read_text(encoding="utf-8")
+    prd = Path("docs/PRD.md").read_text(encoding="utf-8")
+
+    assert "Status: Accepted" in adr
+    assert "owner_disposition_forbidden" in adr
+    assert "not a catalog" in adr
+    assert "src/cwl_context_contracts/external_metadata.py" in baseline
+    assert "ADR 0017" in baseline
+    assert "External Metadata Observation" in language
+    assert "external metadata observation" in prd.lower()

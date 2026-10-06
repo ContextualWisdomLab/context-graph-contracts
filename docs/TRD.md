@@ -48,6 +48,19 @@ Schema format annotation. CWL Timestamp Profile v1 is a strict subset of RFC
 3339 and intentionally rejects leap-second lexical `:60`; it therefore has a
 distinct contract name rather than claiming complete RFC 3339 acceptance.
 
+## External metadata observation semantics
+
+- `admit_metadata_observation` is a pure function. Structural failures raise;
+  semantic failures return a rejected receipt with an allowlisted reason code.
+- The replay identity is SHA-256 over the UTF-8 JSON array
+  `["cwl-external-metadata-replay/v1", source_authority, tenant_id,
+  external_entity_type, external_id, source_release, payload_sha256]`
+  without insignificant whitespace.
+- The JSON text boundary rejects input over 64 KiB, duplicate members,
+  non-finite numbers, inexact integers and nesting deeper than 64 levels.
+- Consumers must execute `external-metadata-observation-semantics.v1.json`;
+  the JSON Schemas are structural only.
+
 ## Compatibility policy
 
 - Schema `$id` values are immutable after release.

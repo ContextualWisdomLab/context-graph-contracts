@@ -1,0 +1,1077 @@
+{
+  "profile_id": "urn:cwl:context-contracts:external-metadata-observation-semantics:v1",
+  "profile_version": 1,
+  "basis": "CWL provider-neutral external metadata observation admission semantics",
+  "json_schema_role": "structural_and_lexical_only_for_cross_field_invariants",
+  "normative_requirement": "A consumer MUST accept every valid_vectors value with its expected_reason_code, MUST return a rejected receipt with the expected_reason_code for every rejected_vectors value, MUST reject every invalid_vectors value and invalid_json_texts text before minting any receipt, and MUST derive every replay_vectors expected_replay_id. Foreign sources MUST NOT be promoted to authoritative, superseded, or rejected; JSON Schema validation alone is insufficient for authority, tenant, replay, and supersession invariants.",
+  "replay_derivation": "SHA-256 over UTF-8 JSON array [\"cwl-external-metadata-replay/v1\", source_authority, tenant_id, external_entity_type, external_id, source_release, payload_sha256] with separators \",\" and \":\" and no other whitespace",
+  "valid_vectors": [
+    {
+      "case_id": "foreign_observed_evidence",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      },
+      "expected_reason_code": "admitted_evidence"
+    },
+    {
+      "case_id": "foreign_inferred_evidence",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "inferred",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      },
+      "expected_reason_code": "admitted_evidence"
+    },
+    {
+      "case_id": "foreign_proposed_evidence",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "proposed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      },
+      "expected_reason_code": "admitted_evidence"
+    },
+    {
+      "case_id": "owner_authoritative_disposition",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:lineage_core:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:lineage_core",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:lineage_core",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "authoritative",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "c071f62c9dc45c1183f4ef4433fe3b3cbca70c41324e28b54f68cb078206a1dd",
+        "supersedes_observation_id": null
+      },
+      "expected_reason_code": "admitted_owner_disposition"
+    },
+    {
+      "case_id": "owner_superseded_disposition",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:lineage_core:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:lineage_core",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:lineage_core",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "superseded",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "c071f62c9dc45c1183f4ef4433fe3b3cbca70c41324e28b54f68cb078206a1dd",
+        "supersedes_observation_id": null
+      },
+      "expected_reason_code": "admitted_owner_disposition"
+    },
+    {
+      "case_id": "owner_rejected_disposition",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:lineage_core:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:lineage_core",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:lineage_core",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "rejected",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "c071f62c9dc45c1183f4ef4433fe3b3cbca70c41324e28b54f68cb078206a1dd",
+        "supersedes_observation_id": null
+      },
+      "expected_reason_code": "admitted_owner_disposition"
+    },
+    {
+      "case_id": "retroactive_recording_is_valid",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-09-01T00:00:00Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      },
+      "expected_reason_code": "admitted_evidence"
+    },
+    {
+      "case_id": "supersession_as_new_fact",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb713",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb798",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711"
+      },
+      "expected_reason_code": "admitted_evidence"
+    }
+  ],
+  "rejected_vectors": [
+    {
+      "case_id": "foreign_authoritative_promotion",
+      "expected_reason_code": "owner_disposition_forbidden",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "authoritative",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "foreign_superseded_forgery",
+      "expected_reason_code": "owner_disposition_forbidden",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "superseded",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "foreign_rejected_forgery",
+      "expected_reason_code": "owner_disposition_forbidden",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "rejected",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "entity_source_mismatch",
+      "expected_reason_code": "source_authority_mismatch",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:other_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "cross_tenant_subject",
+      "expected_reason_code": "tenant_scope_mismatch",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_002:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "cross_tenant_provenance",
+      "expected_reason_code": "provenance_scope_mismatch",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_002:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "changed_payload_reuses_replay_id",
+      "expected_reason_code": "replay_identity_mismatch",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "supersession_self_reference",
+      "expected_reason_code": "supersession_self_reference",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711"
+      }
+    },
+    {
+      "case_id": "cross_authority_supersession",
+      "expected_reason_code": "supersession_authority_mismatch",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": "urn:cwl:tenant_001:other_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb712"
+      }
+    }
+  ],
+  "invalid_vectors": [
+    {
+      "case_id": "missing_provenance",
+      "error_pattern": "provenance is required",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": null,
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "unknown_truth_status",
+      "error_pattern": "unknown truth status",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "confirmed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "unknown_top_level_field",
+      "error_pattern": "unknown metadata observation fields",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null,
+        "vendor_payload": {}
+      }
+    },
+    {
+      "case_id": "non_canonical_authority_case",
+      "error_pattern": "canonical CWL authority URI",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:Tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "non_https_schema_uri",
+      "error_pattern": "schema_uri",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "http://schemas.example.org/a.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "digest_with_prefix",
+      "error_pattern": "payload_sha256",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "oversize_external_id",
+      "error_pattern": "external_id",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "naive_timestamp",
+      "error_pattern": "CWL timestamp",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": null,
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    },
+    {
+      "case_id": "sentinel_free_reverse_interval",
+      "error_pattern": "valid_to must be later",
+      "value": {
+        "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+        "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+        "source": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "provider_code": "openmetadata",
+          "source_release": "provider-release-1.5.2",
+          "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+          "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+          "lifecycle": "active"
+        },
+        "entity": {
+          "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+          "external_entity_type": "data_table",
+          "external_id": "f3b0c2a1-external-table-01",
+          "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+        },
+        "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+        "truth_status": "observed",
+        "interval": {
+          "valid_from": "2026-10-01T00:00:00Z",
+          "recorded_at": "2026-10-01T00:00:05Z",
+          "valid_to": "2026-09-30T00:00:00Z",
+          "superseded_at": null
+        },
+        "provenance": {
+          "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+          "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+          "source_locator": "metadata-export/order_ledger.json"
+        },
+        "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+        "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+        "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+        "supersedes_observation_id": null
+      }
+    }
+  ],
+  "invalid_json_texts": [
+    {
+      "case_id": "duplicate_truth_status_member",
+      "error_pattern": "duplicate JSON object member",
+      "text": "{\"truth_status\":\"observed\",\"truth_status\":\"authoritative\"}"
+    },
+    {
+      "case_id": "nested_duplicate_member",
+      "error_pattern": "duplicate JSON object member",
+      "text": "{\"provenance\":{\"sha256\":\"a\",\"sha256\":\"b\"}}"
+    },
+    {
+      "case_id": "nan_literal",
+      "error_pattern": "non-standard JSON constant",
+      "text": "{\"normalized_sha256\":NaN}"
+    },
+    {
+      "case_id": "infinity_literal",
+      "error_pattern": "non-standard JSON constant",
+      "text": "{\"normalized_sha256\":Infinity}"
+    },
+    {
+      "case_id": "inexact_integer",
+      "error_pattern": "exact interoperable range",
+      "text": "{\"source_release\":9007199254740992}"
+    },
+    {
+      "case_id": "non_object_document",
+      "error_pattern": "JSON object",
+      "text": "[]"
+    }
+  ],
+  "replay_vectors": [
+    {
+      "case_id": "published_replay_derivation",
+      "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+      "external_entity_type": "data_table",
+      "external_id": "f3b0c2a1-external-table-01",
+      "source_release": "provider-release-1.5.2",
+      "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+      "expected_replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b"
+    },
+    {
+      "case_id": "other_tenant_same_external_id",
+      "source_authority": "urn:cwl:tenant_002:metadata_bridge",
+      "external_entity_type": "data_table",
+      "external_id": "f3b0c2a1-external-table-01",
+      "source_release": "provider-release-1.5.2",
+      "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+      "expected_replay_id": "978934030470783885ac50d2e7acf2c4276c790a6d3f6cc132ecb9254aba0232"
+    }
+  ]
+}

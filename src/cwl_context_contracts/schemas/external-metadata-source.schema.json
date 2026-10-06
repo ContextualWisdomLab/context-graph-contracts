@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contextualwisdomlab.org/context/external-metadata-source.v1.schema.json",
+  "title": "CWL External Metadata Source",
+  "description": "Tenant-scoped identity and schema pin of one external metadata producer. provider_code is a thin profile value and grants no authority over subjects owned by other bounded contexts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_authority",
+    "provider_code",
+    "source_release",
+    "schema_uri",
+    "schema_sha256",
+    "lifecycle"
+  ],
+  "properties": {
+    "source_authority": {
+      "$ref": "https://schemas.contextualwisdomlab.org/context/canonical-authority-uri.v1.schema.json"
+    },
+    "provider_code": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 63,
+      "pattern": "^[a-z][a-z0-9]+(?:_[a-z0-9]+)*$"
+    },
+    "source_release": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$"
+    },
+    "schema_uri": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 2048,
+      "pattern": "^https://[^/?#\\s]+"
+    },
+    "schema_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "lifecycle": {
+      "type": "string",
+      "enum": [
+        "active",
+        "deprecated",
+        "retired"
+      ]
+    }
+  }
+}

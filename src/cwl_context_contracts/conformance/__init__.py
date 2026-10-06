@@ -16,6 +16,7 @@ _PROFILE_NAMES = (
     "cloudevent-semantics.v1.json",
     "cwl-json-interoperability.v1.json",
     "data-management-assessment-semantics.v1.json",
+    "external-metadata-observation-semantics.v1.json",
 )
 
 
