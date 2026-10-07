@@ -32,12 +32,17 @@ approved facts.
    without sharing a graph store.
 9. An assertion must name at least one context membership and may name several,
    so consumers cannot collapse a person, record, or asset into a single group.
+10. An external metadata observation must keep the reporting source's tenant,
+    authority, release, schema pin, exact truth status, time and provenance.
+    A foreign source must not be admitted as authoritative, superseded, or
+    rejected for a subject it does not own (ADR 0017).
 
 ## Excluded from P0
 
 - Graph persistence or query execution.
 - Catalog, EA, workflow, or UI functionality.
 - Automatic promotion of inferred relationships.
+- External catalog clients, credentials, ingestion, or metadata persistence.
 - Provider-specific Atlan or SAP LeanIX payloads.
 
 [Executable SDK quickstart: synthetic compatibility sample, not release approval or runtime authorization](../examples/context_assertion_quickstart.py).

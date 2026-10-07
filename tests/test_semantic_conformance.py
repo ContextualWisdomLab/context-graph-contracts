@@ -44,6 +44,7 @@ def test_conformance_profile_inventory_is_stable_and_complete() -> None:
         _EVENT_PROFILE,
         _JSON_PROFILE,
         _DATA_MANAGEMENT_PROFILE,
+        "external-metadata-observation-semantics.v1.json",
     )
 
 

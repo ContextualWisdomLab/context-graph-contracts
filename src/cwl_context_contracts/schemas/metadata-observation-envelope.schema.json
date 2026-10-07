@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.contextualwisdomlab.org/context/metadata-observation-envelope.v1.schema.json",
+  "$comment": "Structural and lexical contract only. Authority, tenant, replay, and supersession invariants are defined by the packaged external-metadata-observation-semantics.v1.json profile; consumers MUST also execute those vectors.",
+  "title": "CWL Metadata Observation Envelope",
+  "description": "One immutable, provenance-bound observation reported by an external metadata source. It is interchange evidence, not catalog state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observation_id",
+    "event_id",
+    "source",
+    "entity",
+    "subject_ref",
+    "truth_status",
+    "interval",
+    "provenance",
+    "payload_sha256",
+    "normalized_sha256",
+    "replay_id"
+  ],
+  "properties": {
+    "observation_id": {
+      "type": "string",
+      "allOf": [
+        {
+          "$ref": "https://schemas.contextualwisdomlab.org/context/canonical-asset-uri.v1.schema.json"
+        },
+        {
+          "pattern": "^urn:cwl:[^:]+:[^:]+:metadata_observation:"
+        }
+      ]
+    },
+    "event_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$(?![\\s\\S])"
+    },
+    "source": {
+      "$ref": "https://schemas.contextualwisdomlab.org/context/external-metadata-source.v1.schema.json"
+    },
+    "entity": {
+      "$ref": "https://schemas.contextualwisdomlab.org/context/external-entity-reference.v1.schema.json"
+    },
+    "subject_ref": {
+      "$ref": "https://schemas.contextualwisdomlab.org/context/canonical-asset-uri.v1.schema.json"
+    },
+    "truth_status": {
+      "$ref": "https://schemas.contextualwisdomlab.org/context/truth-status.v1.schema.json"
+    },
+    "interval": {
+      "$ref": "https://schemas.contextualwisdomlab.org/context/bitemporal-interval.v1.schema.json"
+    },
+    "provenance": {
+      "$ref": "https://schemas.contextualwisdomlab.org/context/provenance-reference.v1.schema.json"
+    },
+    "payload_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"
+    },
+    "normalized_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"
+    },
+    "replay_id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"
+    },
+    "supersedes_observation_id": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "string",
+          "allOf": [
+            {
+              "$ref": "https://schemas.contextualwisdomlab.org/context/canonical-asset-uri.v1.schema.json"
+            },
+            {
+              "pattern": "^urn:cwl:[^:]+:[^:]+:metadata_observation:"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

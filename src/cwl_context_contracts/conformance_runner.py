@@ -15,6 +15,15 @@ from .conformance import (
 from .context_assertion_admission import admit_context_assertion_message
 from .data_management import validate_data_management_assessment_semantics
 from .events import CloudEventEnvelope, _validate_and_freeze_json_value
+from .external_metadata import (
+    derive_metadata_replay_id,
+    parse_metadata_observation_json,
+)
+from .external_metadata_admission import (
+    MetadataAdmissionResult,
+    admit_metadata_observation,
+)
+from .identity import CanonicalAuthorityUri
 from .temporal import parse_cwl_timestamp
 
 _CONTEXT_ASSERTION_EVENT_PROFILE_ID = (
@@ -26,6 +35,10 @@ _CONTEXT_ASSERTION_MESSAGE_PROFILE_ID = (
 )
 _CONTEXT_ASSERTION_MESSAGE_PROFILE_VERSION = 1
 _CONTEXT_ASSERTION_STRUCTURED_MEDIA_TYPE = "application/cloudevents+json"
+_EXTERNAL_METADATA_PROFILE_ID = (
+    "urn:cwl:context-contracts:external-metadata-observation-semantics:v1"
+)
+_EXTERNAL_METADATA_PROFILE_VERSION = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -386,6 +399,134 @@ def _run_data_management_assessment_profile(
     return case_count, tuple(failures)
 
 
+def _expected_receipt(
+    *,
+    profile_name: str,
+    case_id: str,
+    value: object,
+    result: MetadataAdmissionResult,
+    reason_code: str,
+) -> ConformanceFailure | None:
+    """Admit one observation vector and compare its bounded receipt decision."""
+    try:
+        receipt = admit_metadata_observation(value)  # type: ignore[arg-type]
+    except Exception as exc:
+        return ConformanceFailure(
+            profile_name,
+            case_id,
+            f"valid vector was unexpectedly rejected: {_unexpected_exception(exc)}",
+        )
+    if (receipt.result, receipt.reason_code) != (result, reason_code):
+        return ConformanceFailure(
+            profile_name,
+            case_id,
+            "receipt reason mismatch: expected "
+            f"{result.value}/{reason_code}, got "
+            f"{receipt.result.value}/{receipt.reason_code}",
+        )
+    return None
+
+
+def _derive_replay_vector(vector: dict[str, Any]) -> str:
+    """Derive one published replay vector through the reference SDK."""
+    return derive_metadata_replay_id(
+        source_authority=CanonicalAuthorityUri.parse(vector["source_authority"]),
+        external_entity_type=vector["external_entity_type"],
+        external_id=vector["external_id"],
+        source_release=vector["source_release"],
+        payload_sha256=vector["payload_sha256"],
+    )
+
+
+def _run_external_metadata_observation_profile(
+    profile_name: str,
+    profile: dict[str, Any],
+) -> tuple[int, tuple[ConformanceFailure, ...]]:
+    """Execute external metadata observation admission and replay vectors."""
+    if (
+        profile.get("profile_id") != _EXTERNAL_METADATA_PROFILE_ID
+        or profile.get("profile_version") != _EXTERNAL_METADATA_PROFILE_VERSION
+    ):
+        return 1, (
+            ConformanceFailure(
+                profile_name,
+                "profile_identity",
+                "external metadata observation profile identity does not match "
+                "the reference admission contract",
+            ),
+        )
+    failures: list[ConformanceFailure] = []
+    case_count = 0
+    for vector in profile["valid_vectors"]:
+        case_count += 1
+        failure = _expected_receipt(
+            profile_name=profile_name,
+            case_id=str(vector["case_id"]),
+            value=vector["value"],
+            result=MetadataAdmissionResult.ADMITTED,
+            reason_code=str(vector["expected_reason_code"]),
+        )
+        if failure is not None:
+            failures.append(failure)
+    for vector in profile["rejected_vectors"]:
+        case_count += 1
+        failure = _expected_receipt(
+            profile_name=profile_name,
+            case_id=str(vector["case_id"]),
+            value=vector["value"],
+            result=MetadataAdmissionResult.REJECTED,
+            reason_code=str(vector["expected_reason_code"]),
+        )
+        if failure is not None:
+            failures.append(failure)
+    for vector in profile["invalid_vectors"]:
+        case_count += 1
+        failure = _expected_rejection(
+            profile_name=profile_name,
+            case_id=str(vector["case_id"]),
+            error_pattern=str(vector["error_pattern"]),
+            action=lambda vector=vector: admit_metadata_observation(vector["value"]),
+        )
+        if failure is not None:
+            failures.append(failure)
+    for vector in profile["invalid_json_texts"]:
+        case_count += 1
+        failure = _expected_rejection(
+            profile_name=profile_name,
+            case_id=str(vector["case_id"]),
+            error_pattern=str(vector["error_pattern"]),
+            action=lambda vector=vector: parse_metadata_observation_json(
+                vector["text"]
+            ),
+        )
+        if failure is not None:
+            failures.append(failure)
+    for vector in profile["replay_vectors"]:
+        case_count += 1
+        case_id = str(vector["case_id"])
+        try:
+            derived = _derive_replay_vector(vector)
+        except Exception as exc:
+            failures.append(
+                ConformanceFailure(
+                    profile_name,
+                    case_id,
+                    f"replay vector was unexpectedly rejected: "
+                    f"{_unexpected_exception(exc)}",
+                )
+            )
+            continue
+        if derived != vector["expected_replay_id"]:
+            failures.append(
+                ConformanceFailure(
+                    profile_name,
+                    case_id,
+                    "replay identity mismatch with the published derivation",
+                )
+            )
+    return case_count, tuple(failures)
+
+
 _PROFILE_RUNNERS: dict[
     str,
     Callable[[str, dict[str, Any]], tuple[int, tuple[ConformanceFailure, ...]]],
@@ -398,6 +539,9 @@ _PROFILE_RUNNERS: dict[
     "cwl-json-interoperability.v1.json": _run_json_profile,
     "data-management-assessment-semantics.v1.json": (
         _run_data_management_assessment_profile
+    ),
+    "external-metadata-observation-semantics.v1.json": (
+        _run_external_metadata_observation_profile
     ),
 }
 

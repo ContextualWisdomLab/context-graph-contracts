@@ -1,0 +1,26 @@
+{
+  "result": "admitted",
+  "reason_code": "admitted_evidence",
+  "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+  "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+  "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+  "truth_status": "observed",
+  "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+  "provider_code": "openmetadata",
+  "source_release": "provider-release-1.5.2",
+  "external_entity_type": "data_table",
+  "external_id": "f3b0c2a1-external-table-01",
+  "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+  "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+  "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+  "provenance": {
+    "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+    "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+    "source_locator": "metadata-export/order_ledger.json"
+  },
+  "contract_version": "1.0.0",
+  "schema_id": "https://schemas.contextualwisdomlab.org/context/metadata-observation-envelope.v1.schema.json",
+  "profile_id": "urn:cwl:context-contracts:external-metadata-observation-semantics:v1",
+  "profile_version": 1,
+  "admission_version": 1
+}

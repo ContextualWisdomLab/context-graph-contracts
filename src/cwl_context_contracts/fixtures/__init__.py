@@ -14,6 +14,9 @@ _FIXTURE_NAMES = (
     "invalid-assertion.json",
     "data-management-contract.valid.json",
     "data-management-assessment.valid.json",
+    "metadata-observation-envelope.valid.json",
+    "metadata-observation-envelope.invalid.json",
+    "metadata-projection-receipt.valid.json",
 )
 
 

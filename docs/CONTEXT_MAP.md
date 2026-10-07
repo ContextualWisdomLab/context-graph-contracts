@@ -21,6 +21,7 @@
 | Physical Schema Evidence (`pg-erd-cloud`) | Upstream evidence producer through published references/events. | Physical database/schema design evidence stays owned by `pg-erd-cloud`; this repository only defines portable reference shapes. |
 | Inferred Lineage (`LineageWeave`) | Upstream evidence producer through published truth/provenance semantics. | Inferred/proposed lineage remains non-authoritative unless an owning product explicitly accepts it. |
 | Orchestration (`contextual-orchestrator`) | Proposal-producing customer. | Orchestration may consume contracts and propose changes but never mutates another product's authoritative store through this library. |
+| External metadata catalogs (for example OpenMetadata) | Upstream evidence producer through External Metadata Observations (ADR 0017). | The catalog owns its own metadata. Its observations stay non-authoritative for subjects owned by other contexts; this repository ships no catalog client or provider dependency. |
 | Naruon and other clients | Customer / conformist. | Consumer-specific UX, search, workflow and persistence remain outside this bounded context. |
 
 ## Minimal Shared Kernel

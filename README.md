@@ -78,7 +78,9 @@ Every Context Assertion carries a typed provenance reference to the evidence or 
 
 Context Assertions carry typed subject–predicate–object facts with truth status, temporal validity, provenance, and context memberships. Service notifications use CloudEvents 1.0.2 structured JSON. The assertion-event contract binds assertion data to the CloudEvent envelope, and message admission accepts only the supported `application/cloudevents+json` structured media type forms before minting receipt evidence. JSON Schema Draft 2020-12 supplies structural contracts; packaged semantic vectors cover important cross-field invariants that schema validation alone cannot safely establish.
 
-Packaged semantic conformance includes **CWL Timestamp Profile v1**, **Context assertion semantics v1**, **Context assertion event semantics v1**, and the **CWL JSON interoperability profile**, alongside the shared CloudEvent and message-admission profiles.
+Packaged semantic conformance includes **CWL Timestamp Profile v1**, **Context assertion semantics v1**, **Context assertion event semantics v1**, the **CWL JSON interoperability profile**, and **External metadata observation semantics v1**, alongside the shared CloudEvent, message-admission, and data-management assessment profiles.
+
+External metadata observations (ADR 0017) let a consumer admit what an external catalog reported as non-authoritative evidence. The catalog keeps no authority over subjects owned elsewhere: a foreign source cannot be admitted as `authoritative`, `superseded`, or `rejected` for those subjects, and each receipt carries a bounded reason code. The package ships no catalog client or provider dependency.
 
 The AsyncAPI 3.1.0 resource is intentionally reusable contract material. It does not declare servers, channels, operations, broker addresses, or runtime topology.
 

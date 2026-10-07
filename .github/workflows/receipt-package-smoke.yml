@@ -246,6 +246,10 @@ jobs:
               "fixtures/data-management-contract.valid.json",
               "fixtures/data-management-assessment.valid.json",
               "conformance/data-management-assessment-semantics.v1.json",
+              "schemas/metadata-observation-envelope.schema.json",
+              "schemas/metadata-projection-receipt.schema.json",
+              "fixtures/metadata-observation-envelope.valid.json",
+              "conformance/external-metadata-observation-semantics.v1.json",
           } <= resource_paths
           assert bundle_manifest["resources"] == sorted(
               bundle_manifest["resources"],

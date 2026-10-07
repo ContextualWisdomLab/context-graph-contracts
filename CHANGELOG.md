@@ -64,6 +64,17 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+- Provider-neutral external metadata observation contracts (ADR 0017,
+  Issue #26). They comprise `ExternalMetadataSource`,
+  `ExternalEntityReference`, `MetadataObservationEnvelope`, and receipts
+  minted only by `admit_metadata_observation`, together with four Draft
+  2020-12 schemas, CWL-authored fixtures, and the
+  `external-metadata-observation-semantics.v1.json` profile.
+  - Foreign sources cannot be admitted as authoritative, superseded, or
+    rejected for subjects they do not own.
+  - Replay identity is deterministic and tenant-scoped.
+  - No provider client or dependency is added.
+
 - Source-bound release provenance through
   `cwl-context-release-source-manifest`, which strictly binds one verified
   wheel/source/SPDX package snapshot to protected `main`, the exact source SHA,

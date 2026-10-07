@@ -1,0 +1,35 @@
+{
+  "observation_id": "urn:cwl:tenant_001:metadata_bridge:metadata_observation:0195d145-64e8-7f4f-8a23-a0cc784cb711",
+  "event_id": "0195d145-64e8-7f4f-8a23-a0cc784cb799",
+  "source": {
+    "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+    "provider_code": "openmetadata",
+    "source_release": "provider-release-1.5.2",
+    "schema_uri": "https://schemas.example.org/cwl-profile/table.v1.json",
+    "schema_sha256": "0b395813d83a2297c3908180356103142f25f2dd7cf444c1cc187e6fbd375daf",
+    "lifecycle": "active"
+  },
+  "entity": {
+    "source_authority": "urn:cwl:tenant_001:metadata_bridge",
+    "external_entity_type": "data_table",
+    "external_id": "f3b0c2a1-external-table-01",
+    "fully_qualified_name": "warehouse_service.sales_db.order_ledger"
+  },
+  "subject_ref": "urn:cwl:tenant_001:lineage_core:data_table:0195d145-64e8-7f4f-8a23-a0cc784cb721",
+  "truth_status": "observed",
+  "interval": {
+    "valid_from": "2026-10-01T00:00:00Z",
+    "recorded_at": "2026-10-01T00:00:05Z",
+    "valid_to": null,
+    "superseded_at": null
+  },
+  "provenance": {
+    "evidence_ref": "urn:cwl:tenant_001:metadata_bridge:metadata_evidence:0195d145-64e8-7f4f-8a23-a0cc784cb731",
+    "sha256": "bbb73e38c81aab3901f128cf6dfaf946642b3f1a36795b0d2dd1d7fb525e0570",
+    "source_locator": "metadata-export/order_ledger.json"
+  },
+  "payload_sha256": "a1ccd9ee34c9a199d7f08f222b5b8bb1b1c7e62b16d3f9817451dcc6b51b10e4",
+  "normalized_sha256": "0d818e965bd0c02194b315b7d98263fc764e91807d9e317a8cdcfef0e69a1fb6",
+  "replay_id": "d6d236792e45009713130a4e39a4a609f211ceafc7b5fbb257ee5cb0f1ee077b",
+  "supersedes_observation_id": null
+}

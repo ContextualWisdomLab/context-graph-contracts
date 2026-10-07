@@ -19,6 +19,9 @@ def test_packaged_fixture_corpus_is_complete_and_parseable() -> None:
         "invalid-assertion.json",
         "data-management-contract.valid.json",
         "data-management-assessment.valid.json",
+        "metadata-observation-envelope.valid.json",
+        "metadata-observation-envelope.invalid.json",
+        "metadata-projection-receipt.valid.json",
     )
     valid_event = load_fixture("valid-event.json")
     invalid_event = load_fixture("invalid-event.json")

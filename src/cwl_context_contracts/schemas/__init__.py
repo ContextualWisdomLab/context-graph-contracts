@@ -18,6 +18,10 @@ _SCHEMA_NAMES = (
     "context-assertion.schema.json",
     "data-management-framework.schema.json",
     "data-management-assessment.schema.json",
+    "external-metadata-source.schema.json",
+    "external-entity-reference.schema.json",
+    "metadata-observation-envelope.schema.json",
+    "metadata-projection-receipt.schema.json",
 )
 
 

@@ -5,7 +5,11 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from cwl_context_contracts import available_conformance_profile_names
+from cwl_context_contracts import (
+    available_conformance_profile_names,
+    available_fixture_names,
+    available_schema_names,
+)
 
 _CI_PATH = Path(__file__).resolve().parents[2] / ".github/workflows/ci.yml"
 _SUPPLY_CHAIN_PATH = (
@@ -91,6 +95,36 @@ def test_package_smoke_covers_every_declared_conformance_profile() -> None:
         resource_path = f'"cwl_context_contracts/conformance/{profile_name}"'
         assert resource_path in workflow_text, profile_name
         assert f'"{profile_name}",' in workflow_text, profile_name
+
+
+def _installed_smoke_tuple(workflow_text: str, function_name: str) -> tuple[str, ...]:
+    """Return the exact string tuple compared against one installed inventory."""
+    match = re.search(
+        rf"assert {function_name}\(\) == \(\n(?P<body>(?:\s+\"[^\"]+\",\n)+)\s+\)",
+        workflow_text,
+    )
+    assert match is not None, function_name
+    return tuple(re.findall(r'"([^"]+)"', match.group("body")))
+
+
+def test_package_smoke_tuples_equal_every_packaged_inventory() -> None:
+    """Keep installed-smoke inventories from drifting from the shipped package."""
+    workflow_text = _CI_PATH.read_text(encoding="utf-8")
+
+    assert _installed_smoke_tuple(
+        workflow_text,
+        "available_conformance_profile_names",
+    ) == available_conformance_profile_names()
+    assert _installed_smoke_tuple(
+        workflow_text,
+        "available_fixture_names",
+    ) == available_fixture_names()
+    for fixture_name in available_fixture_names():
+        resource_path = f'"cwl_context_contracts/fixtures/{fixture_name}"'
+        assert resource_path in workflow_text, fixture_name
+    for schema_name in available_schema_names():
+        resource_path = f'"cwl_context_contracts/schemas/{schema_name}"'
+        assert resource_path in workflow_text, schema_name
 
 
 def test_protected_main_revalidates_downloaded_evidence_before_attesting() -> None:

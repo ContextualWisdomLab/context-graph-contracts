@@ -53,6 +53,20 @@ from .contract_release_admission import (
 from .contracts import available_contract_names, load_contract
 from .data_management import validate_data_management_assessment_semantics
 from .events import CloudEventEnvelope
+from .external_metadata import (
+    ExternalEntityReference,
+    ExternalMetadataLifecycle,
+    ExternalMetadataSource,
+    MetadataObservationEnvelope,
+    derive_metadata_replay_id,
+    parse_metadata_observation_json,
+)
+from .external_metadata_admission import (
+    METADATA_RECEIPT_REASON_CODES,
+    MetadataAdmissionResult,
+    MetadataProjectionReceipt,
+    admit_metadata_observation,
+)
 from .fixtures import available_fixture_names, load_fixture
 from .identity import CanonicalAssetUri, CanonicalAuthorityUri
 from .package_evidence_verifier import (
@@ -110,6 +124,13 @@ __all__ = [
     "ContractBundleManifestVerification",
     "ContractReleaseAdmissionReport",
     "ContractResourceEvidence",
+    "ExternalEntityReference",
+    "ExternalMetadataLifecycle",
+    "ExternalMetadataSource",
+    "METADATA_RECEIPT_REASON_CODES",
+    "MetadataAdmissionResult",
+    "MetadataObservationEnvelope",
+    "MetadataProjectionReceipt",
     "PackageArtifactEvidence",
     "PackageEvidenceInputError",
     "PackageEvidenceVerification",
@@ -120,6 +141,7 @@ __all__ = [
     "ReleaseSourceManifestInputError",
     "TruthStatus",
     "admit_context_assertion_message",
+    "admit_metadata_observation",
     "assert_packaged_conformance",
     "available_conformance_profile_names",
     "available_contract_names",
@@ -130,6 +152,7 @@ __all__ = [
     "build_packaged_contract_bundle_manifest",
     "build_release_source_manifest",
     "conformance_profile_sha256",
+    "derive_metadata_replay_id",
     "evaluate_packaged_conformance_admission",
     "evaluate_packaged_contract_release_admission",
     "evaluate_release_evidence_admission",
@@ -141,6 +164,7 @@ __all__ = [
     "load_fixture",
     "load_schema",
     "parse_cwl_timestamp",
+    "parse_metadata_observation_json",
     "parse_rfc3339_timestamp",
     "parse_truth_status",
     "refuse_truth_promotion",
