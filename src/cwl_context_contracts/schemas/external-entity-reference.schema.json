@@ -19,19 +19,19 @@
       "type": "string",
       "minLength": 2,
       "maxLength": 63,
-      "pattern": "^[a-z][a-z0-9]+(?:_[a-z0-9]+)*$"
+      "pattern": "^[a-z][a-z0-9]+(?:_[a-z0-9]+)*$(?![\\s\\S])"
     },
     "external_id": {
       "type": "string",
       "minLength": 1,
       "maxLength": 512,
-      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$(?![\\s\\S])"
     },
     "fully_qualified_name": {
       "type": "string",
       "minLength": 1,
       "maxLength": 1024,
-      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$(?![\\s\\S])"
     }
   }
 }

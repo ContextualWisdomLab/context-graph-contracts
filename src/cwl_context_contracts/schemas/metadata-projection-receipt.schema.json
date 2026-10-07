@@ -63,7 +63,7 @@
     },
     "event_id": {
       "type": "string",
-      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$(?![\\s\\S])"
     },
     "subject_ref": {
       "$ref": "https://schemas.contextualwisdomlab.org/context/canonical-asset-uri.v1.schema.json"
@@ -78,44 +78,44 @@
       "type": "string",
       "minLength": 2,
       "maxLength": 63,
-      "pattern": "^[a-z][a-z0-9]+(?:_[a-z0-9]+)*$"
+      "pattern": "^[a-z][a-z0-9]+(?:_[a-z0-9]+)*$(?![\\s\\S])"
     },
     "source_release": {
       "type": "string",
       "minLength": 1,
       "maxLength": 128,
-      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$"
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]*$(?![\\s\\S])"
     },
     "external_entity_type": {
       "type": "string",
       "minLength": 2,
       "maxLength": 63,
-      "pattern": "^[a-z][a-z0-9]+(?:_[a-z0-9]+)*$"
+      "pattern": "^[a-z][a-z0-9]+(?:_[a-z0-9]+)*$(?![\\s\\S])"
     },
     "external_id": {
       "type": "string",
       "minLength": 1,
       "maxLength": 512,
-      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$"
+      "pattern": "^[^\\u0000-\\u001f\\u007f-\\u009f]+$(?![\\s\\S])"
     },
     "replay_id": {
       "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
+      "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"
     },
     "payload_sha256": {
       "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
+      "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"
     },
     "normalized_sha256": {
       "type": "string",
-      "pattern": "^[0-9a-f]{64}$"
+      "pattern": "^[0-9a-f]{64}$(?![\\s\\S])"
     },
     "provenance": {
       "$ref": "https://schemas.contextualwisdomlab.org/context/provenance-reference.v1.schema.json"
     },
     "contract_version": {
       "type": "string",
-      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$(?![\\s\\S])"
     },
     "schema_id": {
       "const": "https://schemas.contextualwisdomlab.org/context/metadata-observation-envelope.v1.schema.json"

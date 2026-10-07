@@ -469,7 +469,15 @@ def parse_metadata_observation_json(text: str) -> MetadataObservationEnvelope:
         )
     except json.JSONDecodeError as exc:
         raise ValueError("malformed metadata observation JSON") from exc
+    except RecursionError as exc:
+        raise ValueError("metadata observation JSON nesting is too deep") from exc
     _validate_and_freeze_json_value(decoded)
+    try:
+        json.dumps(decoded, ensure_ascii=False).encode("utf-8")
+    except UnicodeEncodeError as exc:
+        raise ValueError(
+            "metadata observation JSON must contain Unicode scalar values"
+        ) from exc
     if not isinstance(decoded, dict):
         raise ValueError("metadata observation JSON must be a JSON object")
     return MetadataObservationEnvelope.from_mapping(decoded)
